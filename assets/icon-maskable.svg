@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgm" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#1b1748"/>
+      <stop offset="60%" stop-color="#0a0c22"/>
+      <stop offset="100%" stop-color="#04050e"/>
+    </radialGradient>
+    <linearGradient id="starm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="45%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bgm)"/>
+  <!-- Kept inside the 80% safe zone so no platform mask can clip the mark. -->
+  <path d="M256 140 L285 230 L375 259 L285 288 L256 378 L227 288 L137 259 L227 230 Z"
+        fill="url(#starm)"/>
+  <circle cx="256" cy="259" r="20" fill="#ffffff" opacity="0.9"/>
+</svg>

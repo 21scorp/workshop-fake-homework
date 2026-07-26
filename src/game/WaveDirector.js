@@ -1,0 +1,313 @@
+/**
+ * WaveDirector.js — spawn choreography.
+ *
+ * Waves are *composed*, not random: each wave is a sequence of formations with
+ * deliberate gaps. The gaps matter as much as the enemies — a wave with no
+ * breathing room reads as noise, and a wave with too much reads as empty.
+ *
+ * Everything here draws from the run's seeded RNG, so the same seed produces
+ * the identical fight. That is what makes the Daily Seed and shared challenge
+ * links work without a server.
+ */
+
+import { ENEMY, enemyPool, ELITE_MODS, ELITE_KEYS, bossForWave } from '../data/enemies.js';
+import { clamp, lerp, TAU } from '../core/Math2.js';
+
+const WAVE_TIME = 22;         // seconds of spawning per wave
+const BREATH = 3.2;           // calm gap between waves
+const BOSS_EVERY = 5;
+
+/** How much tougher everything gets, per wave. */
+export function waveScaling(wave) {
+  return {
+    hp: 1 + Math.pow(wave - 1, 1.28) * 0.34,
+    dmg: 1 + Math.floor((wave - 1) / 6) * 0.5,
+    speed: 1 + Math.min(0.55, (wave - 1) * 0.035),
+    score: 1 + (wave - 1) * 0.16,
+    density: 1 + (wave - 1) * 0.19,
+    eliteChance: clamp(0.02 + (wave - 2) * 0.022, 0, 0.30),
+  };
+}
+
+/* ------------------------------------------------------------------
+   FORMATIONS — each returns a list of {x, y, delay, type} spawn orders.
+   x is normalised 0..1 across the play width.
+   ------------------------------------------------------------------ */
+
+const FORMATIONS = {
+  /** A horizontal rank that drops together. */
+  line(rng, n, type) {
+    const out = [];
+    const pad = 0.12;
+    for (let i = 0; i < n; i++) {
+      out.push({ x: lerp(pad, 1 - pad, n === 1 ? 0.5 : i / (n - 1)), y: -0.06, delay: i * 0.05, type });
+    }
+    return out;
+  },
+
+  /** A V, tip first. Reads as "incoming". */
+  arrow(rng, n, type) {
+    const out = [];
+    const half = Math.floor(n / 2);
+    out.push({ x: 0.5, y: -0.06, delay: 0, type });
+    for (let i = 1; i <= half; i++) {
+      const off = i * 0.09;
+      out.push({ x: 0.5 - off, y: -0.06 - i * 0.03, delay: i * 0.06, type });
+      out.push({ x: 0.5 + off, y: -0.06 - i * 0.03, delay: i * 0.06, type });
+    }
+    return out.slice(0, n);
+  },
+
+  /** A steady trickle down one lane. Pressure without panic. */
+  stream(rng, n, type) {
+    const lane = rng.range(0.2, 0.8);
+    return Array.from({ length: n }, (_, i) => ({
+      x: clamp(lane + rng.range(-0.06, 0.06), 0.08, 0.92),
+      y: -0.06, delay: i * 0.34, type,
+    }));
+  },
+
+  /** Two flanks, converging. Forces the player off the walls. */
+  pincer(rng, n, type) {
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const side = i % 2 ? 0.9 : 0.1;
+      out.push({ x: side, y: -0.05 - Math.floor(i / 2) * 0.05, delay: Math.floor(i / 2) * 0.14, type });
+    }
+    return out;
+  },
+
+  /** A ring that closes in. Only used from wave 6 — it's genuinely mean. */
+  ring(rng, n, type) {
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU;
+      out.push({
+        x: 0.5 + Math.cos(a) * 0.44,
+        y: 0.34 + Math.sin(a) * 0.22,
+        delay: 0.02 * i, type, spawnIn: true,
+      });
+    }
+    return out;
+  },
+
+  /** Scattered chaff. The palate cleanser. */
+  scatter(rng, n, type) {
+    return Array.from({ length: n }, (_, i) => ({
+      x: rng.range(0.1, 0.9), y: -0.05 - rng.float() * 0.2,
+      delay: rng.float() * 1.4, type,
+    }));
+  },
+};
+
+const FORMATION_KEYS = Object.keys(FORMATIONS);
+
+/* ------------------------------------------------------------------ */
+
+export class WaveDirector {
+  /** @param {import('./RunScene.js').RunScene} run */
+  constructor(run, rng) {
+    this.run = run;
+    this.rng = rng;
+    this.wave = 0;
+    this.waveTime = 0;
+    this.phase = 'breath';       // breath | spawning | boss | cleared
+    this.queue = [];             // pending spawn orders
+    this.spawnedThisWave = 0;
+    this.killedThisWave = 0;
+    this.bossRef = null;
+    this.totalSpawned = 0;
+    this.pendingBanner = null;
+    this.breathTime = 1.4;       // shorter before wave 1 so the run starts fast
+  }
+
+  get isBossWave() { return this.wave > 0 && this.wave % BOSS_EVERY === 0; }
+  get scaling() { return waveScaling(Math.max(1, this.wave)); }
+
+  /** Build the spawn plan for the upcoming wave. */
+  planWave(wave) {
+    const rng = this.rng;
+    const sc = waveScaling(wave);
+    const pool = enemyPool(wave);
+    const orders = [];
+
+    // Budget grows with the wave but is capped so late waves don't turn to soup.
+    const budget = Math.round(clamp(7 + wave * 3.4, 8, 46) * sc.density * 0.8);
+    let spent = 0;
+    let t = 0;
+
+    // Choose 3–5 beats. Each beat is one formation with a gap after it.
+    const beats = clamp(3 + Math.floor(wave / 4), 3, 6);
+    for (let b = 0; b < beats && spent < budget; b++) {
+      const type = rng.weighted(pool, (e) => e.weight);
+      const group = type.groupSize ?? 1;
+      const count = clamp(
+        Math.round((budget / beats) * rng.range(0.7, 1.3) / (type.hp > 60 ? 2.2 : 1)) * group,
+        1, 16,
+      );
+
+      let formName;
+      if (type.groupSize) formName = rng.pick(['scatter', 'stream', 'arrow']);
+      else if (wave >= 6 && rng.chance(0.16)) formName = 'ring';
+      else formName = rng.pick(FORMATION_KEYS.filter((k) => k !== 'ring'));
+
+      const form = FORMATIONS[formName](rng, count, type.id);
+      for (const o of form) {
+        o.delay += t;
+        orders.push(o);
+      }
+      spent += count * (type.hp > 60 ? 2 : 1);
+      t += rng.range(2.2, 4.4) + count * 0.06;
+    }
+
+    // Sprinkle a guaranteed elite from wave 3 onward — a clear "watch out".
+    if (wave >= 3) {
+      const eliteType = rng.weighted(pool.filter((e) => !e.groupSize), (e) => e.weight);
+      if (eliteType) {
+        orders.push({
+          x: rng.range(0.25, 0.75), y: -0.08,
+          delay: t * rng.range(0.35, 0.7),
+          type: eliteType.id, elite: rng.pick(ELITE_KEYS),
+        });
+      }
+    }
+
+    orders.sort((a, b) => a.delay - b.delay);
+    return orders;
+  }
+
+  startWave(wave) {
+    this.wave = wave;
+    this.waveTime = 0;
+    this.spawnedThisWave = 0;
+    this.killedThisWave = 0;
+
+    if (this.isBossWave) {
+      this.phase = 'boss';
+      this.queue = [];
+      this.run.onBossWave(bossForWave(wave));
+    } else {
+      this.phase = 'spawning';
+      this.queue = this.planWave(wave);
+    }
+    this.run.onWaveStart(wave, this.isBossWave);
+  }
+
+  update(dt) {
+    this.waveTime += dt;
+
+    switch (this.phase) {
+      case 'breath': {
+        this.breathTime -= dt;
+        if (this.breathTime <= 0) this.startWave(this.wave + 1);
+        break;
+      }
+
+      case 'spawning': {
+        while (this.queue.length && this.queue[0].delay <= this.waveTime) {
+          const order = this.queue.shift();
+          this.spawn(order);
+        }
+        // Wave ends when the plan is exhausted *and* the field is nearly clear,
+        // or when we run out of patience — whichever comes first.
+        const fieldClear = this.run.enemies.count <= 2;
+        if (!this.queue.length && (fieldClear || this.waveTime > WAVE_TIME + 14)) {
+          this.endWave();
+        }
+        break;
+      }
+
+      case 'boss': {
+        if (this.bossRef && !this.bossRef._alive) {
+          this.bossRef = null;
+          this.endWave();
+        }
+        break;
+      }
+    }
+  }
+
+  endWave() {
+    this.phase = 'breath';
+    this.breathTime = BREATH;
+    this.run.onWaveClear(this.wave);
+  }
+
+  /** Turn a spawn order into a live enemy. */
+  spawn(order) {
+    const def = ENEMY[order.type];
+    if (!def) return;
+    const view = this.run.view;
+    const sc = this.scaling;
+    const rng = this.rng;
+
+    const e = this.run.enemies.spawn();
+    const elite = order.elite ?? (rng.chance(sc.eliteChance) ? rng.pick(ELITE_KEYS) : null);
+    const mod = elite ? ELITE_MODS[elite] : null;
+
+    e.id = this.run.enemyId++;
+    e.type = def.id;
+    e.def = def;
+    e.sprite = def.sprite;
+    e.x = clamp(order.x * view.w, 24, view.w - 24);
+    e.y = order.y * view.h;
+    e.spawnIn = !!order.spawnIn;
+    e.spawnT = order.spawnIn ? 0.6 : 0;
+    e.r = def.radius * (mod ? 1.22 : 1);
+    e.maxHp = Math.round(def.hp * sc.hp * (mod?.hp ?? 1));
+    e.hp = e.maxHp;
+    e.dmg = def.dmg * sc.dmg * (mod?.dmg ?? 1);
+    e.speed = def.speed * sc.speed * (mod?.speed ?? 1);
+    e.score = Math.round(def.score * sc.score * (mod ? 2.4 : 1));
+    e.xp = Math.round(def.xp * (mod ? 2.6 : 1));
+    e.armor = (def.armor ?? 0) + (mod?.armor ?? 0);
+    e.color = mod?.color ?? def.color;
+    e.color2 = def.color2;
+    e.ai = def.ai;
+    e.elite = elite;
+    e.eliteMod = mod;
+    e.t = rng.float() * 10;
+    e.flash = 0;
+    e.slowT = 0; e.slowAmt = 0;
+    e.burnT = 0; e.burnDmg = 0;
+    e.stunT = 0;
+    e.gunT = def.gun ? rng.range(0.6, def.gun.cooldown) : 0;
+    e.charge = 0;
+    e.aim = Math.PI / 2;
+    e.vx = rng.range(-18, 18);
+    e.vy = 0;
+    e.phase = rng.float() * TAU;
+    e.chargeState = 'idle';
+    e.chargeT = 0;
+    e.trailT = 0;
+    e.orbitA = rng.float() * TAU;
+    e.hitFlashT = 0;
+    e.knockX = 0; e.knockY = 0;
+
+    this.spawnedThisWave++;
+    this.totalSpawned++;
+    return e;
+  }
+
+  /** Direct spawn used by splitters, boss minions and hazards. */
+  spawnAt(typeId, x, y, opts = {}) {
+    const order = { x: x / this.run.view.w, y: y / this.run.view.h, type: typeId, ...opts };
+    const e = this.spawn(order);
+    if (e && opts.hpMul) { e.maxHp = Math.max(1, Math.round(e.maxHp * opts.hpMul)); e.hp = e.maxHp; }
+    if (e && opts.scale) e.r *= opts.scale;
+    return e;
+  }
+
+  /** Progress through the current wave, 0..1 — drives the HUD ring. */
+  get progress() {
+    if (this.phase === 'boss') {
+      return this.bossRef ? 1 - this.bossRef.hp / this.bossRef.maxHp : 1;
+    }
+    if (this.phase === 'breath') return 1;
+    const planned = this.spawnedThisWave + this.queue.length;
+    if (!planned) return 0;
+    return clamp(this.killedThisWave / planned, 0, 1);
+  }
+}
+
+export { WAVE_TIME, BOSS_EVERY };

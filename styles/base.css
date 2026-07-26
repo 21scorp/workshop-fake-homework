@@ -1,0 +1,333 @@
+/* ============================================================
+   ASTRAFALL — base.css
+   Design tokens, reset, stage, boot, global FX layers.
+   ============================================================ */
+
+:root {
+  /* ---- Void / surfaces ---- */
+  --void:        #05060f;
+  --void-2:      #080b1c;
+  --deep:        #0b1030;
+  --surface:     rgba(255, 255, 255, 0.045);
+  --surface-2:   rgba(255, 255, 255, 0.075);
+  --surface-3:   rgba(255, 255, 255, 0.11);
+  --hairline:    rgba(255, 255, 255, 0.10);
+  --hairline-2:  rgba(255, 255, 255, 0.18);
+
+  /* ---- Rarity / accents ---- */
+  --c-common:    #8b96b8;
+  --c-rare:      #22d3ee;
+  --c-superior:  #a855f7;
+  --c-stellar:   #fbbf24;
+  --c-ultra:     #ff5cf0;
+
+  --accent:      #22d3ee;
+  --accent-2:    #a855f7;
+  --gold:        #fbbf24;
+  --danger:      #f43f5e;
+  --success:     #34d399;
+
+  --grad-prism:  linear-gradient(115deg, #22d3ee 0%, #6366f1 28%, #a855f7 52%, #ff5cf0 74%, #fbbf24 100%);
+  --grad-gold:   linear-gradient(140deg, #fde68a 0%, #fbbf24 45%, #f59e0b 100%);
+  --grad-cyan:   linear-gradient(140deg, #67e8f9 0%, #22d3ee 50%, #0891b2 100%);
+  --grad-violet: linear-gradient(140deg, #d8b4fe 0%, #a855f7 50%, #7e22ce 100%);
+
+  /* ---- Text ---- */
+  --text:        #eef2ff;
+  --text-dim:    #a3adcc;
+  --text-faint:  #6b7599;
+
+  /* ---- Type ---- */
+  --font: "Inter var", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "SF Pro Display", Roboto, "Helvetica Neue", system-ui, sans-serif;
+  --font-num: "SF Mono", "Roboto Mono", ui-monospace, "Menlo", monospace;
+
+  /* ---- Motion ---- */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-back:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-snap:   cubic-bezier(0.2, 0.9, 0.1, 1);
+
+  /* ---- Layout ---- */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 30px;
+  --r-pill: 999px;
+
+  --shadow-lift: 0 18px 50px -12px rgba(0, 0, 0, 0.85);
+  --shadow-glow: 0 0 40px -6px var(--accent);
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Components below set `display`, which silently beats the UA rule for
+   [hidden]. Without this, hiding by attribute does nothing. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--void);
+  color: var(--text);
+  font-family: var(--font);
+  font-feature-settings: "tnum" 1, "cv11" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  /* Ambient void gradient behind the canvas — cheap depth. */
+  background:
+    radial-gradient(120% 80% at 50% -10%, #17123f 0%, transparent 60%),
+    radial-gradient(90% 60% at 90% 110%, #0a2a45 0%, transparent 55%),
+    radial-gradient(70% 50% at 5% 90%, #2a0f3d 0%, transparent 60%),
+    var(--void);
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+button { cursor: pointer; touch-action: manipulation; }
+img, svg, canvas { display: block; max-width: 100%; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+h1, h2, h3, h4, p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 999px; }
+
+/* ============================================================
+   STAGE — the 9:16 play surface, letterboxed on wide screens
+   ============================================================ */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.stage__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  touch-action: none;
+}
+
+/* The DOM overlay sits exactly on top of the canvas play-field. */
+.ui {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: grid;
+}
+.ui > * { pointer-events: auto; }
+
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+.hud [data-tap] { pointer-events: auto; }
+
+/* ============================================================
+   FULL-SCREEN FX
+   ============================================================ */
+
+.fx-layer { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
+
+.fx-flash {
+  position: absolute; inset: 0;
+  background: #fff;
+  opacity: 0;
+  mix-blend-mode: screen;
+  will-change: opacity;
+}
+
+.fx-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(115% 85% at 50% 50%, transparent 42%, rgba(0,0,0,0.55) 100%);
+  opacity: 0.85;
+  transition: opacity .3s var(--ease-out), background .3s var(--ease-out);
+}
+.fx-vignette[data-danger="1"] {
+  background: radial-gradient(110% 80% at 50% 50%, transparent 30%, rgba(244,63,94,0.42) 100%);
+  opacity: 1;
+}
+
+.fx-scanline {
+  position: absolute; inset: 0;
+  opacity: 0.035;
+  background-image: repeating-linear-gradient(
+    0deg, rgba(255,255,255,.7) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+
+/* ============================================================
+   BOOT SCREEN
+   ============================================================ */
+
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  background: var(--void);
+  transition: opacity .55s var(--ease-out), transform .55s var(--ease-out);
+}
+.boot[data-done="1"] { opacity: 0; transform: scale(1.06); pointer-events: none; }
+
+.boot__mark { width: 92px; height: 92px; animation: bootSpin 6s linear infinite; }
+.boot__glyph { width: 100%; height: 100%; filter: drop-shadow(0 0 26px rgba(168,85,247,.85)); }
+
+@keyframes bootSpin {
+  0%   { transform: rotate(0deg)   scale(1); }
+  50%  { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.boot__title {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  background: var(--grad-prism);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.boot__bar {
+  width: 190px; height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.09);
+  overflow: hidden;
+}
+.boot__bar i {
+  display: block; height: 100%; width: 0%;
+  background: var(--grad-prism);
+  border-radius: 999px;
+  transition: width .28s var(--ease-out);
+  box-shadow: 0 0 14px rgba(34,211,238,.9);
+}
+
+.boot__hint {
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+
+.toasts {
+  position: absolute;
+  left: 0; right: 0;
+  top: calc(var(--safe-t) + 74px);
+  z-index: 60;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  pointer-events: none;
+  padding: 0 16px;
+}
+
+.toast {
+  display: flex; align-items: center; gap: 9px;
+  max-width: 92%;
+  padding: 9px 16px;
+  border-radius: var(--r-pill);
+  background: rgba(10, 14, 33, 0.85);
+  border: 1px solid var(--hairline-2);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--shadow-lift);
+  font-size: 13px; font-weight: 650;
+  letter-spacing: .01em;
+  animation: toastIn .42s var(--ease-back) both;
+}
+.toast[data-out="1"] { animation: toastOut .3s var(--ease-in-out) both; }
+.toast__icon { font-size: 15px; line-height: 1; }
+.toast[data-tone="good"] { border-color: rgba(52,211,153,.45); color: #d1fae5; }
+.toast[data-tone="bad"]  { border-color: rgba(244,63,94,.5);  color: #ffe4e6; }
+.toast[data-tone="gold"] { border-color: rgba(251,191,36,.5); color: #fef3c7; }
+
+@keyframes toastIn  { from { opacity: 0; transform: translateY(-16px) scale(.9); } }
+@keyframes toastOut { to   { opacity: 0; transform: translateY(-10px) scale(.96); } }
+
+/* ============================================================
+   ROTATE HINT + NOSCRIPT
+   ============================================================ */
+
+.rotate-hint { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .rotate-hint {
+    position: fixed; inset: 0; z-index: 500;
+    display: grid; place-items: center;
+    background: var(--void);
+    text-align: center;
+  }
+  .rotate-hint__inner { display: grid; gap: 14px; color: var(--text-dim); font-size: 14px; line-height: 1.6; }
+  .rotate-hint__icon { font-size: 46px; animation: rotHint 2.4s var(--ease-in-out) infinite; }
+  @keyframes rotHint { 0%,100% { transform: rotate(0); } 50% { transform: rotate(90deg); } }
+}
+
+.noscript {
+  position: fixed; inset: 0; z-index: 999;
+  display: grid; place-items: center;
+  background: var(--void); color: var(--text);
+  font-size: 15px;
+}
+
+/* ============================================================
+   A11Y / MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .fx-scanline { display: none; }
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
