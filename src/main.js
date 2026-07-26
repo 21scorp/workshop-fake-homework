@@ -23,6 +23,7 @@ import { Router } from './ui/Router.js';
 import { HUD } from './ui/HUD.js';
 import { Toasts } from './ui/Toasts.js';
 import { CardPicker } from './ui/CardPicker.js';
+import { Onboarding, welcomeSheet } from './ui/Onboarding.js';
 import { HomeScreen } from './ui/screens/Home.js';
 import { SummonScreen } from './ui/screens/Summon.js';
 import { CollectionScreen } from './ui/screens/Collection.js';
@@ -134,6 +135,8 @@ function createApp() {
   const toasts = new Toasts(toastRoot);
   const hud = new HUD(hudRoot, game);
   const cardPicker = new CardPicker(uiRoot);
+  const onboarding = new Onboarding(uiRoot);
+  game.onboarding = onboarding;
 
   /** Overlay root for things that must sit above the router (pull reveal). */
   const overlayRoot = document.createElement('div');
@@ -301,10 +304,16 @@ function createApp() {
   return {
     start() {
       const urlSeed = readSeedFromUrl();
+      const firstEver = !save.profile.flags.tutorialDone && save.profile.stats.runs === 0;
       // The loop must be running before the first scene swap, because the swap
       // is what clears the UI root — the router has to mount after it.
       game.start();
       toMenu('home');
+
+      // A brand-new player gets one screen explaining the loop, then plays.
+      if (firstEver && !urlSeed) {
+        setTimeout(() => overlayRoot.appendChild(welcomeSheet()), 900);
+      }
       if (urlSeed) {
         clearSeedFromUrl();
         const seed = normalizeSeedCode(urlSeed);

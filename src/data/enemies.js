@@ -11,7 +11,7 @@ export const ENEMY = {
     id: 'drone',
     sprite: 'enemy/drone',
     name: 'Drone',
-    hp: 12, dmg: 1, speed: 105, radius: 17,
+    hp: 12, dmg: 1, speed: 105, radius: 20,
     score: 10, xp: 3,
     color: '#f43f5e', color2: '#fecdd3',
     ai: 'dive',            // straight down, slight drift
@@ -23,7 +23,7 @@ export const ENEMY = {
     id: 'swarm',
     sprite: 'enemy/swarm',
     name: 'Zwerm',
-    hp: 5, dmg: 1, speed: 190, radius: 10,
+    hp: 5, dmg: 1, speed: 190, radius: 12,
     score: 6, xp: 2,
     color: '#fb7185', color2: '#ffe4e6',
     ai: 'seek',            // slowly homes toward the player
@@ -36,7 +36,7 @@ export const ENEMY = {
     id: 'tank',
     sprite: 'enemy/tank',
     name: 'Bastion',
-    hp: 95, dmg: 2, speed: 46, radius: 31,
+    hp: 95, dmg: 2, speed: 46, radius: 37,
     score: 55, xp: 14,
     color: '#94a3b8', color2: '#e2e8f0',
     ai: 'dive',
@@ -50,7 +50,7 @@ export const ENEMY = {
     id: 'shooter',
     sprite: 'enemy/shooter',
     name: 'Wachter',
-    hp: 26, dmg: 1, speed: 62, radius: 21,
+    hp: 26, dmg: 1, speed: 62, radius: 25,
     score: 30, xp: 8,
     color: '#c084fc', color2: '#f3e8ff',
     ai: 'hover',           // descends to a band, then holds and fires
@@ -64,7 +64,7 @@ export const ENEMY = {
     id: 'splitter',
     sprite: 'enemy/splitter',
     name: 'Splijter',
-    hp: 34, dmg: 1, speed: 78, radius: 23,
+    hp: 34, dmg: 1, speed: 78, radius: 27,
     score: 34, xp: 9,
     color: '#34d399', color2: '#d1fae5',
     ai: 'drift',           // sine-wave descent
@@ -78,21 +78,21 @@ export const ENEMY = {
     id: 'weaver',
     sprite: 'enemy/weaver',
     name: 'Wever',
-    hp: 40, dmg: 1, speed: 130, radius: 20,
+    hp: 40, dmg: 1, speed: 130, radius: 24,
     score: 42, xp: 11,
     color: '#22d3ee', color2: '#cffafe',
     ai: 'orbit',           // circles the play area
     contact: true,
     weight: 5,
     minWave: 5,
-    trail: { life: 2.4, radius: 13, dmg: 1, every: 0.16 },
+    trail: { life: 2.4, radius: 15, dmg: 1, every: 0.16 },
   },
 
   lancer: {
     id: 'lancer',
     sprite: 'enemy/swarm',
     name: 'Lansier',
-    hp: 22, dmg: 2, speed: 95, radius: 14,
+    hp: 22, dmg: 2, speed: 95, radius: 17,
     score: 26, xp: 7,
     color: '#fbbf24', color2: '#fef3c7',
     ai: 'charge',          // pauses, telegraphs, then dashes at the player
@@ -106,7 +106,7 @@ export const ENEMY = {
     id: 'turret',
     sprite: 'enemy/shooter',
     name: 'Geschutstoren',
-    hp: 70, dmg: 1, speed: 26, radius: 25,
+    hp: 70, dmg: 1, speed: 26, radius: 30,
     score: 60, xp: 16,
     color: '#f472b6', color2: '#fce7f3',
     ai: 'hover',
@@ -121,7 +121,7 @@ export const ENEMY = {
     id: 'spinner',
     sprite: 'enemy/weaver',
     name: 'Tolwezen',
-    hp: 55, dmg: 1, speed: 70, radius: 22,
+    hp: 55, dmg: 1, speed: 70, radius: 26,
     score: 48, xp: 13,
     color: '#818cf8', color2: '#e0e7ff',
     ai: 'drift',
@@ -146,7 +146,7 @@ export function enemyPool(wave) {
 export const ELITE_MODS = {
   armored:  { name: 'Gepantserd', hp: 3.2, dmg: 1, speed: 0.8, armor: 0.35, color: '#94a3b8' },
   swift:    { name: 'Razend',     hp: 2.0, dmg: 1, speed: 1.9, color: '#5eead4' },
-  volatile: { name: 'Instabiel',  hp: 2.4, dmg: 1, speed: 1.0, explodeOnDeath: { radius: 120, dmg: 1 }, color: '#fb923c' },
+  volatile: { name: 'Instabiel',  hp: 2.4, dmg: 1, speed: 1.0, explodeOnDeath: { radius: 142, dmg: 1 }, color: '#fb923c' },
   vampiric: { name: 'Bloedzuiger',hp: 2.8, dmg: 1, speed: 1.1, healAura: true, color: '#f43f5e' },
   warped:   { name: 'Vervormd',   hp: 2.6, dmg: 2, speed: 1.2, color: '#a855f7' },
 };
@@ -163,7 +163,7 @@ export const BOSSES = [
     sprite: 'boss/warden',
     name: 'DE WACHTER',
     subtitle: 'Poortwachter van de Val',
-    hp: 1400, radius: 78, score: 1200, xp: 260,
+    hp: 1400, radius: 92, score: 1200, xp: 260,
     color: '#818cf8', color2: '#c7d2fe',
     phases: [
       { at: 1.00, pattern: 'radial',  interval: 2.2, note: 'Radiale salvo\'s' },
@@ -177,7 +177,7 @@ export const BOSSES = [
     sprite: 'boss/devourer',
     name: 'DE VERSLINDER',
     subtitle: 'Hij die de Leegte voedt',
-    hp: 2100, radius: 84, score: 1800, xp: 340,
+    hp: 2100, radius: 99, score: 1800, xp: 340,
     color: '#a855f7', color2: '#f0abfc',
     phases: [
       { at: 1.00, pattern: 'suction', interval: 3.0, note: 'Zuigt je naar binnen' },
@@ -191,7 +191,7 @@ export const BOSSES = [
     sprite: 'boss/nova',
     name: 'NOVA',
     subtitle: 'Een ster die weigert te doven',
-    hp: 3000, radius: 76, score: 2600, xp: 460,
+    hp: 3000, radius: 90, score: 2600, xp: 460,
     color: '#fbbf24', color2: '#fef3c7',
     phases: [
       { at: 1.00, pattern: 'ring',    interval: 2.6, note: 'Uitdijende ringen' },

@@ -33,7 +33,7 @@ function shoot(ctx, { x, y, angle, speed, dmgMul = 1, sizeMul = 1, extra = {} })
   b.speed = sp;
   b.angle = angle;
   b.dmg = stats.damage * dmgMul;
-  b.r = (weapon.radius ?? 7) * stats.bulletSize * sizeMul;
+  b.r = (weapon.radius ?? 8) * stats.bulletSize * sizeMul;
   b.sprite = weapon.bullet ?? 'bullet/basic';
   b.color = stats.color;
   b.color2 = stats.color2;

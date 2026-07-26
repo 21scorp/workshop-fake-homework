@@ -305,6 +305,7 @@ export class RunScene extends Scene {
 
     this.runTimers(dt);
     this.updatePlayer(dt);
+    this.game.onboarding?.tick(this, this.game.input);
 
     this.beam.active = false;
     updateWeapon(this, dt);
@@ -977,7 +978,9 @@ export class RunScene extends Scene {
     const gained = Math.round(e.score * comboMul);
     this.score += gained;
 
+    const ultBefore = this.ult;
     this.ult = Math.min(this.ultMax, this.ult + (e.isBoss ? 40 : e.elite ? 8 : 2.2));
+    if (ultBefore < this.ultMax && this.ult >= this.ultMax) bus.emit(EV.ULT_READY);
 
     // Visuals scale with how big a deal the kill was.
     const power = e.isBoss ? 3 : e.elite ? 1.7 : clamp(e.r / 20, 0.7, 1.6);
