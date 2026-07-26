@@ -29,6 +29,9 @@ import {
 import { hexA, mixHex } from '../core/Renderer.js';
 
 import { getAstra, STARTER_ID, astraSprite } from '../data/astra.js';
+
+/** Elements Prism refracts through, one per hit. */
+const ELEMENTAL_CYCLE = ['ember', 'tide', 'gale', 'terra', 'lumen'];
 import { starPower, SCORE_SCALE } from '../data/constants.js';
 import { blankMods, CARDS, CARD_WEIGHTS, getCard } from '../data/cards.js';
 import { ENEMY } from '../data/enemies.js';
@@ -66,12 +69,13 @@ const blankEnemy = () => ({
   score: 10, xp: 3, armor: 0, color: '#f43f5e', color2: '#fff', ai: 'dive',
   elite: null, eliteMod: null, t: 0, flash: 0, slowT: 0, slowAmt: 0,
   burnT: 0, burnDmg: 0, stunT: 0, gunT: 0, charge: 0, aim: 1.57,
-  phase: 0, chargeState: 'idle', chargeT: 0, trailT: 0, orbitA: 0,
+  phase: 0, chargeState: 'idle', chargeT: 0, trailT: 0, orbitA: 0, weak: 0,
   knockX: 0, knockY: 0, marked: 0, spawnIn: false, spawnT: 0, isBoss: false,
 });
 
 const resetEnemy = (e) => {
   e.elite = null; e.eliteMod = null; e.flash = 0; e.slowT = 0; e.slowAmt = 0;
+  e.weak = 0;
   e.burnT = 0; e.burnDmg = 0; e.stunT = 0; e.marked = 0; e.isBoss = false;
   e.knockX = 0; e.knockY = 0; e.charge = 0; e.spawnIn = false; e.spawnT = 0;
 };
@@ -161,6 +165,11 @@ export class RunScene extends Scene {
     this.time = 0;
     this.fireTimer = 0;
     this.revivesLeft = 0;
+    this.passiveKey = this.astra.passive?.key ?? null;
+    this.tailwind = 0;       // Zephyr: fire-rate stacks that decay
+    this.tailwindT = 0;
+    this.hitCount = 0;       // Basalt: every 4th hit shockwaves
+    this.feastKills = 0;     // Umbra: heal every 25 kills
     this.timeFreeze = 0;
     this.markMul = 1;
     this.markT = 0;
@@ -239,9 +248,24 @@ export class RunScene extends Scene {
       luck: m.luck,
       thorns: m.thorns,
       echo: m.echo,
+      element: a.element,
       color: a.colors.primary,
       color2: a.colors.secondary,
     };
+
+    /* ---- Astra passives that are pure stat edits ----
+       Everything the collection screen promises has to be true somewhere.
+       The flat ones fold in here; the situational ones are handled in the
+       gameplay hooks below (see `passiveKey`). */
+    switch (a.passive?.key) {
+      case 'bulwark':  m.maxHp = Math.max(m.maxHp, m.maxHp + 1); break;
+      case 'unmoved':  m.maxHp += 2; s.moveSpeed *= 0.85; break;
+      case 'swift':    s.moveSpeed *= 1.12; break;
+      case 'undertow': s.pierce += 2; break;
+      case 'refract':  s.chains += 2; break;
+      case 'shell':    m.shieldRegen = Math.max(m.shieldRegen, 1); break;
+      case 'draft':    s.bulletSpeedMul *= 1.1; break;
+    }
 
     // HP is special: it can be forced (GLASKANON) and must not heal on rebuild.
     const wantMax = m.forceHp ? m.forceHp : Math.round(b.hp + m.maxHp);
@@ -321,6 +345,7 @@ export class RunScene extends Scene {
     this.updateBeam(dt);
     this.updateCombo(dt);
     this.updateAuras(dt);
+    this.updatePassives(dt);
 
     if (this.markT > 0) { this.markT -= dt; if (this.markT <= 0) this.markMul = 1; }
 
@@ -607,7 +632,7 @@ export class RunScene extends Scene {
       fromX: b.prevX, fromY: b.prevY,
     });
 
-    if (b.burn) this.applyBurn(hit, b.burn, b.dmg * 0.3);
+    if (b.burn) this.applyBurn(hit, b.burn * 2, b.dmg * 0.3);
     if (b.slow) { hit.slowT = Math.max(hit.slowT, 2); hit.slowAmt = Math.max(hit.slowAmt, b.slow); }
     if (b.splash) this.spawnShockwave(b.x, b.y, b.splash, b.dmg * 0.6, { color: b.color, knockback: 90 });
 
@@ -754,6 +779,7 @@ export class RunScene extends Scene {
       e.t += dt;
       if (e.flash > 0) e.flash = Math.max(0, e.flash - dt * 6);
       if (e.marked > 0) e.marked -= dt;
+      if (e.weak > 0) e.weak -= dt;
 
       if (e.spawnT > 0) {
         e.spawnT -= dt;
@@ -937,8 +963,16 @@ export class RunScene extends Scene {
     if (!e._alive || e.spawnT > 0) return 0;
 
     let dmg = amount;
+
+    // Nyx doesn't hunt what is strong — it hunts what is nearly finished.
+    if (this.passiveKey === 'hunt' && !opts.crit &&
+        e.hp / e.maxHp < 0.4 && this.rng.chance(0.35)) {
+      dmg *= this.stats.critDmg;
+      opts = { ...opts, crit: true };
+    }
     if (e.armor) dmg *= 1 - clamp(e.armor, 0, 0.85);
     if (e.marked > 0) dmg *= this.markMul;
+    if (e.weak > 0) dmg *= 1.3;
     dmg = Math.max(1, dmg);
 
     e.hp -= dmg;
@@ -960,8 +994,81 @@ export class RunScene extends Scene {
       this.game.hitstop(0.02);
     }
 
+    if (opts.source === 'bullet' || opts.source === 'beam') {
+      this.applyElement(e, dmg, opts);
+
+      if (this.passiveKey === 'aftershock' && ++this.hitCount % 4 === 0) {
+        // Basalt: the fourth blow always lands like the first one should have.
+        this.spawnShockwave(e.x, e.y, 110, this.stats.damage * 0.8,
+          { color: '#fbbf24', knockback: 130 });
+      }
+      if (this.passiveKey === 'sparks' && opts.crit && this.rng.chance(0.5)) {
+        // Flint: a crit throws off a second spark at a neighbour.
+        const other = nearestEnemy(this, e.x, e.y, 220);
+        if (other && other !== e) {
+          this.damageEnemy(other, dmg * 0.5, { source: 'spark' });
+          this.spawnArc(e.x, e.y, other.x, other.y, '#fdba74');
+        }
+      }
+    }
+
     if (e.hp <= 0) this.killEnemy(e, opts);
     return dmg;
+  }
+
+  /**
+   * Element traits.
+   *
+   * These are the effects the collection screen advertises on every Astra, so
+   * they have to actually exist. They are deliberately small — a trait should
+   * colour how an Astra feels without competing with the card build for the
+   * player's attention.
+   */
+  applyElement(e, dmg, opts) {
+    let el = this.stats.element;
+    // Prism refracts: every hit borrows a different element.
+    if (el === 'prism') el = ELEMENTAL_CYCLE[(this.kills + e.id) % ELEMENTAL_CYCLE.length];
+
+    switch (el) {
+      case 'ember':
+        this.applyBurn(e, 1.6, dmg * 0.22);
+        break;
+      case 'tide':
+        e.slowT = Math.max(e.slowT, 1.6);
+        e.slowAmt = Math.max(e.slowAmt, 0.24);
+        break;
+      case 'gale':
+        if (this.rng.chance(0.12)) {
+          e.knockY -= 260;
+          e.knockX += this.rng.range(-90, 90);
+        }
+        break;
+      case 'terra': {
+        // Fracture: a quarter of the hit shudders into everything nearby.
+        const r2 = 92 * 92;
+        this.enemies.each((o) => {
+          if (o === e || !o._alive) return;
+          if (dist2(o.x, o.y, e.x, e.y) > r2) return;
+          o.hp -= dmg * 0.25;
+          o.flash = Math.max(o.flash, 0.6);
+          if (o.hp <= 0) this.killEnemy(o, { source: 'fracture' });
+        });
+        break;
+      }
+      case 'lumen':
+        if (opts.crit) {
+          e.weak = Math.max(e.weak ?? 0, 3);
+          this.fx.emit({ x: e.x, y: e.y, life: 0.3, size: e.r, size2: e.r * 2.2,
+                         color: '#fef9c3', shape: 2, weight: 0.6, layer: 1 });
+        }
+        break;
+      // 'void' resolves on kill, in killEnemy.
+    }
+  }
+
+  applyBurn(e, seconds, dmgPerTick) {
+    e.burnT = Math.max(e.burnT, seconds);
+    e.burnDmg = Math.max(e.burnDmg, dmgPerTick);
   }
 
   killEnemy(e, opts = {}) {
@@ -1013,6 +1120,37 @@ export class RunScene extends Scene {
         this.spawnPickup('coin', e.x + this.rng.range(-60, 60), e.y + this.rng.range(-40, 40), { value: 30 });
       }
       this.spawnPickup('heart', e.x, e.y);
+    }
+
+    switch (this.passiveKey) {
+      case 'tailwind':
+        // Zephyr accelerates while it is winning.
+        this.tailwind = Math.min(5, this.tailwind + 1);
+        this.tailwindT = 1;
+        break;
+      case 'feast':
+        if (++this.feastKills >= 25) { this.feastKills = 0; this.healPlayer(1); }
+        break;
+      case 'wildfire':
+        // Pyra: a burning corpse sets its neighbours alight.
+        if (e.burnT > 0) {
+          const r2 = 150 * 150;
+          this.enemies.each((o) => {
+            if (o !== e && o._alive && dist2(o.x, o.y, e.x, e.y) < r2) {
+              this.applyBurn(o, 2, e.burnDmg);
+            }
+          });
+          this.fx.burst(e.x, e.y, '#fb923c', 1.1);
+        }
+        break;
+    }
+
+    // Void's trait: a kill reels in everything loose nearby.
+    if (this.stats.element === 'void') {
+      const r2 = 300 * 300;
+      this.pickups.each((k) => {
+        if (k.kind === 'prism' && dist2(k.x, k.y, e.x, e.y) < r2) k.magnetised = true;
+      });
     }
 
     // Cards that trigger on kill.
@@ -1572,6 +1710,29 @@ export class RunScene extends Scene {
   /* ------------------------------------------------------------
      MISC
      ------------------------------------------------------------ */
+
+  /** Passives whose value changes moment to moment. */
+  updatePassives(dt) {
+    if (this.passiveKey === 'tailwind') {
+      this.tailwindT -= dt;
+      if (this.tailwindT <= 0 && this.tailwind > 0) {
+        this.tailwind--;
+        this.tailwindT = 1;
+      }
+    }
+  }
+
+  /** Multiplier applied to every shot, recomputed per volley. */
+  get passiveDamageMul() {
+    // Pip stands its ground: holding still is a real, readable choice.
+    if (this.passiveKey === 'steady' && this.player.thrust < 0.12) return 1.08;
+    return 1;
+  }
+
+  get passiveRateMul() {
+    if (this.passiveKey === 'tailwind') return 1 + this.tailwind * 0.25;
+    return 1;
+  }
 
   updateCombo(dt) {
     if (this.combo > 0) {

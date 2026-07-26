@@ -70,7 +70,7 @@ export const ELEMENT = {
   lumen:  { key: 'lumen',  name: 'Lumen',  icon: '✷', color: '#facc15', accent: '#fef9c3',
             trait: 'Straling', traitDesc: 'Kritieke treffers verblinden en verzwakken.' },
   prism:  { key: 'prism',  name: 'Prism',  icon: '✵', color: '#ff5cf0', accent: '#fbcfe8',
-            trait: 'Refractie', traitDesc: 'Neemt het element van je sterkste kaart over.' },
+            trait: 'Refractie', traitDesc: 'Elke treffer breekt door een ander element — brand, stroom, wind, breuk of straling.' },
 };
 
 export const ELEMENT_KEYS = Object.keys(ELEMENT);

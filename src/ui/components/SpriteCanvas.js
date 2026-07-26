@@ -16,15 +16,30 @@ import { el } from '../dom.js';
 /** How much bigger than its nominal box a sprite's glow can reach. */
 const GLOW_ALLOWANCE = 1.85;
 
+/**
+ * Portraits redraw at 30fps, not 60.
+ *
+ * These are procedurally drawn every frame — a 240px hero at 2x DPR is a
+ * quarter of a million shaded pixels, and the collection screen has twenty of
+ * them. At 30fps the idle float is still perfectly smooth and the cost halves.
+ */
+const TICK_HZ = 30;
+const TICK_DT = 1 / TICK_HZ;
+
 const live = new Set();
 let raf = 0;
 let last = 0;
+let acc = 0;
 
 function tick(now) {
   raf = requestAnimationFrame(tick);
   const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
   last = now;
-  for (const s of live) s.render(dt);
+  acc += dt;
+  if (acc < TICK_DT) return;
+  const step = acc;
+  acc = 0;
+  for (const s of live) s.render(step);
   if (!live.size) { cancelAnimationFrame(raf); raf = 0; }
 }
 
@@ -42,7 +57,8 @@ export class SpriteCanvas {
     this.charge = opts.charge ?? 0;
     this.paused = false;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, opts.dpr ?? 2);
+    // 1.5 is indistinguishable from 2 for soft glowing shapes and costs 44% less fill.
+    const dpr = Math.min(window.devicePixelRatio || 1, opts.dpr ?? 1.5);
     this.canvas = el('canvas' + (opts.className ? '.' + opts.className : ''), {
       width: Math.round(this.size * dpr),
       height: Math.round(this.size * dpr),

@@ -216,24 +216,50 @@ export class Starfield {
     }
   }
 
+  /**
+   * The nebulae are three screen-sized radial gradients. Re-rasterising them
+   * every frame was, by a wide margin, the most expensive thing in the render
+   * loop — several million shaded pixels per frame for a backdrop that barely
+   * changes. So they get baked once into a quarter-resolution offscreen canvas
+   * and blitted; the drift is a sub-pixel translate on the blit, which costs
+   * nothing and is indistinguishable at this blur level.
+   */
+  _bakeNebulae() {
+    const { w, h } = this.view;
+    const scale = 0.25;
+    const cw = Math.max(2, Math.ceil(w * scale));
+    const ch = Math.max(2, Math.ceil(h * scale));
+
+    if (!this._neb) this._neb = document.createElement('canvas');
+    this._neb.width = cw;
+    this._neb.height = ch;
+    const c = this._neb.getContext('2d');
+    c.clearRect(0, 0, cw, ch);
+    c.globalCompositeOperation = 'lighter';
+    for (const nb of this._nebulae) {
+      const x = nb.x * scale, y = nb.y * scale, rr = nb.r * scale;
+      const g = c.createRadialGradient(x, y, 0, x, y, rr);
+      g.addColorStop(0, `hsl(${nb.hue} 80% 55% / 0.10)`);
+      g.addColorStop(0.55, `hsl(${nb.hue} 80% 45% / 0.045)`);
+      g.addColorStop(1, 'transparent');
+      c.fillStyle = g;
+      c.fillRect(x - rr, y - rr, rr * 2, rr * 2);
+    }
+    this._nebKey = `${w}x${h}`;
+  }
+
   /** @param {import('../core/Renderer.js').Renderer} r */
   draw(r) {
     const ctx = r.ctx;
     const { w, h } = this.view;
 
-    // Nebula wash — huge soft blobs, drawn once, very cheap.
+    if (this._nebKey !== `${w}x${h}`) this._bakeNebulae();
+
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    for (const nb of this._nebulae) {
-      const y = nb.y + Math.sin(this.t * 0.07 + nb.phase) * nb.drift;
-      const x = nb.x + Math.cos(this.t * 0.05 + nb.phase) * nb.drift;
-      const g = ctx.createRadialGradient(x, y, 0, x, y, nb.r);
-      g.addColorStop(0, `hsl(${nb.hue} 80% 55% / 0.10)`);
-      g.addColorStop(0.55, `hsl(${nb.hue} 80% 45% / 0.045)`);
-      g.addColorStop(1, 'transparent');
-      ctx.fillStyle = g;
-      ctx.fillRect(x - nb.r, y - nb.r, nb.r * 2, nb.r * 2);
-    }
+    const dx = Math.cos(this.t * 0.05) * 14;
+    const dy = Math.sin(this.t * 0.07) * 14;
+    ctx.drawImage(this._neb, dx - 20, dy - 20, w + 40, h + 40);
 
     // Stars.
     for (let li = 0; li < this.layers.length; li++) {

@@ -32,7 +32,7 @@ function shoot(ctx, { x, y, angle, speed, dmgMul = 1, sizeMul = 1, extra = {} })
   b.vy = Math.sin(angle) * sp;
   b.speed = sp;
   b.angle = angle;
-  b.dmg = stats.damage * dmgMul;
+  b.dmg = stats.damage * dmgMul * (run.passiveDamageMul ?? 1);
   b.r = (weapon.radius ?? 8) * stats.bulletSize * sizeMul;
   b.sprite = weapon.bullet ?? 'bullet/basic';
   b.color = stats.color;
@@ -46,7 +46,7 @@ function shoot(ctx, { x, y, angle, speed, dmgMul = 1, sizeMul = 1, extra = {} })
   b.burn = weapon.burn ?? 0;
   b.knockback = weapon.knockback ?? 0;
   b.splash = weapon.splash ?? 0;
-  b.crit = Math.random() < stats.crit;
+  b.crit = Math.random() < stats.crit + (extra.critBonus ?? 0);
   if (b.crit) b.dmg *= stats.critDmg;
   b.split = weapon.split ?? 0;
   b.t = 0;
@@ -314,7 +314,7 @@ export function updateWeapon(run, dt) {
 
   run.fireTimer -= dt;
   if (run.fireTimer > 0) return;
-  const rate = Math.max(0.08, stats.fireRate);
+  const rate = Math.max(0.08, stats.fireRate * (run.passiveRateMul ?? 1));
   run.fireTimer += 1 / rate;
   if (run.fireTimer < -0.5) run.fireTimer = 0;    // recover from long stalls
 

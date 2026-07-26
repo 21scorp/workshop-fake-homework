@@ -169,7 +169,10 @@ export class Game {
   }
 
   _frame(now) {
-    const t0 = now;
+    // Measure from *now*, not from the rAF timestamp: the callback can be
+    // dispatched well after the timestamp it was handed, and using it as the
+    // start point folds scheduler latency into the reported frame cost.
+    const t0 = performance.now();
     let dt = (now - this._last) / 1000;
     this._last = now;
     if (dt > MAX_FRAME_DT) dt = FIXED_DT;   // tab was backgrounded — skip, don't catch up
@@ -234,16 +237,39 @@ export class Game {
     if (this._perfSamples.length > 120) this._perfSamples.shift();
   }
 
-  /** Drop visual load if the device can't hold 50fps. Never raises past 1. */
+  /**
+   * Drop visual load if the device genuinely can't hold the frame rate.
+   *
+   * Requires two consecutive bad samples before acting: a single slow sample is
+   * usually a scene transition or a first-paint hitch, and permanently halving
+   * a retina device's resolution because of one stutter is a bad trade.
+   */
   _adaptQuality() {
     const r = this.renderer;
-    if (this.fps < 44 && r.quality > 0.5) {
-      r.quality = r.quality > 0.75 ? 0.75 : 0.5;
-      r.resize();
-      console.info(`[perf] quality → ${r.quality} (fps ${this.fps.toFixed(0)})`);
-    } else if (this.fps > 58 && r.quality < 1 && this.realTime > 12) {
-      r.quality = Math.min(1, r.quality + 0.25);
-      r.resize();
+    // Only react when *our own* frame cost is the problem. a low fps with a cheap
+    // frame means the browser is throttling or compositing slowly, and dropping
+    // render resolution would cost visual quality without buying anything.
+    const expensive = this.avgFrameCost > 11;
+    if (this.fps < 44 && expensive) {
+      this._badSamples = (this._badSamples ?? 0) + 1;
+      if (this._badSamples >= 2 && r.quality > 0.5) {
+        this._badSamples = 0;
+        r.quality = r.quality > 0.75 ? 0.75 : 0.5;
+        r.resize();
+        console.info(`[perf] quality → ${r.quality} (fps ${this.fps.toFixed(0)})`);
+      }
+      return;
+    }
+    this._badSamples = 0;
+    if (this.fps > 57 && r.quality < 1 && this.avgFrameCost < 7) {
+      this._goodSamples = (this._goodSamples ?? 0) + 1;
+      if (this._goodSamples >= 6) {
+        this._goodSamples = 0;
+        r.quality = Math.min(1, r.quality + 0.25);
+        r.resize();
+      }
+    } else {
+      this._goodSamples = 0;
     }
   }
 

@@ -77,15 +77,18 @@ export class MenuScene extends Scene {
     const view = r.view;
 
     // Soft colour wash tinted to the current screen's accent.
+    //
+    // Baked at quarter resolution for the same reason the starfield's nebulae
+    // are: seven screen-sized radial gradients per frame is millions of shaded
+    // pixels for something that only drifts. The orbs move, so the bake is
+    // refreshed a few times a second rather than never — still ~20x cheaper.
+    this._bakeT = (this._bakeT ?? 0) + 1;
+    if (!this._wash || this._washKey !== `${view.w}x${view.h}` || this._bakeT % 12 === 0) {
+      this._bakeWash(ctx, view);
+    }
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    for (const o of this.orbs) {
-      const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.r);
-      g.addColorStop(0, `hsl(${o.hue} 85% 58% / ${0.07 + this.intensity * 0.06})`);
-      g.addColorStop(1, 'transparent');
-      ctx.fillStyle = g;
-      ctx.fillRect(o.x - o.r, o.y - o.r, o.r * 2, o.r * 2);
-    }
+    ctx.drawImage(this._wash, 0, 0, view.w, view.h);
     ctx.restore();
 
     this.stars.draw(r);
@@ -101,6 +104,29 @@ export class MenuScene extends Scene {
     ctx.restore();
 
     this.fx.draw(r);
+  }
+
+  _bakeWash(ctx, view) {
+    const scale = 0.25;
+    const cw = Math.max(2, Math.ceil(view.w * scale));
+    const ch = Math.max(2, Math.ceil(view.h * scale));
+    if (!this._wash) this._wash = document.createElement('canvas');
+    if (this._wash.width !== cw || this._wash.height !== ch) {
+      this._wash.width = cw;
+      this._wash.height = ch;
+    }
+    const c = this._wash.getContext('2d');
+    c.clearRect(0, 0, cw, ch);
+    c.globalCompositeOperation = 'lighter';
+    for (const o of this.orbs) {
+      const x = o.x * scale, y = o.y * scale, rr = o.r * scale;
+      const g = c.createRadialGradient(x, y, 0, x, y, rr);
+      g.addColorStop(0, `hsl(${o.hue} 85% 58% / ${0.07 + this.intensity * 0.06})`);
+      g.addColorStop(1, 'transparent');
+      c.fillStyle = g;
+      c.fillRect(x - rr, y - rr, rr * 2, rr * 2);
+    }
+    this._washKey = `${view.w}x${view.h}`;
   }
 
   /** Screens call this so the backdrop matches the content. */
