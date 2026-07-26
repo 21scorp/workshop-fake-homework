@@ -85,7 +85,7 @@ export function runRewards(result) {
     bossesKilled = 0, isDaily = false, isNewBest = false, level = 1,
   } = result;
 
-  const base = Math.round(score * 0.06);
+  const base = Math.round(score * 0.01);
   const waveBonus = Math.round(Math.pow(wave, 1.35) * 14);
   const killBonus = Math.round(kills * 0.7);
   const bossBonus = bossesKilled * 180;
@@ -99,7 +99,7 @@ export function runRewards(result) {
   if (isNewBest) { stardust = Math.round(stardust * 1.25); shards += 3; }
   if (bossesKilled > 0) shards += bossesKilled;
 
-  const xp = Math.round(score * 0.05 + wave * 22 + kills * 0.5 + bossesKilled * 120);
+  const xp = Math.round(score * 0.009 + wave * 22 + kills * 0.5 + bossesKilled * 120);
 
   return { stardust, shards, cores, xp, breakdown: { base, waveBonus, killBonus, bossBonus, timeBonus } };
 }

@@ -29,7 +29,7 @@ import {
 import { hexA, mixHex } from '../core/Renderer.js';
 
 import { getAstra, STARTER_ID, astraSprite } from '../data/astra.js';
-import { starPower } from '../data/constants.js';
+import { starPower, SCORE_SCALE } from '../data/constants.js';
 import { blankMods, CARDS, CARD_WEIGHTS, getCard } from '../data/cards.js';
 import { ENEMY } from '../data/enemies.js';
 import { WaveDirector } from './WaveDirector.js';
@@ -844,16 +844,22 @@ export class RunScene extends Scene {
         break;
       }
       case 'hover': {
-        const targetY = view.h * (0.14 + (e.phase % 1) * 0.2);
+        // Camping is not allowed: after a while the hold-band creeps down, so a
+        // shooter the player is ignoring eventually forces the issue instead of
+        // stalling the wave from a corner.
+        const impatience = clamp((e.t - 10) / 22, 0, 1) * 0.34;
+        const targetY = view.h * (0.14 + (e.phase % 1) * 0.2 + impatience);
         e.vy = e.y < targetY ? sp : (e.y > targetY + 30 ? -sp * 0.5 : Math.sin(e.t * 1.6) * 22);
-        e.vx = Math.sin(e.t * 0.9 + e.phase) * 62;
+        // Drift toward the player's column so it can be lined up and answered.
+        e.vx = Math.sin(e.t * 0.9 + e.phase) * 62 + (p.x - e.x) * 0.55;
         break;
       }
       case 'orbit': {
         e.orbitA += dt * 1.1 * speedMul;
+        const closing = clamp((e.t - 8) / 24, 0, 1);
         const cx = view.w / 2;
-        const cy = view.h * 0.34;
-        const rx = view.w * 0.36;
+        const cy = view.h * (0.34 + closing * 0.2);
+        const rx = view.w * (0.36 - closing * 0.12);
         const ry = view.h * 0.17;
         const tx = cx + Math.cos(e.orbitA + e.phase) * rx;
         const ty = cy + Math.sin(e.orbitA + e.phase) * ry;
@@ -995,7 +1001,7 @@ export class RunScene extends Scene {
     }
 
     const luck = this.stats.luck;
-    if (this.rng.chance(0.018 + luck * 0.01)) this.spawnPickup('heart', e.x, e.y);
+    if (this.rng.chance(0.026 + luck * 0.012)) this.spawnPickup('heart', e.x, e.y);
     if (this.rng.chance(0.02 + luck * 0.012)) this.spawnPickup('bomb', e.x, e.y);
     if (this.rng.chance(0.015 + luck * 0.01)) this.spawnPickup('magnet', e.x, e.y);
     if (e.elite && this.rng.chance(0.7)) this.spawnPickup('coin', e.x, e.y, { value: 20 });
@@ -1240,7 +1246,7 @@ export class RunScene extends Scene {
       case 'prism': {
         const gain = p.value * this.stats.xpMul;
         this.xp += gain;
-        this.score += Math.round(p.value * 2);
+        this.score += Math.round(p.value * 2 * SCORE_SCALE);
         this.fx.absorb(p.x, p.y, '#67e8f9');
         Sfx.play('pickup', { step: Math.min(24, this.combo * 0.4), gate: 0.012 });
         while (this.xp >= this.xpNeed) this.levelUp();
@@ -1267,9 +1273,9 @@ export class RunScene extends Scene {
         break;
       }
       case 'coin':
-        this.score += p.value * 10;
+        this.score += p.value * 10 * SCORE_SCALE;
         this.runCoins = (this.runCoins ?? 0) + p.value;
-        this.fx.number(p.x, p.y, `+${p.value * 10}`, '#fde047', 24);
+        this.fx.number(p.x, p.y, `+${p.value * 10 * SCORE_SCALE}`, '#fde047', 24);
         Sfx.play('coin', { gate: 0.02 });
         break;
     }
@@ -1371,7 +1377,7 @@ export class RunScene extends Scene {
   }
 
   onWaveClear(wave) {
-    this.score += 100 * wave;
+    this.score += 100 * wave * SCORE_SCALE;
     this.fx.number(this.view.w / 2, this.view.h * 0.42, `GOLF ${wave} ✓`, '#34d399', 30);
   }
 
@@ -1399,7 +1405,7 @@ export class RunScene extends Scene {
     e.hp = e.maxHp;
     e.dmg = 2;
     e.speed = 60;
-    e.score = bossDef.score;
+    e.score = bossDef.score * SCORE_SCALE;
     e.xp = bossDef.xp;
     e.color = bossDef.color;
     e.color2 = bossDef.color2;

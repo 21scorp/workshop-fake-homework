@@ -111,6 +111,20 @@ export function starPower(star) {
 }
 
 /* ============================================================
+   SCORING
+   ============================================================ */
+
+/**
+ * Global score multiplier.
+ *
+ * Enemy `score` values are authored as small readable integers (a drone is
+ * worth 10). This scales them into the range that actually feels like a
+ * score — five digits by the end of a decent run. Numbers people want to
+ * screenshot are part of the design, not decoration.
+ */
+export const SCORE_SCALE = 6;
+
+/* ============================================================
    ACCOUNT LEVEL
    ============================================================ */
 

@@ -12,19 +12,22 @@
 
 import { ENEMY, enemyPool, ELITE_MODS, ELITE_KEYS, bossForWave } from '../data/enemies.js';
 import { clamp, lerp, TAU } from '../core/Math2.js';
+import { SCORE_SCALE } from '../data/constants.js';
 
 const WAVE_TIME = 22;         // seconds of spawning per wave
-const BREATH = 3.2;           // calm gap between waves
+const BREATH = 2.2;           // calm gap between waves
+const CLEANUP_PATIENCE = 7;   // grace period for stragglers before moving on
+const MAX_LIVE = 48;          // hard ceiling on simultaneous enemies
 const BOSS_EVERY = 5;
 
 /** How much tougher everything gets, per wave. */
 export function waveScaling(wave) {
   return {
-    hp: 1 + Math.pow(wave - 1, 1.28) * 0.34,
+    hp: 1 + Math.pow(wave - 1, 1.15) * 0.28,
     dmg: 1 + Math.floor((wave - 1) / 6) * 0.5,
     speed: 1 + Math.min(0.55, (wave - 1) * 0.035),
     score: 1 + (wave - 1) * 0.16,
-    density: 1 + (wave - 1) * 0.19,
+    density: 1 + (wave - 1) * 0.14,
     eliteChance: clamp(0.02 + (wave - 2) * 0.022, 0, 0.30),
   };
 }
@@ -116,6 +119,7 @@ export class WaveDirector {
     this.spawnedThisWave = 0;
     this.killedThisWave = 0;
     this.bossRef = null;
+    this.cleanupT = 0;
     this.totalSpawned = 0;
     this.pendingBanner = null;
     this.breathTime = 1.4;       // shorter before wave 1 so the run starts fast
@@ -132,7 +136,7 @@ export class WaveDirector {
     const orders = [];
 
     // Budget grows with the wave but is capped so late waves don't turn to soup.
-    const budget = Math.round(clamp(7 + wave * 3.4, 8, 46) * sc.density * 0.8);
+    const budget = Math.round(clamp(10 + wave * 4.2, 12, 52) * sc.density * 0.85);
     let spent = 0;
     let t = 0;
 
@@ -157,7 +161,7 @@ export class WaveDirector {
         orders.push(o);
       }
       spent += count * (type.hp > 60 ? 2 : 1);
-      t += rng.range(2.2, 4.4) + count * 0.06;
+      t += rng.range(1.6, 3.2) + count * 0.06;
     }
 
     // Sprinkle a guaranteed elite from wave 3 onward — a clear "watch out".
@@ -179,6 +183,7 @@ export class WaveDirector {
   startWave(wave) {
     this.wave = wave;
     this.waveTime = 0;
+    this.cleanupT = 0;
     this.spawnedThisWave = 0;
     this.killedThisWave = 0;
 
@@ -204,15 +209,31 @@ export class WaveDirector {
       }
 
       case 'spawning': {
+        // Spawn what is due — but never past the live ceiling. A field that
+        // outruns the player's clear rate is a death spiral: framerate drops,
+        // the screen becomes unreadable, and the run ends to noise rather than
+        // to a mistake. Held orders are pushed back rather than dropped.
         while (this.queue.length && this.queue[0].delay <= this.waveTime) {
-          const order = this.queue.shift();
-          this.spawn(order);
+          if (this.run.enemies.count >= MAX_LIVE) {
+            this.queue[0].delay = this.waveTime + 0.5;
+            break;
+          }
+          this.spawn(this.queue.shift());
         }
-        // Wave ends when the plan is exhausted *and* the field is nearly clear,
-        // or when we run out of patience — whichever comes first.
-        const fieldClear = this.run.enemies.count <= 2;
-        if (!this.queue.length && (fieldClear || this.waveTime > WAVE_TIME + 14)) {
-          this.endWave();
+
+        // Wave ends when the plan is exhausted and the field is nearly clear.
+        //
+        // The "nearly" matters: waiting for a literal zero means one weaver
+        // orbiting out of the player's firing line can stall a run for half a
+        // minute — which is exactly what the balance bot ran into. So once the
+        // queue is empty we start a patience timer, and when it expires the
+        // next wave starts regardless. Overlapping waves raise the pressure,
+        // which is a far better failure mode than dead air.
+        if (!this.queue.length) {
+          this.cleanupT += dt;
+          if (this.run.enemies.count <= 2 || this.cleanupT > CLEANUP_PATIENCE) {
+            this.endWave();
+          }
         }
         break;
       }
@@ -258,7 +279,7 @@ export class WaveDirector {
     e.hp = e.maxHp;
     e.dmg = def.dmg * sc.dmg * (mod?.dmg ?? 1);
     e.speed = def.speed * sc.speed * (mod?.speed ?? 1);
-    e.score = Math.round(def.score * sc.score * (mod ? 2.4 : 1));
+    e.score = Math.round(def.score * sc.score * SCORE_SCALE * (mod ? 2.4 : 1));
     e.xp = Math.round(def.xp * (mod ? 2.6 : 1));
     e.armor = (def.armor ?? 0) + (mod?.armor ?? 0);
     e.color = mod?.color ?? def.color;
