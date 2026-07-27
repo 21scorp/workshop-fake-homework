@@ -757,7 +757,10 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
     for (const run of [
       { score: 0, wave: 1, kills: 0, time: 4, maxCombo: 0, astraId: 'pip' },
       { score: 1500000, wave: 22, kills: 2000, time: 300, maxCombo: 140,
-        astraId: 'kairos', seed: 'ABC123', personalBest: true },
+        astraId: 'kairos', seed: 'ABC123', personalBest: true,
+        // Every anomaly at once: the chip row has to survive more of them
+        // than the card is ever asked to show.
+        anomalies: (await import('./src/data/anomalies.js')).ANOMALIES.map((a) => a.id) },
     ]) {
       const { canvas, blob } = await renderShareCard(run);
       sizes.push(`${canvas.width}x${canvas.height}:${blob ? blob.size > 1000 : false}`);

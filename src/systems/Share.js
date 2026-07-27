@@ -16,6 +16,7 @@ import Assets from '../core/AssetRegistry.js';
 import { ASTRA, getAstra, astraSprite } from '../data/astra.js';
 import { collectionStats } from './Gacha.js';
 import { rankFor } from './Rank.js';
+import { getAnomaly } from '../data/anomalies.js';
 import { RARITY_INFO, ELEMENT } from '../data/constants.js';
 import { grouped, timeStr } from '../core/Math2.js';
 import { hexA, mixHex } from '../core/Renderer.js';
@@ -315,22 +316,51 @@ export async function renderShareCard(run) {
     ctx.textAlign = 'center';
     ctx.font = '900 54px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#e2e8f0';
-    ctx.fillText(value, cx, 1470);
+    ctx.fillText(value, cx, 1456);
     ctx.font = '700 24px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#64748b';
     ctx.letterSpacing = '4px';
-    ctx.fillText(label, cx + 2, 1512);
+    ctx.fillText(label, cx + 2, 1496);
     ctx.restore();
     if (i < stats.length - 1) {
       ctx.fillStyle = 'rgba(255,255,255,.08)';
-      ctx.fillRect(90 + cellW * (i + 1), 1420, 2, 100);
+      ctx.fillRect(90 + cellW * (i + 1), 1406, 2, 100);
     }
   });
 
+  /* ---- anomalies ----
+     The twists a run happened to get are half the story of a score, and two
+     people on the same seed get the same ones — so this is also the proof
+     that a shared challenge really was the same fight. */
+  {
+    const list = (run.anomalies ?? []).map(getAnomaly).filter(Boolean).slice(0, 3);
+    if (list.length) {
+      ctx.save();
+      ctx.textBaseline = 'middle';
+      ctx.font = '800 22px Inter, system-ui, sans-serif';
+      const pad = 20, gap = 11, h = 42, y = 1552;
+      const widths = list.map((a) => ctx.measureText(`${a.icon} ${a.name}`).width + pad * 2);
+      let x = (CARD_W - (widths.reduce((s2, w) => s2 + w, 0) + gap * (list.length - 1))) / 2;
+      list.forEach((a, i) => {
+        roundRect(ctx, x, y - h / 2, widths[i], h, h / 2);
+        ctx.fillStyle = hexA(a.color, 0.16);
+        ctx.fill();
+        ctx.strokeStyle = hexA(a.color, 0.5);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = a.color;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${a.icon} ${a.name}`, x + widths[i] / 2, y + 1);
+        x += widths[i] + gap;
+      });
+      ctx.restore();
+    }
+  }
+
   /* ---- seed callout — the actual viral hook ---- */
   if (run.seed) {
-    roundRect(ctx, 140, 1580, CARD_W - 280, 168, 40);
-    const seedGrad = ctx.createLinearGradient(140, 1580, CARD_W - 140, 1748);
+    roundRect(ctx, 140, 1598, CARD_W - 280, 168, 40);
+    const seedGrad = ctx.createLinearGradient(140, 1598, CARD_W - 140, 1766);
     seedGrad.addColorStop(0, hexA('#22d3ee', 0.16));
     seedGrad.addColorStop(1, hexA('#a855f7', 0.16));
     ctx.fillStyle = seedGrad;
@@ -344,13 +374,13 @@ export async function renderShareCard(run) {
     ctx.font = '700 26px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#a5f3fc';
     ctx.letterSpacing = '6px';
-    ctx.fillText('SPEEL DEZELFDE RUN — SEED', CARD_W / 2 + 3, 1638);
+    ctx.fillText('SPEEL DEZELFDE RUN — SEED', CARD_W / 2 + 3, 1656);
     ctx.letterSpacing = '0px';
     ctx.font = '900 82px "SF Mono", ui-monospace, monospace';
     ctx.fillStyle = '#f0f9ff';
     ctx.shadowColor = 'rgba(103,232,249,.7)';
     ctx.shadowBlur = 30;
-    ctx.fillText(run.seed, CARD_W / 2, 1718);
+    ctx.fillText(run.seed, CARD_W / 2, 1736);
     ctx.restore();
   }
 
@@ -359,7 +389,7 @@ export async function renderShareCard(run) {
   ctx.textAlign = 'center';
   ctx.font = '600 28px Inter, system-ui, sans-serif';
   ctx.fillStyle = '#475569';
-  ctx.fillText(`${save.profile.name} · Lv ${save.profile.account.level}`, CARD_W / 2, 1812);
+  ctx.fillText(`${save.profile.name} · Lv ${save.profile.account.level}`, CARD_W / 2, 1826);
 
   // Where to play it. A share card without an address is a screenshot of a
   // score; with one it's an invitation.
