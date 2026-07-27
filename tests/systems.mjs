@@ -352,6 +352,40 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- every passive is kept by something ----------------
+ * A passive key with no implementation is a character whose whole selling
+ * point is a lie, and nothing throws. Three of them are honestly kept by the
+ * weapon config instead of by a `passiveKey` branch — those are listed here
+ * explicitly, so the exception is visible rather than invisible. */
+{
+  const r = await page.evaluate(async () => {
+    const { ASTRA } = await import('./src/data/astra.js');
+    // Kept by the weapon rather than by a code branch: burn, slow and the
+    // beam's own heat ramp. Each one is verified below against the weapon.
+    const BY_WEAPON = {
+      ignite: (w) => w.burn > 0,
+      flow: (w) => w.slow > 0,
+      daybreak: (w) => w.type === 'beam',
+    };
+    const sources = await Promise.all(
+      ['./src/game/RunScene.js', './src/game/Weapons.js', './src/game/Ults.js']
+        .map((f) => fetch(f).then((r2) => r2.text())));
+    const code = sources.join('\n');
+    const bad = [];
+    for (const a of ASTRA) {
+      const k = a.passive?.key;
+      if (!k) { bad.push(`${a.id}: geen passive`); continue; }
+      if (new RegExp(`['\`]${k}['\`]`).test(code)) continue;
+      const via = BY_WEAPON[k];
+      if (!via) bad.push(`${a.id}: passive "${k}" wordt nergens waargemaakt`);
+      else if (!via(a.weapon)) bad.push(`${a.id}: "${k}" zou uit het wapen komen, maar dat klopt niet`);
+    }
+    return { bad, count: ASTRA.length };
+  });
+  check(`elke passive van de ${r.count} Astra wordt waargemaakt`, r.bad.length === 0,
+    r.bad.slice(0, 4).join(' | '));
+}
+
 /* ---------------- new cards actually land ----------------
  * The NaN sweep proves a card applies without breaking the bag; it does not
  * prove the bag is ever read. Three of these were dead on the starter Astra

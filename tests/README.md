@@ -65,6 +65,10 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   tas ooit gelezen wordt
 - alle Astra tekenen, en hun verwijzingen naar patronen, ultimates en
   elementen bestaan echt
+- elke passive wordt ook echt waargemaakt: door een tak in de code, of door
+  een veld in het wapen — en dan wordt dat veld gecontroleerd. Een passive
+  zonder implementatie is een personage waarvan het hele verkoopargument een
+  leugen is, en niets gooit daarbij een fout
 - 60 000 gesimuleerde pulls: de effectieve Stellar+-rate ligt boven de
   basisrate en geen enkele reeks overschrijdt de harde pity
 - alle tien anomalieën veranderen echt iets, stapelen door vermenigvuldiging,

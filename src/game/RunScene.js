@@ -1275,6 +1275,14 @@ export class RunScene extends Scene {
       case 'feast':
         if (++this.feastKills >= 25) { this.feastKills = 0; this.healPlayer(1); }
         break;
+      case 'eternal':
+        // OUROBOROS promises "every kill extends them". Nothing kept that half
+        // of the promise — the boomerang return came from the weapon config,
+        // the extension came from nowhere.
+        this.bullets.each((b) => {
+          if (b.owner === 'player' && b.boomerang) b.life = Math.min(b.life + 0.35, 6);
+        });
+        break;
       case 'wildfire':
         // Pyra: a burning corpse sets its neighbours alight.
         if (e.burnT > 0) {
