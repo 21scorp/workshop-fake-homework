@@ -18,7 +18,7 @@ import { save } from '../../core/Save.js';
 import { Sfx, Music } from '../../core/Audio.js';
 import { haptic } from '../../core/Input.js';
 import { renderShareCard, shareRun, downloadBlob } from '../../systems/Share.js';
-import { rankFor } from '../../systems/Rank.js';
+import { rankFor, isPersonalBest } from '../../systems/Rank.js';
 import { ENEMY, BOSSES } from '../../data/enemies.js';
 import { getAnomaly } from '../../data/anomalies.js';
 import Assets from '../../core/AssetRegistry.js';
@@ -38,7 +38,7 @@ export function ResultsScreen(ctx, params = {}) {
     .filter((d) => d.def);
   const astra = getAstra(run.astraId) ?? getAstra('pip');
   const info = RARITY_INFO[astra.rarity];
-  const isBest = run.score >= (save.profile.stats.bestScore ?? 0) && run.score > 0;
+  const isBest = isPersonalBest(run.score ?? 0, save.profile.stats.bestScore ?? 0);
   const rank = rankFor(run.score ?? 0);
   const anomalies = (run.anomalies ?? []).map(getAnomaly).filter(Boolean);
 
