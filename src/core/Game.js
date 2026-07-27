@@ -246,21 +246,56 @@ export class Game {
    */
   _adaptQuality() {
     const r = this.renderer;
-    // Only react when *our own* frame cost is the problem. a low fps with a cheap
-    // frame means the browser is throttling or compositing slowly, and dropping
-    // render resolution would cost visual quality without buying anything.
+    const slow = this.fps < 44;
+    // Our own JS being slow and the device having too many pixels to push are
+    // different problems with the same symptom, and only the first one used to
+    // be handled. A cheap frame at 30fps on a 2.25× backing store is not
+    // necessarily throttling — it can be fill rate, and resolution is the only
+    // lever that touches that.
     const expensive = this.avgFrameCost > 11;
-    if (this.fps < 44 && expensive) {
+
+    if (slow && expensive) {
       this._badSamples = (this._badSamples ?? 0) + 1;
       if (this._badSamples >= 2 && r.quality > 0.5) {
         this._badSamples = 0;
         r.quality = r.quality > 0.75 ? 0.75 : 0.5;
         r.resize();
-        console.info(`[perf] quality → ${r.quality} (fps ${this.fps.toFixed(0)})`);
+        console.info(`[perf] quality → ${r.quality} (fps ${this.fps.toFixed(0)}, ${this.avgFrameCost.toFixed(1)}ms)`);
       }
       return;
     }
+
+    // Fill-bound: react slowly, and prove it worked.
+    //
+    // If the browser is throttling — a 30Hz panel, a background tab, a
+    // battery saver — no amount of resolution buys a frame, so a blind
+    // step-down just makes the game blurry for nothing. So take one step,
+    // watch what happens, and put it back if it changed nothing.
+    if (slow && !expensive && r.quality > 0.75 && !this._fillProbeDone) {
+      this._fillSamples = (this._fillSamples ?? 0) + 1;
+      if (this._fillSamples >= 6) {
+        this._fillSamples = 0;
+        this._fpsBeforeProbe = this.fps;
+        this._fillProbeAt = this.frame;
+        r.quality = 0.75;
+        r.resize();
+        console.info(`[perf] fill-probe: quality → 0.75 (fps ${this.fps.toFixed(0)})`);
+      }
+      return;
+    }
+    if (this._fillProbeAt && this.frame - this._fillProbeAt > 240) {
+      // ~4s later at any frame rate worth measuring.
+      this._fillProbeAt = 0;
+      this._fillProbeDone = true;
+      if (this.fps < this._fpsBeforeProbe * 1.1) {
+        r.quality = 1;
+        r.resize();
+        console.info('[perf] fill-probe: geen winst, resolutie terug');
+      }
+    }
+
     this._badSamples = 0;
+    this._fillSamples = 0;
     if (this.fps > 57 && r.quality < 1 && this.avgFrameCost < 7) {
       this._goodSamples = (this._goodSamples ?? 0) + 1;
       if (this._goodSamples >= 6) {
