@@ -40,12 +40,7 @@ export function ResultsScreen(ctx, params = {}) {
   const scoreEl = el('div.res__score', { text: '0' });
   const prog = accountProgress();
 
-  const cardChips = (run.cards ?? []).map((c) => {
-    const def = getCard(c.id);
-    const ri = RARITY_INFO[c.rarity ?? 0];
-    return el('span.chip', { style: { '--c': def?.color ?? ri.color } },
-      el('span.chip__i', { text: def?.icon ?? '✦' }), c.name);
-  });
+  // Collapse the pick list into one chip per card with a stack count.
   const uniqueChips = [];
   const seen = new Map();
   for (const c of run.cards ?? []) seen.set(c.id, (seen.get(c.id) ?? 0) + 1);

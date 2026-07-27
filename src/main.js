@@ -145,7 +145,6 @@ function createApp() {
 
   let menuScene = null;
   let router = null;
-  let lastResult = null;
 
   /* ---------- scenes ---------- */
 
@@ -270,7 +269,6 @@ function createApp() {
   });
 
   bus.on(EV.RUN_END, (result) => {
-    lastResult = result;
     hud.hide();
     cardPicker.close();
     const { rewards, levels } = commitRun(result);

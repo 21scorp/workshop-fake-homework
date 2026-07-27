@@ -1,0 +1,38 @@
+# Publishes the game to GitHub Pages.
+#
+# There is no build step — the repository *is* the deployable artifact — so this
+# workflow just uploads the checkout. It only does anything once Pages is
+# enabled for the repository with "GitHub Actions" as the source; until then it
+# is inert.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it, so a half-uploaded
+# site never becomes the live one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

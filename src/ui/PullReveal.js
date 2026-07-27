@@ -139,6 +139,9 @@ export class PullReveal {
     this.nameEl.textContent = '';
     this.titleEl.textContent = '';
     this.rarityEl.textContent = '';
+    // Clear the tier too: the UR style paints a gradient background, so an
+    // empty chip that still says data-tier="ur" leaves a stray pill on screen.
+    delete this.rarityEl.dataset.tier;
     this.badgeEl.replaceChildren();
     this.hintEl.dataset.on = '0';
 

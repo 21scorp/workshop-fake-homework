@@ -353,9 +353,11 @@ function drawPrism(ctx, s) {
   ctx.globalCompositeOperation = 'lighter';
   for (const [col, off] of CHROMA) {
     ctx.save();
-    ctx.translate(Math.cos(t * 2.2) * off, Math.sin(t * 2.6) * off);
+    // Wider separation and lower per-layer alpha: three additive copies at 0.72
+    // sum straight to white and the facets vanish. At 0.45 the refraction reads.
+    ctx.translate(Math.cos(t * 2.2) * off * 2.2, Math.sin(t * 2.6) * off * 2.2);
     ctx.rotate(t * 0.55);
-    ctx.globalAlpha *= 0.72;
+    ctx.globalAlpha *= 0.45;
     crystal(ctx, r, 3, col, 0, 1);
     ctx.rotate(Math.PI);
     crystal(ctx, r * 0.82, 3, col, 0, 1);
@@ -383,8 +385,9 @@ function drawPrism(ctx, s) {
 
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha *= 0.75;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.3 * (1 + Math.sin(t * 5) * 0.15), 0, TAU);
+  ctx.arc(0, 0, r * 0.2 * (1 + Math.sin(t * 5) * 0.15), 0, TAU);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.restore();

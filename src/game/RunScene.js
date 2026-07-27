@@ -174,6 +174,7 @@ export class RunScene extends Scene {
     this.markMul = 1;
     this.markT = 0;
     this.bossRef = null;
+    this.banner = null;
     this.runCoins = 0;
     this.enemyId = 1;
     this.edt = 0;
@@ -346,6 +347,10 @@ export class RunScene extends Scene {
     this.updateCombo(dt);
     this.updateAuras(dt);
     this.updatePassives(dt);
+    if (this.banner) {
+      this.banner.t += dt;
+      if (this.banner.t >= this.banner.dur) this.banner = null;
+    }
 
     if (this.markT > 0) { this.markT -= dt; if (this.markT <= 0) this.markMul = 1; }
 
@@ -1512,14 +1517,19 @@ export class RunScene extends Scene {
   onWaveStart(wave, isBoss) {
     bus.emit(EV.WAVE_START, { wave, isBoss });
     if (!isBoss) {
-      bus.emit(EV.TOAST, { text: `GOLF ${wave}`, tone: 'good', ttl: 1300 });
+      // A banner on the canvas rather than a toast: it sits in the play field,
+      // reads at a glance, and clears itself out of the way in under a second.
+      this.banner = { text: `GOLF ${wave}`, sub: null, t: 0, dur: 1.5 };
       Sfx.play('tick');
     }
   }
 
   onWaveClear(wave) {
-    this.score += 100 * wave * SCORE_SCALE;
-    this.fx.number(this.view.w / 2, this.view.h * 0.42, `GOLF ${wave} ✓`, '#34d399', 30);
+    const bonus = 100 * wave * SCORE_SCALE;
+    this.score += bonus;
+    this.fx.number(this.view.w / 2, this.view.h * 0.40, `GOLF ${wave} VEILIG`, '#34d399', 30);
+    this.fx.number(this.view.w / 2, this.view.h * 0.46, `+${bonus}`, '#fde047', 26);
+    Sfx.play('confirm', { gate: 0.2 });
   }
 
   onBossWave(bossDef) {
@@ -1792,6 +1802,7 @@ export class RunScene extends Scene {
       shield: this.player.shield,
       score: Math.round(this.score),
       wave: this.director.wave,
+      waveProgress: this.director.progress,
       level: this.level,
       xp: this.xp,
       xpNeed: this.xpNeed,
@@ -1825,6 +1836,7 @@ export class RunScene extends Scene {
     this.drawHazards(r, true);
     this.fx.draw(r, 1);
 
+    if (this.banner) this.drawBanner(r);
     if (this.state === 'intro') this.drawIntro(r);
     if (this.state === 'dead') this.drawDeathVeil(r);
     if (this.timeFreeze > 0) this.drawTimeFreeze(r);
@@ -2056,6 +2068,40 @@ export class RunScene extends Scene {
     ctx.restore();
   }
 
+  /** Wave banner: sweeps in, holds, sweeps out. Never blocks the play field. */
+  drawBanner(r) {
+    const b = this.banner;
+    const view = this.view;
+    const k = b.t / b.dur;
+    // in 0..0.18, hold to 0.72, out to 1
+    const enter = clamp01(k / 0.18);
+    const exit = 1 - clamp01((k - 0.72) / 0.28);
+    const alpha = Math.min(enter, exit);
+    if (alpha <= 0.01) return;
+
+    const y = view.h * 0.3;
+    const slide = (1 - enter) * 90 - (1 - exit) * 90;
+    const ctx = r.ctx;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.globalCompositeOperation = 'lighter';
+    // Thin light bars top and bottom frame the text without hiding anything.
+    const g = ctx.createLinearGradient(0, 0, view.w, 0);
+    g.addColorStop(0, hexA(this.stats.color, 0));
+    g.addColorStop(0.5, hexA(this.stats.color, 0.85));
+    g.addColorStop(1, hexA(this.stats.color, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, y - 34 + slide * 0.3, view.w, 1.5);
+    ctx.fillRect(0, y + 26 + slide * 0.3, view.w, 1.5);
+    ctx.restore();
+
+    r.text(b.text, view.w / 2 + slide, y, {
+      size: 44, weight: 900, color: '#ffffff', alpha,
+      letterSpacing: 8, shadow: this.stats.color, shadowBlur: 26,
+    });
+  }
+
   drawIntro(r) {
     const view = this.view;
     const k = clamp01(this.introT / 1.15);
@@ -2073,6 +2119,10 @@ export class RunScene extends Scene {
     });
     r.text(this.astra.title, view.w / 2, view.h * 0.5, {
       size: 20, weight: 600, color: '#a3adcc', alpha: Math.sin(k * Math.PI),
+    });
+    r.text(`SEED ${this.seed}`, view.w / 2, view.h * 0.56, {
+      size: 17, weight: 800, color: '#67e8f9', alpha: Math.sin(k * Math.PI) * 0.8,
+      letterSpacing: 4,
     });
   }
 
