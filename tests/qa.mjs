@@ -217,6 +217,29 @@ for (const [label, vp] of [
   await page.close();
 }
 
+/* ---------------- 7b. a new player can actually pull ----------------
+ * The summon screen used to open on the Shards banner, so the first thing a
+ * brand-new player ever saw of the gacha was a greyed-out ten-pull and a link
+ * to the shop. Assert the opening banner is one their starting balance covers. */
+{
+  const page = await makePage();
+  await boot(page);
+  await page.click('.nav__item:nth-child(2)');
+  await page.waitForTimeout(1100);
+  const m = await page.evaluate(() => {
+    const on = [...document.querySelectorAll('.stab')].findIndex((b) => b.dataset.on === '1');
+    const btns = [...document.querySelectorAll('.summon__actions button')]
+      .map((b) => ({ txt: b.textContent.replace(/\s+/g, ' ').trim(), off: b.disabled }));
+    return { on, btns, free: btns.some((b) => /GRATIS/.test(b.txt)) };
+  });
+  const ten = m.btns.find((b) => /×10/.test(b.txt));
+  check('nieuwe speler opent op een banner die hij kan trekken', !!ten && !ten.off,
+    JSON.stringify(m.btns.map((b) => b.txt)));
+  check('de gratis dagelijkse summon staat er meteen', m.free);
+  check('geen fouten op het summonscherm', page.errs.length === 0, page.errs.join(' | '));
+  await page.close();
+}
+
 /* ---------------- 8. save migration from an old schema ---------------- */
 {
   const page = await makePage();

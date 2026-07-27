@@ -24,13 +24,15 @@ Configuratie via omgevingsvariabelen:
 
 ## qa.mjs
 
-Zesentwintig controles over de paden die je bij normaal doorklikken mist:
+Negenentwintig controles over de paden die je bij normaal doorklikken mist:
 
 - layout op 360×640, 430×932, tablet en desktop, plus horizontale overflow
 - `?s=CODE` deeplinks starten de juiste run en ruimen de adresbalk op
 - dezelfde seed levert twee keer identieke golven op — de basis van de
   dagelijkse seed en van elke gedeelde uitdaging
 - pauzeren, hervatten, run verlaten
+- een nieuwe speler opent op een banner die hij kan trekken, met zijn gratis
+  dagelijkse summon meteen in beeld
 - sterren verhogen, mock-aankoop, export/import van een profiel
 - migratie van een schema-v1 profiel zonder verlies
 - `prefers-reduced-motion`

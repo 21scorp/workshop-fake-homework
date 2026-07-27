@@ -1226,3 +1226,4 @@
 .found:active { transform: scale(.96); }
 .found canvas { width: 34px; height: 34px; object-fit: contain; }
 .found span { font-size: 12px; font-weight: 800; }
+.summon__free { color: var(--gold); font-weight: 800; }

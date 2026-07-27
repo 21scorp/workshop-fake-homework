@@ -22,8 +22,24 @@ import { haptic } from '../../core/Input.js';
 import { bus, EV } from '../../core/Events.js';
 import { PullReveal } from '../PullReveal.js';
 
+/**
+ * Which banner to open on.
+ *
+ * It used to default to the limited KAIROS banner, which is priced in Shards.
+ * A brand-new player has 1.600 Stardust and 60 Shards, so their first ever
+ * look at the gacha was a greyed-out ten-pull and a link to the shop. That is
+ * the opposite of what this economy promises. Default to a banner they can
+ * actually ten-pull, and only fall back to the first one if none qualifies.
+ */
+function defaultBannerId() {
+  const chosen = save.profile.lastBanner;
+  if (chosen && BANNERS.some((b) => b.id === chosen)) return chosen;
+  const affordable = BANNERS.find((b) => (save.profile.currency[b.currency] ?? 0) >= b.cost10);
+  return (affordable ?? BANNERS[0]).id;
+}
+
 export function SummonScreen(ctx, params = {}) {
-  let bannerIdx = Math.max(0, BANNERS.findIndex((b) => b.id === (params.banner ?? save.profile.lastBanner ?? 'kairos')));
+  let bannerIdx = Math.max(0, BANNERS.findIndex((b) => b.id === (params.banner ?? defaultBannerId())));
   const sprites = [];
 
   const node = el('div.summon');
@@ -156,6 +172,16 @@ export function SummonScreen(ctx, params = {}) {
         }),
       ),
       el('div.summon__guar', { text: '×10 garandeert minimaal één Superior of hoger' }),
+      // The free pull lives on the standard banner. From anywhere else it is
+      // invisible, and a free thing nobody can find is not free.
+      !free && freePullAvailable() ? el('button.linkbtn.summon__free', {
+        text: '🎁 Je gratis dagelijkse summon wacht op Sterrenval ›',
+        onclick: () => {
+          Sfx.play('tap');
+          bannerIdx = BANNERS.findIndex((b) => b.id === 'standard');
+          render();
+        },
+      }) : null,
       !a10.ok ? el('button.linkbtn.summon__need', {
         text: `Je hebt ${abbrev(a10.cost - a10.have)} ${sym} te weinig — naar de winkel ›`,
         onclick: () => ctx.go('shop'),
