@@ -62,13 +62,17 @@ function drawVessel(ctx, s) {
   ctx.lineTo(-r * 0.3, r * 0.32);
   ctx.lineTo(-r * 0.78, r * 0.5);
   ctx.closePath();
+  // Hull palette comes from the equipped skin; the shape never changes, so a
+  // finish can't blur the silhouette the game is read by.
+  const hull = s.data?.hull ?? ['#e2e8f0', '#94a3b8', '#334155'];
+  const trim = s.data?.trim ?? '#f8fafc';
   const hg = ctx.createLinearGradient(-r, -r, r, r);
-  hg.addColorStop(0, '#e2e8f0');
-  hg.addColorStop(0.45, '#94a3b8');
-  hg.addColorStop(1, '#334155');
+  hg.addColorStop(0, hull[0]);
+  hg.addColorStop(0.45, hull[1]);
+  hg.addColorStop(1, hull[2]);
   ctx.fillStyle = hg;
   ctx.fill();
-  ctx.strokeStyle = hexA('#f8fafc', 0.55);
+  ctx.strokeStyle = hexA(trim, 0.55);
   ctx.lineWidth = Math.max(0.8, r * 0.05);
   ctx.lineJoin = 'round';
   ctx.stroke();

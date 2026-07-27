@@ -25,6 +25,8 @@ import { list as achievementList, summary as achievementSummary, GROUPS } from '
 import { collectionStats } from '../../systems/Gacha.js';
 import { supports, setSupport, totals as supportTotals, supportBonus, SUPPORT_SLOTS } from '../../systems/Loadout.js';
 import { ASTRA } from '../../data/astra.js';
+import { SKINS, unlockLabel } from '../../data/skins.js';
+import { isUnlocked, currentSkinId, setSkin, skinSummary } from '../../systems/Skins.js';
 import { leaderboard } from '../../systems/Economy.js';
 import { Sfx } from '../../core/Audio.js';
 import { haptic } from '../../core/Input.js';
@@ -47,6 +49,7 @@ export function HomeScreen(ctx) {
   const questsReady = quests.filter((q) => !q.claimed && q.progress >= q.target).length;
   const cstats = collectionStats();
   const ach = achievementSummary();
+  const skins = skinSummary();
 
   /* ---------------- hero ---------------- */
 
@@ -74,10 +77,44 @@ export function HomeScreen(ctx) {
         ),
       ),
     ),
-    el('button.hero__swap', {
-      onclick: () => { Sfx.play('tap'); haptic('light'); ctx.go('collection'); },
-    }, '⇄ Wissel'),
+    el('div.hero__actions', null,
+      el('button.hero__swap', {
+        onclick: () => { Sfx.play('tap'); haptic('light'); ctx.go('collection'); },
+      }, '⇄ Wissel'),
+      el('button.hero__swap', {
+        onclick: () => { Sfx.play('tap'); haptic('light'); openSkins(); },
+      }, `⬡ Romp ${skins.have}/${skins.total}`),
+    ),
   );
+
+  function openSkins() {
+    const cur = currentSkinId();
+    const list = el('div.skins', null, ...SKINS.map((sk) => {
+      const un = isUnlocked(sk);
+      return el('button.skin', {
+        dataset: { on: sk.id === cur ? '1' : '0', locked: un ? '0' : '1' },
+        style: { '--a': sk.hull[0], '--b': sk.hull[1], '--c': sk.hull[2], '--t': sk.trim },
+        onclick: () => {
+          if (!un) { Sfx.play('error'); bus.emit(EV.TOAST, { text: unlockLabel(sk), tone: 'info' }); return; }
+          setSkin(sk.id);
+          sh.close();
+          ctx.go('home', { force: true, replace: true });
+        },
+      },
+        el('div.skin__swatch'),
+        el('div.skin__mid', null,
+          el('div.skin__name', { text: sk.name }),
+          el('div.skin__desc', { text: un ? sk.desc : unlockLabel(sk) }),
+        ),
+        sk.id === cur ? el('div.skin__on', { text: '✓' }) : (un ? null : el('div.skin__lock', { text: '🔒' })),
+      );
+    }));
+    const sh = sheet('Rompafwerking', el('div', null,
+      el('p.sheet__lead', { text: 'Alleen uiterlijk. Een beloning die een getal verandert maakt van de Starpass een machtsaankoop; een beloning die je schip anders laat staan in een clip is het jagen waard zonder het spel scheef te trekken.' }),
+      list,
+    ));
+    node.appendChild(sh);
+  }
 
   /* ---------------- play ---------------- */
 

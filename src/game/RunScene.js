@@ -38,6 +38,7 @@ import { blankMods, CARDS, CARD_WEIGHTS, getCard } from '../data/cards.js';
 import { ENEMY } from '../data/enemies.js';
 import { WaveDirector } from './WaveDirector.js';
 import { resolveSupports } from '../systems/Loadout.js';
+import { currentSkin } from '../systems/Skins.js';
 import { updateWeapon, fireEchoes, nearestEnemy } from './Weapons.js';
 import { fireUlt } from './Ults.js';
 
@@ -153,6 +154,7 @@ export class RunScene extends Scene {
     // Support Astra are read once, at run start: swapping mid-run isn't a
     // thing, and re-reading the profile every frame would be a trap.
     this.supports = params.trial ? [] : resolveSupports();
+    this.skin = currentSkin();
 
     this.mods = blankMods();
     this.cardStacks = {};
@@ -1961,7 +1963,7 @@ export class RunScene extends Scene {
       ctx.globalAlpha = a;
       Assets.draw(ctx, 'vessel/idle', s.x, s.y, {
         scale: 1 - i * 0.045, tint: this.stats.color, tint2: this.stats.color2,
-        data: { tilt: s.a, thrust: 0, shield: 0, invuln: 0 },
+        data: { tilt: s.a, thrust: 0, shield: 0, invuln: 0, hull: this.skin.hull, trim: this.skin.trim },
       });
     });
     ctx.restore();
@@ -1977,6 +1979,7 @@ export class RunScene extends Scene {
         tilt: p.tilt, thrust: p.thrust,
         shield: p.shield > 0 ? 1 : 0,
         invuln: p.invuln > 0 ? 1 : 0,
+        hull: this.skin.hull, trim: this.skin.trim,
       },
     });
 

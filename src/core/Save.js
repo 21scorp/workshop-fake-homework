@@ -91,6 +91,9 @@ export function defaultProfile() {
 
     /** Season pass progress; reset when the season id changes. */
     pass: null,
+
+    /** Selected Vessel finish. Unlocks are derived, not stored. */
+    skin: 'standard',
   };
 }
 
