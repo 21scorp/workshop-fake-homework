@@ -89,7 +89,9 @@ twee afspeelt. `Assets.report().unresolved` laat zien wat er nog ontbreekt.
 ### Astra
 
 Keys staan **per personage**, niet per vorm — voor elke `id` uit
-`src/data/astra.js` (`pip`, `cinder`, `pebble`, … `ouroboros`):
+`src/data/astra.js` (`pip`, `cinder`, `pebble`, … `thresher`). De lijst groeit
+met de roster; draai `node tools/bake-atlas.mjs` en lees de gegenereerde JSON
+als je de actuele set wilt zien.
 
 ```
 astra/<id>/idle       72×72   8 frames @ 10fps   loop

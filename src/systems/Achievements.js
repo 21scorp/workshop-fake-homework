@@ -16,6 +16,7 @@ import { bus, EV } from '../core/Events.js';
 import { grantAll } from './Economy.js';
 import { ASTRA } from '../data/astra.js';
 import { RARITY } from '../data/constants.js';
+import { ENEMY_LIST, BOSSES } from '../data/enemies.js';
 
 /**
  * @typedef {Object} Achievement
@@ -149,7 +150,33 @@ export const ACHIEVEMENTS = [
     desc: 'Bereik golf 8 zonder je ultimate te gebruiken',
     progress: (c) => (c.run && c.run.wave >= 8 && (c.run.ultsFired ?? 0) === 0 ? 1 : 0),
     reward: { shards: 45 } },
+
+  /* ---------------- bestiary ----------------
+     Declarative like the rest: the bestiary itself is the state, so these
+     cannot drift and an imported save unlocks them the moment it lands. */
+  { id: 'bes_half', group: 'Bestiarium', icon: '☰', name: 'Veldnotities',
+    desc: 'Ontmoet de helft van alles wat er rondvliegt',
+    progress: (c) => ratio(bestiaryKnown(c.p), Math.ceil(BESTIARY_TOTAL / 2)),
+    reward: { stardust: 900 } },
+  { id: 'bes_all', group: 'Bestiarium', icon: '☰', name: 'Volledig bestiarium',
+    desc: 'Ontmoet elke vijand en elke baas',
+    progress: (c) => ratio(bestiaryKnown(c.p), BESTIARY_TOTAL),
+    reward: { shards: 120 } },
+  { id: 'bes_bosses', group: 'Bestiarium', icon: '☠', name: 'Alle drie',
+    desc: 'Versla elke baas minstens één keer',
+    progress: (c) => ratio(BOSSES.filter((b) => (c.p.bestiary?.[`boss/${b.id}`]?.kills ?? 0) > 0).length, BOSSES.length),
+    reward: { shards: 90 } },
 ];
+
+/** How many bestiary rows exist, and how many this profile has met. */
+const BESTIARY_TOTAL = ENEMY_LIST.length + BOSSES.length;
+const bestiaryKnown = (p) => {
+  const b = p.bestiary ?? {};
+  let n = 0;
+  for (const e of ENEMY_LIST) if (b[e.id]) n++;
+  for (const boss of BOSSES) if (b[`boss/${boss.id}`]) n++;
+  return n;
+};
 
 const BY_ID = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));
 
@@ -223,4 +250,4 @@ export function summary() {
 export const getAchievement = (id) => BY_ID.get(id) ?? null;
 
 /** Groups in display order. */
-export const GROUPS = ['Begin', 'Diepte', 'Score', 'Strijd', 'Verzameling', 'Gewoonte', 'Meesterschap'];
+export const GROUPS = ['Begin', 'Diepte', 'Score', 'Strijd', 'Verzameling', 'Bestiarium', 'Gewoonte', 'Meesterschap'];

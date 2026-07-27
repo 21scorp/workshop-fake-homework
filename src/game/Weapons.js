@@ -48,7 +48,7 @@ function shoot(ctx, { x, y, angle, speed, dmgMul = 1, sizeMul = 1, extra = {} })
   b.burn = weapon.burn ?? 0;
   b.knockback = weapon.knockback ?? 0;
   b.splash = weapon.splash ?? 0;
-  b.crit = Math.random() < stats.crit + (extra.critBonus ?? 0);
+  b.crit = Math.random() < stats.crit + (extra.critBonus ?? 0) + (run.passiveCritBonus ?? 0);
   if (b.crit) b.dmg *= stats.critDmg;
   b.split = weapon.split ?? 0;
   b.t = 0;
@@ -297,6 +297,99 @@ const PATTERNS = {
     }
     Sfx.play('laser', { pitch: 1.2, gate: 0.04 });
   },
+
+  /**
+   * Three shots in quick succession, then a long gap.
+   *
+   * The same DPS as `straight`, but the *rhythm* is what you feel: a burst
+   * punishes you for drifting mid-volley and rewards you for lining up before
+   * one starts. Rate-of-fire cards shorten the gap, never the burst.
+   */
+  burst(ctx) {
+    const { run, player, stats, weapon } = ctx;
+    const shots = weapon.burst ?? 3;
+    const gap = weapon.burstGap ?? 0.07;
+    const n = Math.max(1, stats.projectiles);
+    for (let i = 0; i < shots; i++) {
+      const fire = () => {
+        for (const a of fan(UP, n, (weapon.spread ?? 0.06) + n * 0.03)) {
+          shoot(ctx, { x: player.x, y: player.y - 18, angle: a, dmgMul: 0.8 });
+        }
+        run.fx.muzzle(player.x, player.y - 22, UP, stats.color2);
+        Sfx.play('shoot', { pitch: 1.25 + i * 0.06, gate: 0.02 });
+      };
+      // Reuse the echo queue rather than a timer: it is already paused,
+      // slowed and cleaned up with the run.
+      if (i === 0) fire();
+      else run.pendingEcho.push({ t: gap * i, ctx, fire });
+    }
+  },
+
+  /**
+   * A continuously rotating stream. Covers everything, eventually.
+   *
+   * Angle comes off run time rather than a per-shot counter so the spiral
+   * keeps its shape through hitstop, slow-motion and pauses.
+   */
+  spiral(ctx) {
+    const { run, player, stats, weapon } = ctx;
+    const arms = Math.max(1, (weapon.arms ?? 2) + Math.floor(stats.projectiles / 2));
+    const base = run.time * (weapon.spin ?? 3.1);
+    for (let i = 0; i < arms; i++) {
+      shoot(ctx, {
+        x: player.x, y: player.y, angle: base + (i / arms) * TAU,
+        dmgMul: 0.78,
+        extra: { life: 3.2 },
+      });
+    }
+    Sfx.play('shoot', { pitch: 1.4, gate: 0.04 });
+  },
+
+  /**
+   * Slow, heavy shots that bounce off the walls.
+   *
+   * Every ricochet is a second chance at a row you missed, which makes the
+   * narrow lanes of a late wave an advantage instead of a trap.
+   */
+  ricochet(ctx) {
+    const { player, stats, weapon } = ctx;
+    const n = Math.max(1, stats.projectiles);
+    for (const a of fan(UP, n, weapon.spread ?? 0.5)) {
+      const b = shoot(ctx, {
+        x: player.x, y: player.y - 14, angle: a,
+        speed: (weapon.bulletSpeed ?? 560) * stats.bulletSpeedMul,
+        dmgMul: 1.25, sizeMul: 1.2,
+        extra: { life: 5 },
+      });
+      if (!b) continue;
+      b.bounce = Math.max(b.bounce, weapon.bounce ?? 3);
+    }
+    Sfx.play('shoot', { pitch: 0.75, gate: 0.05 });
+  },
+
+  /**
+   * Falls from above, in the column the nearest enemy is standing in.
+   *
+   * The only pattern that does not originate at the vessel, so it hits the
+   * back rank that everything else has to shoot through.
+   */
+  rain(ctx) {
+    const { run, player, stats, weapon } = ctx;
+    const n = Math.max(1, stats.projectiles + 1);
+    const target = nearestEnemy(run, player.x, player.y * 0.5, 1400);
+    const cx = target ? target.x : player.x;
+    for (let i = 0; i < n; i++) {
+      const jitter = (i - (n - 1) / 2) * (weapon.spacing ?? 54) + (Math.random() - 0.5) * 26;
+      shoot(ctx, {
+        x: clamp(cx + jitter, 20, run.view.w - 20), y: -20,
+        angle: Math.PI / 2,
+        speed: (weapon.bulletSpeed ?? 640) * stats.bulletSpeedMul,
+        dmgMul: 0.85, sizeMul: 1.15,
+        extra: { life: 4, splash: weapon.splash ?? 40 },
+      });
+    }
+    Sfx.play('shoot', { pitch: 0.95, gate: 0.05 });
+  },
 };
 
 /** Weapons that fire continuously rather than on a cooldown. */
@@ -336,9 +429,14 @@ export function fireEchoes(run, dt) {
   for (let i = list.length - 1; i >= 0; i--) {
     list[i].t -= dt;
     if (list[i].t <= 0) {
-      const { ctx } = list[i];
-      const pattern = PATTERNS[ctx.weapon.type] ?? PATTERNS.straight;
-      try { pattern(ctx); } catch { /* the volley is cosmetic; never break the run */ }
+      const { ctx, fire } = list[i];
+      // A queued `fire` means "just this shot", not "run the pattern again" —
+      // without it a burst would re-enter itself and queue forever.
+      const run2 = fire ?? (() => {
+        const pattern = PATTERNS[ctx.weapon.type] ?? PATTERNS.straight;
+        pattern(ctx);
+      });
+      try { run2(); } catch { /* the volley is cosmetic; never break the run */ }
       list.splice(i, 1);
     }
   }

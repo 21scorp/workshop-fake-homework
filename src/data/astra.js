@@ -263,6 +263,72 @@ export const ASTRA = [
     ult: { key: 'serpentcoil', name: 'Slangenkring', cost: 155, desc: 'Een ring van slangen sluit zich om het scherm.' },
     lore: 'Begint waar hij eindigt. Niemand weet welke kant dat is.',
   },
+
+  /* ================= v0.11 — nieuwe cadans =================
+     Vijf Astra die geen bestaand wapen kopiëren maar een ander *ritme*
+     spelen: salvo's met een gat ertussen, een draaiende straal, kogels die
+     van de wanden terugkomen, en regen die van boven valt. Het silhouet komt
+     gratis mee — art/variant.js geeft elke nieuwe id zijn eigen vorm. */
+
+  {
+    id: 'volley', name: 'Volley', title: 'Drie Tellen',
+    rarity: RARITY.R, element: 'ember', form: 'construct',
+    colors: { primary: '#f97316', secondary: '#fed7aa' },
+    stats: { power: 11, fireRate: 2.4, projectiles: 1, spread: 0.06, speed: 1.0, hp: 3, crit: 0.1, critDmg: 1.8, magnet: 1.0 },
+    weapon: { type: 'burst', bullet: 'bullet/basic', bulletSpeed: 1020, burst: 3, burstGap: 0.07 },
+    passive: { key: 'deadeye', name: 'Scherpschutter', desc: '+20% kritieke kans zolang je stilstaat.' },
+    ult: { key: 'fusillade', name: 'Salvo', cost: 110, desc: 'Negen inslagen marcheren het scherm op.' },
+    lore: 'Telt tot drie. Daarna telt hij opnieuw. Dat is alles wat hij doet.',
+  },
+  {
+    id: 'gyre', name: 'Gyre', title: 'de Draaikolk',
+    rarity: RARITY.SR, element: 'gale', form: 'orb',
+    colors: { primary: '#22d3ee', secondary: '#cffafe' },
+    stats: { power: 12, fireRate: 8.5, projectiles: 2, spread: 0, speed: 1.1, hp: 3, crit: 0.11, critDmg: 1.9, magnet: 1.2 },
+    weapon: { type: 'spiral', bullet: 'bullet/orb', bulletSpeed: 620, arms: 2, spin: 3.1 },
+    passive: { key: 'carousel', name: 'Carrousel', desc: '+5% schade per seconde dat je niet geraakt wordt, tot +40%. Eén treffer wist alles.' },
+    ult: { key: 'carousel', name: 'Draaimolen', cost: 130, desc: 'Twaalf bollen draaien negen seconden om je heen.' },
+    lore: 'Alles komt terug. Je moet alleen lang genoeg blijven staan.',
+  },
+  {
+    id: 'carom', name: 'Carom', title: 'de Bandstoot',
+    rarity: RARITY.SR, element: 'terra', form: 'blade',
+    colors: { primary: '#a3e635', secondary: '#ecfccb' },
+    // Measured at 1 kill per 12s on the first pass: a bouncing shot spends
+    // most of its life travelling, so the cadence has to pay for that.
+    stats: { power: 19, fireRate: 3.6, projectiles: 1, spread: 0.5, speed: 0.98, hp: 3, crit: 0.13, critDmg: 2.0, magnet: 1.1 },
+    weapon: { type: 'ricochet', bullet: 'bullet/shard', bulletSpeed: 680, bounce: 3, pierce: 1 },
+    passive: { key: 'carom', name: 'Bandstoot', desc: 'Elke wandstuiter maakt die kogel 35% sterker en groter.' },
+    ult: { key: 'crossfire', name: 'Kruisvuur', cost: 125, desc: 'Twee brandende lijnen over het scherm, en alles staat stil.' },
+    lore: 'Mist nooit. Het duurt alleen soms even.',
+  },
+  {
+    id: 'monsoon', name: 'Monsoon', title: 'de Wolkbreuk',
+    rarity: RARITY.SSR, element: 'tide', form: 'bloom',
+    // Droplet owns #38bdf8 and Nautilus owns #0284c7 — with four Blooms in
+    // the roster the palette is as scarce as the silhouette. Storm blue,
+    // several shades darker than either, and the widest bloom there is.
+    colors: { primary: '#1d4ed8', secondary: '#93c5fd' },
+    art: { c: 4, a: 1, bulk: 1.15 },
+    stats: { power: 15, fireRate: 3.4, projectiles: 2, spread: 0, speed: 1.05, hp: 4, crit: 0.14, critDmg: 2.0, magnet: 1.3 },
+    weapon: { type: 'rain', bullet: 'bullet/basic', bulletSpeed: 640, spacing: 54, splash: 44 },
+    passive: { key: 'undertow', name: 'Onderstroom', desc: 'Treffers van bovenaf vertragen wat ze raken.' },
+    ult: { key: 'downpour', name: 'Wolkbreuk', cost: 140, desc: 'Veertien inslagen in twee tellen, en alles wordt traag.' },
+    lore: 'Vraagt niet of het uitkomt. Valt gewoon.',
+  },
+  {
+    id: 'thresher', name: 'THRESHER', title: 'de Oogst',
+    rarity: RARITY.SSR, element: 'void', form: 'beast',
+    // Five beasts share a form; this one is the crowned one — three pairs of
+    // horns, three eyes — and fuchsia rather than another violet.
+    colors: { primary: '#e879f9', secondary: '#fae8ff' },
+    art: { c: 4, a: 2, b: 2, bulk: 1.12 },
+    stats: { power: 17, fireRate: 5.6, projectiles: 3, spread: 0.28, speed: 1.08, hp: 4, crit: 0.16, critDmg: 2.1, magnet: 1.6 },
+    weapon: { type: 'spread', bullet: 'bullet/shard', bulletSpeed: 880, spread: 0.34 },
+    passive: { key: 'harvest', name: 'Oogst', desc: 'Prisms leveren 25% meer XP en punten op.' },
+    ult: { key: 'reaping', name: 'De Oogst', cost: 150, desc: 'Alle vijandelijke kogels worden prisms, en het veld wordt gemaaid.' },
+    lore: 'Wat hij oogst was nooit van hem. Dat is het punt niet.',
+  },
 ];
 
 /* ------------------------------------------------------------------ */

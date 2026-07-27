@@ -191,6 +191,7 @@ export class RunScene extends Scene {
     this.heat = 0;           // OVERVERHITTING build-up
     this.overheatMul = 1;
     this.tailwind = 0;       // Zephyr: fire-rate stacks that decay
+    this.untouchedT = 0;     // Carousel: seconds since the last hit taken
     this.tailwindT = 0;
     this.hitCount = 0;       // Basalt: every 4th hit shockwaves
     this.feastKills = 0;     // Umbra: heal every 25 kills
@@ -484,6 +485,8 @@ export class RunScene extends Scene {
     const p = this.player;
     if (p.invuln > 0 || this.state !== 'play') return false;
 
+    this.untouchedT = 0;
+
     if (p.shield > 0) {
       p.shield--;
       p.invuln = 0.7;
@@ -654,9 +657,16 @@ export class RunScene extends Scene {
 
       // Bounce off the walls.
       if (b.bounce > 0) {
+        const before = b.bounce;
         if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); b.bounce--; b.angle = Math.atan2(b.vy, b.vx); }
         else if (b.x > view.w - b.r) { b.x = view.w - b.r; b.vx = -Math.abs(b.vx); b.bounce--; b.angle = Math.atan2(b.vy, b.vx); }
         if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); b.bounce--; b.angle = Math.atan2(b.vy, b.vx); }
+        // Ricochet turns a miss into a threat: each wall it takes makes the
+        // shot worth more, so the narrow lanes late on become an advantage.
+        if (b.owner === 'player' && this.passiveKey === 'carom' && b.bounce < before) {
+          b.dmg *= 1 + 0.35 * (before - b.bounce);
+          b.r *= 1.08;
+        }
       }
 
       b.life -= dt;
@@ -1480,9 +1490,10 @@ export class RunScene extends Scene {
     const pl = this.player;
     switch (p.kind) {
       case 'prism': {
-        const gain = p.value * this.stats.xpMul;
+        const harvest = this.passiveKey === 'harvest' ? 1.25 : 1;
+        const gain = p.value * this.stats.xpMul * harvest;
         this.xp += gain;
-        this.score += Math.round(p.value * 2 * SCORE_SCALE);
+        this.score += Math.round(p.value * 2 * SCORE_SCALE * harvest);
         if (this.mods.prismUlt > 0) {
           this.ult = Math.min(this.ultMax, this.ult + 0.9 * this.mods.prismUlt);
         }
@@ -1843,6 +1854,8 @@ export class RunScene extends Scene {
       this.overheatMul = 1;
     }
 
+    this.untouchedT += dt;
+
     if (this.passiveKey === 'tailwind') {
       this.tailwindT -= dt;
       if (this.tailwindT <= 0 && this.tailwind > 0) {
@@ -1856,7 +1869,17 @@ export class RunScene extends Scene {
   get passiveDamageMul() {
     // Pip stands its ground: holding still is a real, readable choice.
     if (this.passiveKey === 'steady' && this.player.thrust < 0.12) return 1.08;
+    // Carousel pays for every second you go untouched, and loses all of it
+    // the moment you don't — a streak you can feel building.
+    if (this.passiveKey === 'carousel') return 1 + Math.min(0.4, this.untouchedT * 0.05);
     return 1;
+  }
+
+  /** Crit bonus from a passive, added to the resolved crit chance. */
+  get passiveCritBonus() {
+    // Standing still is how you aim a burst weapon; reward it there too.
+    if (this.passiveKey === 'deadeye' && this.player.thrust < 0.12) return 0.2;
+    return 0;
   }
 
   get passiveRateMul() {

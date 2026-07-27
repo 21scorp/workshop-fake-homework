@@ -298,6 +298,53 @@ const RECIPES = {
     P.nova(run, { x: run.player.x, y: run.player.y, radius: 380, dmg: 2, color: '#c084fc' });
     Sfx.play('ultimate');
   },
+
+  /* ---- v0.11 roster ---- */
+
+  /** Volley: a wall of strikes marching up the screen. */
+  fusillade: (run) => {
+    P.mark(run, { duration: 5, mul: 2.2 });
+    P.strikes(run, { count: 9, dmg: 2.4, radius: 120, delay: 0.09, color: '#f97316' });
+    run.screen.shake(0.7, 0, 1);
+    Sfx.play('ultimate');
+  },
+
+  /** Carousel: a slow rotating sweep that catches everything twice. */
+  carousel: (run) => {
+    P.orbitals(run, { count: 12, duration: 9, radius: 230, dmg: 1.5, color: '#22d3ee' });
+    P.slowAll(run, { amount: 0.45, duration: 5 });
+    Sfx.play('whoosh', { dur: 0.7 });
+  },
+
+  /** Caroms off both walls and keeps going. */
+  crossfire: (run) => {
+    P.zone(run, {
+      x: 0, y: run.player.y - 420, w: run.view.w, h: 60,
+      duration: 4, dps: 3.4, color: '#a3e635',
+    });
+    P.zone(run, {
+      x: 0, y: run.player.y - 180, w: run.view.w, h: 60,
+      duration: 4, dps: 3.4, color: '#a3e635',
+    });
+    P.stunAll(run, { duration: 1.2 });
+    Sfx.play('ultimate');
+  },
+
+  /** Everything falls at once. */
+  downpour: (run) => {
+    P.strikes(run, { count: 14, dmg: 1.9, radius: 100, delay: 0.06, color: '#38bdf8' });
+    P.slowAll(run, { amount: 0.55, duration: 4 });
+    run.screen.shake(0.55);
+    Sfx.play('ultimate');
+  },
+
+  /** Harvest: turns the field into pickups and clears the shots. */
+  reaping: (run) => {
+    P.clearBullets(run, { toPrisms: true });
+    P.damageAll(run, { mul: 3.2 });
+    P.heal(run, { amount: 1 });
+    Sfx.play('ultimate');
+  },
 };
 
 /**

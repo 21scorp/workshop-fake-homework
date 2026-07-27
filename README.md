@@ -181,7 +181,7 @@ een oude versie nog migreert.
 ```bash
 npm install                       # alleen playwright-core, alleen voor tests
 npx http-server -p 8080 -c-1 .    # in een tweede terminal
-npm test                          # qa.mjs (26) + systems.mjs (21)
+npm test                          # qa.mjs + systems.mjs
 npm run balance                   # pacing-meting met een auto-player
 ```
 
@@ -226,7 +226,7 @@ schermflitsen en camera-shake te dempen.
 | Run | 1–3 min | Kaarten, golven, bosses |
 | Dagelijks | 1 dag | Inlogreeks, drie opdrachten, gratis summon, gratis proefvlucht met een Astra die je niet bezit, dagelijkse seed |
 | Starpass | 6 weken | 30 tiers, gratis spoor tot het einde, premium keert met terugwerkende kracht uit |
-| Prestaties | open | 31 doelen die zichzelf uitkeren zodra ze kloppen |
+| Prestaties | open | 34 doelen die zichzelf uitkeren zodra ze kloppen |
 | Bestiarium | open | 15 vijanden en bazen, per stuk vrijgespeeld door ze tegen te komen |
 | Werf | permanent | Cores in permanente upgrades |
 
