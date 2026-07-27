@@ -65,6 +65,29 @@ const check = (name, ok, detail = '') => {
  * simulating. A later block would then measure a frozen world and blame the
  * subsystem it was testing.
  */
+/**
+ * Make sure a live run scene exists.
+ *
+ * The suite got long enough that the player can die partway through it, and a
+ * later block that assumed `scene.enemies` then failed on the results screen
+ * rather than on the thing it was testing.
+ */
+async function ensureRun(page) {
+  const ok = await page.evaluate(() => !!globalThis.ASTRAFALL.scene?.enemies);
+  if (!ok) {
+    await page.evaluate(() => globalThis.ASTRAFALL.startRun({}));
+    await page.waitForTimeout(2800);
+  }
+  // And keep it alive: a block that spans several seconds of real play can
+  // otherwise lose its scene halfway through and fail on the wrong thing.
+  await page.evaluate(() => {
+    const run = globalThis.ASTRAFALL.scene;
+    if (!run?.player) return;
+    run.player.invuln = 1e6;
+    run.player.hp = run.player.maxHp;
+  });
+}
+
 async function settle(page) {
   for (let i = 0; i < 12; i++) {
     const state = await page.evaluate(() => {
@@ -329,6 +352,62 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- anomalies ----------------
+ * They ride on multipliers the run already applies, so a broken one silently
+ * does nothing rather than throwing. Drive every single one and check the
+ * numbers actually move — and that the draw stays seeded, because the daily
+ * seed stops being a fair comparison the moment it does not. */
+{
+  const r = await page.evaluate(async () => {
+    const { ANOMALIES, blankMods, foldMods, getAnomaly } = await import('./src/data/anomalies.js');
+    const { RNG } = await import('./src/core/RNG.js');
+    const bad = [];
+
+    const neutral = blankMods();
+    for (const a of ANOMALIES) {
+      if (!a.name || !a.desc || !a.icon || !a.color) bad.push(`${a.id}: mist presentatie`);
+      if (getAnomaly(a.id) !== a) bad.push(`${a.id}: niet opzoekbaar`);
+      const m = foldMods([a]);
+      let moved = 0;
+      for (const k in neutral) {
+        if (!Number.isFinite(m[k])) { bad.push(`${a.id}.${k} = ${m[k]}`); continue; }
+        if (m[k] !== neutral[k]) moved++;
+        if (k !== 'grantHp' && m[k] <= 0) bad.push(`${a.id}.${k} <= 0`);
+      }
+      if (!moved) bad.push(`${a.id} verandert niets`);
+      for (const k in a.mods) if (!(k in neutral)) bad.push(`${a.id}: onbekende mod "${k}"`);
+    }
+
+    // Half of them have to be on the player's side, or it is just a tax.
+    const boons = ANOMALIES.filter((a) => a.boon).length;
+    if (boons < 2) bad.push(`maar ${boons} gunstige anomalieën`);
+
+    // Stacking two must compose, not overwrite.
+    const both = foldMods([ANOMALIES[0], ANOMALIES[1]]);
+    for (const k in neutral) {
+      const want = foldMods([ANOMALIES[0]])[k] * foldMods([ANOMALIES[1]])[k] / (k === 'grantHp' ? 1 : 1);
+      if (k !== 'grantHp' && Math.abs(both[k] - want) > 1e-9) bad.push(`stapelen klopt niet voor ${k}`);
+    }
+
+    // Seeded draw: same seed, same order, and never the same one twice.
+    const draw = () => {
+      const rng = new RNG('run|ANOMCHECK');
+      const taken = new Set(); const out = [];
+      for (let i = 0; i < ANOMALIES.length; i++) {
+        const pool = ANOMALIES.filter((a) => !taken.has(a.id));
+        const a = rng.pick(pool); taken.add(a.id); out.push(a.id);
+      }
+      return out;
+    };
+    const a1 = draw(), a2 = draw();
+    if (a1.join() !== a2.join()) bad.push('trekking is niet deterministisch');
+    if (new Set(a1).size !== ANOMALIES.length) bad.push('trekking herhaalt zichzelf');
+    return { bad, count: ANOMALIES.length, boons };
+  });
+  check(`alle ${r.count} anomalieën veranderen echt iets en trekken gezaaid`,
+    r.bad.length === 0, r.bad.slice(0, 4).join(' | '));
+}
+
 /* ---------------- loadout, skins and rewards ----------------
  * Three formula-driven systems with no UI of their own to fail in. A support
  * bonus that inverts, a skin that unlocks itself, or a reward that goes
@@ -577,6 +656,7 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
  * boss fight, and the summon screen — the one where you decide to spend —
  * played the home track. None of that throws, so nothing caught it. */
 {
+  await ensureRun(page);
   const seen = [];
   const track = () => page.evaluate(async () => (await import('./src/core/Audio.js')).Music.trackName);
 
@@ -586,6 +666,7 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   });
   seen.push(['menu', await track()]);
 
+  await ensureRun(page);
   await page.evaluate(async () => {
     const { BOSSES } = await import('./src/data/enemies.js');
     const run = globalThis.ASTRAFALL.scene;

@@ -43,6 +43,7 @@ Je doet het nog een keer.
 | **`?s=CODE` links** | Deel een code, je vriend krijgt exact jouw golven. Geen server nodig. |
 | **Share card** | 1080×1920 PNG, klaar voor Stories en TikTok, met je seed groot in beeld. |
 | **Verzamelkaart** | Dezelfde maat, maar dan je hele roster met sterren en gaten. Pronken met een collectie is het oudste sociale gedrag in het genre. |
+| **Anomalieën** | Elke vierde golf een twist met een naam. Twee mensen op dezelfde seed krijgen dezelfde twists, dus "kijk wat ik kreeg" is te controleren. |
 | **Rarity reveal** | De kleur van de straal verraadt de zeldzaamheid één tel voor de onthulling. Dat is precies waarom een pull kijkbaar is. |
 | **Kaartkeuze** | Drie kaarten, één keuze. Comment-bait: "welke pak jij?" |
 | **Rang** | D tot S+, groot op de kaart. "Ik heb S" is een caption; "984.210" is een screenshot. |
@@ -235,6 +236,7 @@ schermflitsen en camera-shake te dempen.
 | Dagelijks | 1 dag | Inlogreeks, drie opdrachten, gratis summon, gratis proefvlucht met een Astra die je niet bezit, dagelijkse seed |
 | Starpass | 6 weken | 30 tiers, gratis spoor tot het einde, premium keert met terugwerkende kracht uit |
 | Prestaties | open | 34 doelen die zichzelf uitkeren zodra ze kloppen |
+| Anomalieën | per run | Elke vierde golf verandert de lucht: acht modifiers, de helft in jouw voordeel |
 | Bestiarium | open | 16 vijanden en bazen, per stuk vrijgespeeld door ze tegen te komen |
 | Rang | per run | D t/m S+, met de afstand tot de volgende rang erbij |
 | Werf | permanent | Cores in permanente upgrades |

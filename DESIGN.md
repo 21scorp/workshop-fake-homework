@@ -35,6 +35,23 @@ RUN (60-120s)  →  DEATH/CLEAR  →  REWARDS  →  SUMMON  →  UPGRADE  →  R
    └────────────────────────── "nog één keer" ──────────────────────────┘
 ```
 
+### Anomalieën
+
+Voorbij golf tien was de run niet meer een ander gevecht maar hetzelfde
+gevecht met grotere getallen. Schaling verlengt een run; ze varieert er geen.
+Elke vierde golf verandert daarom de lucht: acht modifiers, elk een handvol
+vermenigvuldigers met een naam en een belofte, aangekondigd voordat ze landen
+en achteraf op het resultatenscherm.
+
+De helft staat aan jouw kant. Dat is het punt: een systeem waarin elke twist
+een belasting is leest als moeilijkheidsgraad, en een waarin alles een cadeau
+is leest als ruis. Een twist moet beide kanten op kunnen, anders is de
+aankondiging niet de moeite van het lezen waard.
+
+Ze worden uit de gezaaide stroom van de run getrokken, dus een gedeelde
+`?s=CODE` reproduceert dezelfde anomalieën in dezelfde volgorde — anders zou
+de dagelijkse seed ophouden een eerlijke vergelijking te zijn.
+
 ### Micro-loop (in-run, ~8s)
 `dodge → kill → prisms oppakken → level up → 3 kaarten → sterker → hogere druk`
 
@@ -162,6 +179,6 @@ Astra is gebalanceerd zodra hij bestaat.
 - [x] v0.10 Eigen silhouet per Astra en per vijand, bestiarium, bak-tool voor
       atlassen — de sprite-swap is end-to-end aangetoond
 - [x] v0.11 Roster naar 26 met vier nieuwe wapenpatronen, vierde baas, rangen
-      op de sharekaart, debuutbanner
+      op de sharekaart, debuutbanner, verzamelkaart, anomalieën
 - [ ] v1.0 Echte sprite-art in dat formaat
 - [ ] later Vessel-skins uit de Starpass, echte betaalprovider, server-leaderboard

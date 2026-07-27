@@ -20,6 +20,7 @@ import { haptic } from '../../core/Input.js';
 import { renderShareCard, shareRun, downloadBlob } from '../../systems/Share.js';
 import { rankFor } from '../../systems/Rank.js';
 import { ENEMY, BOSSES } from '../../data/enemies.js';
+import { getAnomaly } from '../../data/anomalies.js';
 import Assets from '../../core/AssetRegistry.js';
 import { accountProgress } from '../../systems/Economy.js';
 import { bus, EV } from '../../core/Events.js';
@@ -39,6 +40,7 @@ export function ResultsScreen(ctx, params = {}) {
   const info = RARITY_INFO[astra.rarity];
   const isBest = run.score >= (save.profile.stats.bestScore ?? 0) && run.score > 0;
   const rank = rankFor(run.score ?? 0);
+  const anomalies = (run.anomalies ?? []).map(getAnomaly).filter(Boolean);
 
   ctx.backdrop?.setAccent(astra.colors.primary, info.color);
   ctx.backdrop?.setIntensity(0.25);
@@ -122,6 +124,17 @@ export function ResultsScreen(ctx, params = {}) {
             onclick: () => { Sfx.play('tap'); ctx.go('bestiary'); },
           }, sc.canvas, el('span', { text: d.def.name }));
         })),
+      ) : null,
+
+      // Which sky you fought under. Two runs on the same seed get the same
+      // anomalies, so this doubles as proof when someone duets your code.
+      anomalies.length ? el('div.res__block', null,
+        el('h3', { text: 'Anomalieën' }),
+        el('div.res__anoms', null, ...anomalies.map((a) =>
+          el('div.anom', { style: { '--c': a.color }, dataset: { boon: a.boon ? '1' : '0' } },
+            el('b', null, a.icon, ' ', a.name),
+            el('span', { text: a.desc }),
+          ))),
       ) : null,
 
       uniqueChips.length ? el('div.res__block', null,

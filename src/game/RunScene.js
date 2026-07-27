@@ -30,6 +30,7 @@ import {
 import { hexA, mixHex } from '../core/Renderer.js';
 
 import { getAstra, STARTER_ID, astraSprite } from '../data/astra.js';
+import { ANOMALIES, ANOMALY_EVERY, blankMods as blankAnomalyMods, foldMods } from '../data/anomalies.js';
 
 /** Elements Prism refracts through, one per hit. */
 const ELEMENTAL_CYCLE = ['ember', 'tide', 'gale', 'terra', 'lumen'];
@@ -193,6 +194,8 @@ export class RunScene extends Scene {
     this.tailwind = 0;       // Zephyr: fire-rate stacks that decay
     this.untouchedT = 0;     // Carousel: seconds since the last hit taken
     this.bossMusicT = 0;     // countdown to handing the boss track back
+    this.anomalies = [];               // active this run, in the order they landed
+    this.anomalyMods = blankAnomalyMods();
     this.tailwindT = 0;
     this.hitCount = 0;       // Basalt: every 4th hit shockwaves
     this.feastKills = 0;     // Umbra: heal every 25 kills
@@ -266,20 +269,23 @@ export class RunScene extends Scene {
     if (up.luck) m.luck += up.luck * 0.05;
   }
 
-  /** Base × star × cards. Recomputed on every card pick, never per frame. */
+  /** Base × star × cards × anomalies. Recomputed on a card pick, never per frame. */
   resolveStats() {
     const a = this.astra;
     const m = this.mods;
     const sp = starPower(this.stars);
     const b = a.stats;
+    // Anomalies ride on the same multipliers the cards use, so they can never
+    // introduce a stat the rest of the run doesn't already understand.
+    const an = this.anomalyMods ?? blankAnomalyMods();
 
     const s = {
       damage: b.power * sp * m.damageMul,
-      fireRate: b.fireRate * m.fireRateMul,
+      fireRate: b.fireRate * m.fireRateMul * an.fireRate,
       projectiles: b.projectiles + m.projectiles,
       spread: b.spread,
-      moveSpeed: 1150 * b.speed * m.moveMul,
-      magnet: 96 * b.magnet * m.magnetMul,
+      moveSpeed: 1150 * b.speed * m.moveMul * an.playerSpeed,
+      magnet: 96 * b.magnet * m.magnetMul * an.magnet,
       crit: clamp01(b.crit + m.crit),
       critDmg: b.critDmg + m.critDmg,
       pierce: m.pierce,
@@ -601,6 +607,7 @@ export class RunScene extends Scene {
       ultsFired: this.ultsFired,
       hitsTaken: this.hitsTaken,
       bestiary: Object.fromEntries(this.seenTypes),
+      anomalies: this.anomalies.map((a) => a.id),
       died,
     };
     bus.emit(EV.RUN_END, result);
@@ -854,10 +861,11 @@ export class RunScene extends Scene {
     }
 
     const b = this.ebullets.spawn();
+    const sp = speed * this.anomalyMods.enemyBulletSpeed;
     b.x = x; b.y = y;
     b.angle = angle;
-    b.vx = Math.cos(angle) * speed;
-    b.vy = Math.sin(angle) * speed;
+    b.vx = Math.cos(angle) * sp;
+    b.vy = Math.sin(angle) * sp;
     b.r = opts.r ?? 8;
     b.dmg = 1;
     b.life = opts.life ?? 6;
@@ -1211,7 +1219,8 @@ export class RunScene extends Scene {
     this.score += gained;
 
     const ultBefore = this.ult;
-    this.ult = Math.min(this.ultMax, this.ult + (e.isBoss ? 40 : e.elite ? 8 : 2.2));
+    this.ult = Math.min(this.ultMax,
+      this.ult + (e.isBoss ? 40 : e.elite ? 8 : 2.2) * this.anomalyMods.ultCharge);
     if (ultBefore < this.ultMax && this.ult >= this.ultMax) bus.emit(EV.ULT_READY);
 
     // Visuals scale with how big a deal the kill was.
@@ -1515,7 +1524,7 @@ export class RunScene extends Scene {
     const pl = this.player;
     switch (p.kind) {
       case 'prism': {
-        const harvest = this.passiveKey === 'harvest' ? 1.25 : 1;
+        const harvest = (this.passiveKey === 'harvest' ? 1.25 : 1) * this.anomalyMods.prismValue;
         const gain = p.value * this.stats.xpMul * harvest;
         this.xp += gain;
         this.score += Math.round(p.value * 2 * SCORE_SCALE * harvest);
@@ -1665,7 +1674,42 @@ export class RunScene extends Scene {
         t: 0, dur: newBiome ? 2.1 : 1.5,
       };
       Sfx.play('tick');
+      // After the wave banner, so the anomaly replaces it rather than the
+      // other way round — the twist is the more interesting of the two.
+      if (wave % ANOMALY_EVERY === 0) this.rollAnomaly(wave);
     }
+  }
+
+  /**
+   * Draw the wave's anomaly.
+   *
+   * From the run's seeded stream, so a shared `?s=CODE` reproduces the same
+   * anomalies in the same order — otherwise the daily seed would stop being a
+   * fair comparison the moment this existed. Never the same one twice in a
+   * run, so a long run keeps introducing something.
+   */
+  rollAnomaly(wave) {
+    const taken = new Set(this.anomalies.map((a) => a.id));
+    const pool = ANOMALIES.filter((a) => !taken.has(a.id));
+    if (!pool.length) return;
+
+    const a = this.rng.pick(pool);
+    this.anomalies.push(a);
+    this.anomalyMods = foldMods(this.anomalies);
+
+    // grantHp is the one that isn't a multiplier: pay it out once, now.
+    if (a.mods.grantHp) {
+      this.player.maxHp += a.mods.grantHp;
+      this.healPlayer(a.mods.grantHp);
+    }
+    this.stats = this.resolveStats();
+
+    this.banner = { text: a.name, sub: a.desc, t: 0, dur: 2.6, color: a.color, icon: a.icon };
+    this.screen.doFlash(0.3, a.color);
+    this.screen.shake(0.35);
+    Sfx.play('warning');
+    haptic('medium');
+    bus.emit(EV.TOAST, { text: `${a.icon} ${a.name}`, tone: a.boon ? 'good' : 'bad', ttl: 2600 });
   }
 
   onWaveClear(wave) {
@@ -2312,23 +2356,27 @@ export class RunScene extends Scene {
     ctx.globalAlpha = alpha;
     ctx.globalCompositeOperation = 'lighter';
     // Thin light bars top and bottom frame the text without hiding anything.
+    // An anomaly banner carries its own colour so the twist reads as a twist
+    // and not as another wave number.
+    const bc = b.color ?? this.stats.color;
     const g = ctx.createLinearGradient(0, 0, view.w, 0);
-    g.addColorStop(0, hexA(this.stats.color, 0));
-    g.addColorStop(0.5, hexA(this.stats.color, 0.85));
-    g.addColorStop(1, hexA(this.stats.color, 0));
+    g.addColorStop(0, hexA(bc, 0));
+    g.addColorStop(0.5, hexA(bc, 0.85));
+    g.addColorStop(1, hexA(bc, 0));
     ctx.fillStyle = g;
     ctx.fillRect(0, y - 34 + slide * 0.3, view.w, 1.5);
     ctx.fillRect(0, y + 26 + slide * 0.3, view.w, 1.5);
     ctx.restore();
 
-    r.text(b.text, view.w / 2 + slide, y, {
-      size: 44, weight: 900, color: '#ffffff', alpha,
-      letterSpacing: 8, shadow: this.stats.color, shadowBlur: 26,
+    r.text(b.icon ? `${b.icon}  ${b.text}` : b.text, view.w / 2 + slide, y, {
+      size: b.icon ? 38 : 44, weight: 900, color: '#ffffff', alpha,
+      letterSpacing: b.icon ? 5 : 8, shadow: b.color ?? this.stats.color, shadowBlur: 26,
     });
     if (b.sub) {
       r.text(b.sub, view.w / 2 - slide, y + 44, {
-        size: 17, weight: 800, color: this.env._col('rim'), alpha: alpha * 0.9,
-        letterSpacing: 7,
+        size: b.color ? 15 : 17, weight: 800,
+        color: b.color ? '#e2e8f0' : this.env._col('rim'), alpha: alpha * 0.9,
+        letterSpacing: b.color ? 2 : 7,
       });
     }
   }

@@ -1240,3 +1240,14 @@
   transition: transform .16s var(--ease-snap);
 }
 .cprogress__top .cshare:active { transform: scale(.9); }
+
+.res__anoms { display: grid; gap: 8px; }
+.anom {
+  display: grid; gap: 2px;
+  padding: 9px 13px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--c) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 36%, transparent);
+}
+.anom b { font-size: 12.5px; font-weight: 800; color: var(--c); letter-spacing: .04em; }
+.anom span { font-size: 11px; color: var(--text-dim); }

@@ -126,7 +126,26 @@ export class WaveDirector {
   }
 
   get isBossWave() { return this.wave > 0 && this.wave % BOSS_EVERY === 0; }
-  get scaling() { return waveScaling(Math.max(1, this.wave)); }
+  /**
+   * Wave scaling, with the active anomalies folded in.
+   *
+   * Anomalies are multipliers on numbers the director already computes, so
+   * they can't introduce a spawn path of their own — and therefore can't
+   * break one either.
+   */
+  get scaling() {
+    const base = waveScaling(Math.max(1, this.wave));
+    const a = this.run.anomalyMods;
+    if (!a) return base;
+    return {
+      ...base,
+      hp: base.hp * a.enemyHp,
+      dmg: base.dmg * a.enemyDmg,
+      speed: base.speed * a.enemySpeed,
+      score: base.score * a.score,
+      density: base.density * a.density,
+    };
+  }
 
   /** Build the spawn plan for the upcoming wave. */
   planWave(wave) {
@@ -180,6 +199,34 @@ export class WaveDirector {
     return orders;
   }
 
+  /**
+   * Thin or thicken a planned wave for an active anomaly.
+   *
+   * Applied *after* planWave rather than inside it, so the composition of a
+   * wave stays a pure function of the seed. Duplicates draw from the same
+   * seeded stream, so a shared seed still reproduces the fight exactly.
+   */
+  applyDensity(orders) {
+    const d = this.run.anomalyMods?.density ?? 1;
+    if (d === 1 || !orders.length) return orders;
+    if (d < 1) {
+      const keep = Math.max(1, Math.round(orders.length * d));
+      return orders.filter((_, i) => i % Math.ceil(orders.length / keep) !== 1).slice(0, keep + 2);
+    }
+    const extra = Math.round(orders.length * (d - 1));
+    const out = orders.slice();
+    for (let i = 0; i < extra; i++) {
+      const src = orders[this.rng.int(0, orders.length - 1)];
+      out.push({
+        ...src,
+        x: clamp(src.x + this.rng.range(-0.12, 0.12), 0.06, 0.94),
+        delay: Math.max(0, src.delay + this.rng.range(-0.4, 0.9)),
+      });
+    }
+    out.sort((a, b) => a.delay - b.delay);
+    return out;
+  }
+
   startWave(wave) {
     this.wave = wave;
     this.waveTime = 0;
@@ -193,7 +240,7 @@ export class WaveDirector {
       this.run.onBossWave(bossForWave(wave));
     } else {
       this.phase = 'spawning';
-      this.queue = this.planWave(wave);
+      this.queue = this.applyDensity(this.planWave(wave));
     }
     this.run.onWaveStart(wave, this.isBossWave);
   }

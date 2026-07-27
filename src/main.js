@@ -189,6 +189,11 @@ function createApp() {
     back: () => router?.back(),
   };
 
+  // Also the handle the test harness drives the game through: a nav bar exists
+  // on some screens and not others, so clicking one is not a reliable way to
+  // get back into a run.
+  globalThis.__afCtx = ctx;
+
   function buildRouter() {
     router = new Router(uiRoot, ctx);
     router
@@ -407,4 +412,7 @@ globalThis.ASTRAFALL = {
   save, Assets, bus, EV, Music, Sfx,
   get game() { return globalThis.__afGame; },
   get scene() { return globalThis.__afGame?.scene; },
+  /** Navigation, for the console and for tests. */
+  go: (n, p) => globalThis.__afCtx?.go(n, p),
+  startRun: (o) => globalThis.__afCtx?.startRun(o),
 };
