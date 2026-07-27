@@ -62,6 +62,25 @@ export const BANNERS = [
     accent: '#ff5cf0',
   },
   {
+    id: 'debut',
+    name: 'NIEUWE CADANS',
+    tagline: 'Vijf Astra die een ander ritme spelen.',
+    subtitle: 'Debuutbanner — de nieuwkomers, te betalen met Stardust',
+    // Priced in the soft currency on purpose. Premium currency buys time, not
+    // power; a debut nobody without a wallet can chase is a debut that never
+    // trends.
+    currency: 'stardust',
+    cost1: 180,
+    cost10: 1620,
+    rates: [0.52, 0.30, 0.13, 0.04, 0.010],
+    featured: ['monsoon', 'thresher', 'gyre', 'carom', 'volley'],
+    featuredBoost: 0.7,
+    limited: true,
+    pity: { soft: 62, hard: 78, srEvery: 10 },
+    colors: ['#0c4a6e', '#1e40af', '#312e81'],
+    accent: '#38bdf8',
+  },
+  {
     id: 'voidcall',
     name: 'STEM UIT DE LEEGTE',
     tagline: 'OUROBOROS keert terug. Zoals altijd.',

@@ -38,6 +38,12 @@ export function SummonScreen(ctx, params = {}) {
     }, el('span', { text: b.name }))),
   );
 
+  /** Keep the selected banner visible — with four of them the strip scrolls. */
+  function revealTab() {
+    const t = tabs.children[bannerIdx];
+    t?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  }
+
   node.append(
     el('div.topbar', null,
       el('button.backbtn', { onclick: () => { Sfx.play('back'); ctx.go('home', { replace: true }); } }, el('span', { text: '‹' })),
@@ -50,6 +56,7 @@ export function SummonScreen(ctx, params = {}) {
   );
 
   function render() {
+    revealTab();
     const banner = BANNERS[bannerIdx];
     save.profile.lastBanner = banner.id;
     ctx.backdrop?.setAccent(banner.accent, banner.colors[1]);

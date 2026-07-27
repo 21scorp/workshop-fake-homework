@@ -412,18 +412,26 @@ function drawPrism(ctx, s, v = NEUTRAL) {
   const CHROMA = [['#ff2fd0', -1.6], ['#22d3ee', 0], ['#fbbf24', 1.6]];
   halo(ctx, r * 3.2, '#c084fc', 0.42);
 
+  // Solid body first, in normal blending. Three additive copies alone sum to
+  // white wherever they overlap, and the overlap is the entire middle of the
+  // shape — at portrait and banner size KAIROS came out as a white blob with
+  // fringes. Lowering the alpha only moved the size at which it blew out.
+  // A real body plus *fringes* keeps the facets at every scale.
+  ctx.save();
+  ctx.rotate(t * 0.55 * v.flip);
+  crystal(ctx, r, facets, '#7c3aed', 0, 1);
+  ctx.rotate(Math.PI);
+  crystal(ctx, r * 0.82, facets, '#a855f7', 0, 0.9);
+  ctx.restore();
+
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for (const [col, off] of CHROMA) {
     ctx.save();
-    // Wider separation and lower per-layer alpha: three additive copies at 0.72
-    // sum straight to white and the facets vanish. At 0.45 the refraction reads.
-    ctx.translate(Math.cos(t * 2.2) * off * 2.2, Math.sin(t * 2.6) * off * 2.2);
+    ctx.translate(Math.cos(t * 2.2) * off * 3.4, Math.sin(t * 2.6) * off * 3.4);
     ctx.rotate(t * 0.55 * v.flip);
-    ctx.globalAlpha *= 0.45;
+    ctx.globalAlpha *= 0.3;
     crystal(ctx, r, facets, col, 0, 1);
-    ctx.rotate(Math.PI);
-    crystal(ctx, r * 0.82, facets, col, 0, 1);
     ctx.restore();
   }
   ctx.restore();
@@ -448,10 +456,10 @@ function drawPrism(ctx, s, v = NEUTRAL) {
 
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  ctx.globalAlpha *= 0.75;
+  ctx.globalAlpha *= 0.6;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.2 * (1 + Math.sin(t * 5) * 0.15), 0, TAU);
-  ctx.fillStyle = '#ffffff';
+  ctx.arc(0, 0, r * 0.16 * (1 + Math.sin(t * 5) * 0.15), 0, TAU);
+  ctx.fillStyle = '#f5d0fe';
   ctx.fill();
   ctx.restore();
 

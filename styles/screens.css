@@ -218,7 +218,15 @@
 
 .summon { display: flex; flex-direction: column; overflow: hidden; }
 
-.summon__tabs { display: flex; gap: 6px; padding: 0 14px 10px; overflow-x: auto; }
+.summon__tabs {
+  display: flex; gap: 6px; padding: 0 14px 10px;
+  overflow-x: auto; scrollbar-width: none;
+  /* Four banners no longer fit the width. Fade the right edge so the strip
+     says "there is more" instead of just clipping the last name. */
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
+}
+.summon__tabs::-webkit-scrollbar { display: none; }
 .stab {
   flex: 0 0 auto;
   padding: 8px 14px;
@@ -275,7 +283,9 @@
   color: var(--gold);
 }
 .bannerart__hero {
-  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  /* Off-centre on purpose: the rate-up column is pinned right, and a 270px
+     headliner centred in a 384px card ends up half behind it. */
+  position: absolute; top: 14px; left: 39%; transform: translateX(-50%);
   filter: drop-shadow(0 16px 34px rgba(0,0,0,.65));
   animation: float 4s ease-in-out infinite;
 }
