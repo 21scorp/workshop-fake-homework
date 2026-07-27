@@ -951,3 +951,40 @@
   padding: 10px; border-radius: var(--r-md);
   background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.3);
 }
+
+/* ---- results: achievements, season, trial conversion ---- */
+.res__achs { display: grid; gap: 6px; }
+.res__ach {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 13px;
+  border-radius: var(--r-md);
+  background: rgba(251,191,36,.1);
+  border: 1px solid rgba(251,191,36,.3);
+  animation: bestPop .5s var(--ease-back) both;
+}
+.res__achi { font-size: 17px; color: var(--gold); }
+.res__ach b { display: block; font-size: 13px; font-weight: 800; }
+.res__ach i { display: block; font-size: 11px; font-style: normal; color: var(--text-faint); }
+
+.res__pass {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: rgba(168,85,247,.12);
+  border: 1px solid rgba(168,85,247,.34);
+  text-align: left; width: 100%;
+}
+.res__pass > span:first-child { font-size: 18px; color: var(--gold); }
+.res__pass b { display: block; font-size: 13.5px; font-weight: 800; }
+.res__pass i { display: block; font-size: 11px; font-style: normal; color: var(--text-dim); }
+.res__passgo { margin-left: auto; font-size: 20px; color: var(--text-faint); }
+
+.res__trial {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 14px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--c) 20%, transparent), transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+}
+.res__trialtop { font-size: 9px; font-weight: 900; letter-spacing: .2em; color: var(--c); }
+.res__trialtxt { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }

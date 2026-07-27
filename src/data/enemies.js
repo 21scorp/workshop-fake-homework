@@ -117,6 +117,51 @@ export const ENEMY = {
     gun: { cooldown: 2.6, charge: 0.6, bullets: 5, speed: 260, spread: 0.7, aimed: true },
   },
 
+  warden: {
+    id: 'warden',
+    sprite: 'enemy/tank',
+    name: 'Schildwacht',
+    hp: 130, dmg: 2, speed: 38, radius: 40,
+    score: 90, xp: 22,
+    color: '#38bdf8', color2: '#e0f2fe',
+    ai: 'hover',
+    contact: true,
+    armor: 0.4,             // needs a build, not just a trigger finger
+    weight: 3,
+    minWave: 10,
+    gun: { cooldown: 3.2, charge: 1.0, bullets: 3, speed: 280, spread: 0.45, aimed: true },
+  },
+
+  reaper: {
+    id: 'reaper',
+    sprite: 'enemy/splitter',
+    name: 'Maaier',
+    hp: 60, dmg: 2, speed: 150, radius: 26,
+    score: 70, xp: 18,
+    color: '#f43f5e', color2: '#fecdd3',
+    ai: 'charge',           // faster, meaner lancer for the late waves
+    contact: true,
+    weight: 4,
+    minWave: 11,
+    charge: { windup: 0.55, dashSpeed: 900, dashTime: 0.5, cooldown: 1.2 },
+  },
+
+  seraph: {
+    id: 'seraph',
+    sprite: 'enemy/weaver',
+    name: 'Serafijn',
+    hp: 100, dmg: 2, speed: 90, radius: 30,
+    score: 120, xp: 26,
+    color: '#fbbf24', color2: '#fef3c7',
+    ai: 'orbit',
+    contact: true,
+    armor: 0.1,
+    weight: 3,
+    minWave: 13,
+    trail: { life: 1.8, radius: 18, dmg: 1, every: 0.22 },
+    gun: { cooldown: 2.2, charge: 0.5, bullets: 6, speed: 230, spread: 6.283, aimed: false, spiral: 0.6 },
+  },
+
   spinner: {
     id: 'spinner',
     sprite: 'enemy/weaver',

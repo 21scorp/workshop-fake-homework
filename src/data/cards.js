@@ -115,6 +115,19 @@ export const CARDS = [
     apply: (m) => { m.luck += 0.18; },
   },
 
+  {
+    id: 'scavenge', name: 'Aaseter', icon: '◇', rarity: RARITY.R, max: 3,
+    tag: 'Nut', color: '#a3e635',
+    desc: () => 'Prisms leven 60% langer en vliegen sneller',
+    apply: (m) => { m.pickupLife += 0.6; m.magnetMul += 0.15; },
+  },
+  {
+    id: 'gambler', name: 'Gokker', icon: '⚄', rarity: RARITY.R, max: 3,
+    tag: 'Aanval', color: '#f0abfc',
+    desc: () => '+30% schade, maar 15% van je schoten mist',
+    apply: (m) => { m.damageMul += 0.3; m.misfire += 0.15; },
+  },
+
   /* ================= SUPERIOR: change how you play ================= */
   {
     id: 'orbitals', name: 'Wachters', icon: '◍', rarity: RARITY.SR, max: 4,
@@ -171,6 +184,19 @@ export const CARDS = [
     apply: (m) => { m.bounce += 2; },
   },
 
+  {
+    id: 'siphon', name: 'Sifon', icon: '◍', rarity: RARITY.SR, max: 2,
+    tag: 'Exotisch', color: '#22d3ee',
+    desc: () => 'Prisms geven ook Ultimate-lading',
+    apply: (m) => { m.prismUlt += 1; },
+  },
+  {
+    id: 'overheat', name: 'Oververhitting', icon: '≡', rarity: RARITY.SR, max: 2,
+    tag: 'Aanval', color: '#fb923c',
+    desc: () => 'Hoe langer je vuurt zonder te bewegen, hoe harder je slaat',
+    apply: (m) => { m.overheat += 1; },
+  },
+
   /* ================= STELLAR: build-defining ================= */
   {
     id: 'overdrive', name: 'OVERDRIVE', icon: '⟁', rarity: RARITY.SSR, max: 1,
@@ -216,6 +242,20 @@ export const CARDS = [
     desc: () => 'Elk schot wordt 0.2s later herhaald',
     apply: (m) => { m.echo += 1; },
   },
+  {
+    id: 'juggernaut', name: 'STORMRAM', icon: '⬢', rarity: RARITY.SSR, max: 1,
+    tag: 'Legendarisch', color: '#34d399',
+    desc: () => '+3 max HP, maar je vuurt 25% trager',
+    apply: (m) => { m.maxHp += 3; m.healNow += 3; m.fireRateMul -= 0.25; },
+    requires: (st) => (st.hp ?? 0) >= 2,
+  },
+  {
+    id: 'nova_core', name: 'NOVAKERN', icon: '✺', rarity: RARITY.SSR, max: 1,
+    tag: 'Legendarisch', color: '#fbbf24',
+    desc: () => 'Elke level-up ontketent een schermvullende schokgolf',
+    apply: (m) => { m.levelNova += 1; },
+    requires: (st) => (st.xp ?? 0) >= 1,
+  },
 ];
 
 const BY_ID = new Map(CARDS.map((c) => [c.id, c]));
@@ -257,5 +297,10 @@ export function blankMods() {
     blackhole: 0,
     revives: 0,
     echo: 0,
+    prismUlt: 0,
+    overheat: 0,
+    pickupLife: 0,
+    misfire: 0,
+    levelNova: 0,
   };
 }

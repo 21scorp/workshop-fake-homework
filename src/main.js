@@ -302,9 +302,9 @@ function createApp() {
     cardPicker.close();
     const { rewards, levels } = commitRun(result);
     progressQuests(result);
-    evaluateAchievements(result);
-    addSeasonXp(result);
-    toMenu('results', { run: result, rewards, levels });
+    const unlocked = evaluateAchievements(result);
+    const season = addSeasonXp(result);
+    toMenu('results', { run: result, rewards, levels, unlocked, season });
   });
 
   // Collection milestones can complete outside a run.

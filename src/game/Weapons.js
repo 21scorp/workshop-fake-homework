@@ -25,6 +25,8 @@ const UP = -Math.PI / 2;
 /** Spawn one bullet with the shared defaults applied. */
 function shoot(ctx, { x, y, angle, speed, dmgMul = 1, sizeMul = 1, extra = {} }) {
   const { run, stats, weapon } = ctx;
+  // GOKKER trades reliability for damage: a misfire never leaves the barrel.
+  if (stats.misfire > 0 && Math.random() < stats.misfire) return null;
   const b = run.bullets.spawn();
   b.x = x; b.y = y;
   const sp = speed ?? (weapon.bulletSpeed ?? 900) * stats.bulletSpeedMul;
@@ -32,7 +34,7 @@ function shoot(ctx, { x, y, angle, speed, dmgMul = 1, sizeMul = 1, extra = {} })
   b.vy = Math.sin(angle) * sp;
   b.speed = sp;
   b.angle = angle;
-  b.dmg = stats.damage * dmgMul * (run.passiveDamageMul ?? 1);
+  b.dmg = stats.damage * dmgMul * (run.passiveDamageMul ?? 1) * (run.overheatMul ?? 1);
   b.r = (weapon.radius ?? 8) * stats.bulletSize * sizeMul;
   b.sprite = weapon.bullet ?? 'bullet/basic';
   b.color = stats.color;
@@ -132,6 +134,7 @@ const PATTERNS = {
     const n = Math.max(1, stats.projectiles);
     for (const a of fan(UP, n, weapon.spread ?? 0.5)) {
       const b = shoot(ctx, { x: player.x, y: player.y - 14, angle: a });
+      if (!b) continue;
       b.homing = Math.max(b.homing, weapon.turnRate ?? 3);
       b.target = nearestEnemy(run, player.x, player.y, 900);
     }
@@ -160,6 +163,7 @@ const PATTERNS = {
     const n = Math.max(1, stats.projectiles);
     for (const a of fan(UP, n, weapon.spread ?? 0.12)) {
       const b = shoot(ctx, { x: player.x, y: player.y - 18, angle: a, dmgMul: 1.15 });
+      if (!b) continue;
       b.pierce = 99;
       b.accel = 900;    // "draft" — speeds up as it travels
     }
@@ -213,7 +217,7 @@ const PATTERNS = {
           pierce: 99, cooldownMap: new Map(),
         },
       });
-      b.dmg = stats.damage * 0.5;
+      if (b) b.dmg = stats.damage * 0.5;
     }
   },
 
@@ -287,6 +291,7 @@ const PATTERNS = {
     const n = Math.max(1, stats.projectiles);
     for (const a of fan(UP, n, weapon.spread ?? 0.15)) {
       const b = shoot(ctx, { x: player.x, y: player.y - 16, angle: a });
+      if (!b) continue;
       b.chains = Math.max(b.chains, weapon.chains ?? 2);
       b.chainRange = weapon.chainRange ?? 160;
     }

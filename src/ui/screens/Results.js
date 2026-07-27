@@ -25,6 +25,8 @@ export function ResultsScreen(ctx, params = {}) {
   const run = params.run ?? {};
   const rewards = params.rewards ?? {};
   const levels = params.levels ?? [];
+  const unlocked = params.unlocked ?? [];
+  const season = params.season ?? null;
   const astra = getAstra(run.astraId) ?? getAstra('pip');
   const info = RARITY_INFO[astra.rarity];
   const isBest = run.score >= (save.profile.stats.bestScore ?? 0) && run.score > 0;
@@ -112,6 +114,37 @@ export function ResultsScreen(ctx, params = {}) {
         levels.length ? el('div.res__levelup', { text: `⬆ Level ${levels[levels.length - 1].level} bereikt!` }) : null,
       ),
 
+      unlocked.length ? el('div.res__block', null,
+        el('h3', { text: 'Prestaties' }),
+        el('div.res__achs', null, ...unlocked.map((a) =>
+          el('div.res__ach', null,
+            el('span.res__achi', { text: a.icon }),
+            el('span', null, el('b', { text: a.name }), el('i', { text: a.desc })),
+          ))),
+      ) : null,
+
+      season && season.tiersGained > 0 ? el('div.res__pass', {
+        onclick: () => ctx.go('starpass'),
+      },
+        el('span', { text: '★' }),
+        el('span', null,
+          el('b', { text: `Starpass tier ${season.tier}` }),
+          el('i', { text: `+${season.gained} seizoen-XP · ${season.tiersGained} nieuwe tier${season.tiersGained > 1 ? 's' : ''}` }),
+        ),
+        el('span.res__passgo', { text: '›' }),
+      ) : null,
+
+      run.isTrial ? el('div.res__trial', { style: { '--c': astra.colors.primary } },
+        el('div', null,
+          el('div.res__trialtop', { text: 'PROEFVLUCHT AFGELOPEN' }),
+          el('div.res__trialtxt', { text: `${astra.name} gaat terug naar de leegte. Zelf toevoegen aan je verzameling?` }),
+        ),
+        button('Summon', {
+          variant: 'gold', size: 'md', icon: '✦',
+          onclick: () => ctx.go('summon'),
+        }),
+      ) : null,
+
       run.seed ? el('div.res__seed', null,
         el('div', null,
           el('span', { text: run.isDaily ? 'DAGELIJKSE SEED' : 'RUN SEED' }),
@@ -134,7 +167,13 @@ export function ResultsScreen(ctx, params = {}) {
       ),
       button('NOG EEN KEER', {
         variant: 'gold', size: 'xl', full: true, sfx: 'confirm', haptics: 'medium',
-        onclick: () => ctx.startRun({ astraId: astra.id, seed: run.isDaily ? run.seed : undefined, daily: run.isDaily }),
+        // A trial Astra is borrowed for exactly one run, so the retry falls
+        // back to whatever the player actually owns.
+        onclick: () => ctx.startRun({
+          astraId: run.isTrial ? undefined : astra.id,
+          seed: run.isDaily ? run.seed : undefined,
+          daily: run.isDaily,
+        }),
       }),
     ),
   );

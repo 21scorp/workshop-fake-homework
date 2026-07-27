@@ -171,6 +171,8 @@ export class RunScene extends Scene {
     this.fireTimer = 0;
     this.revivesLeft = 0;
     this.passiveKey = this.astra.passive?.key ?? null;
+    this.heat = 0;           // OVERVERHITTING build-up
+    this.overheatMul = 1;
     this.tailwind = 0;       // Zephyr: fire-rate stacks that decay
     this.tailwindT = 0;
     this.hitCount = 0;       // Basalt: every 4th hit shockwaves
@@ -255,6 +257,10 @@ export class RunScene extends Scene {
       luck: m.luck,
       thorns: m.thorns,
       echo: m.echo,
+      misfire: m.misfire,
+      overheat: m.overheat,
+      prismUlt: m.prismUlt,
+      pickupLife: m.pickupLife,
       element: a.element,
       color: a.colors.primary,
       color2: a.colors.secondary,
@@ -1350,7 +1356,7 @@ export class RunScene extends Scene {
     p.vx = this.rng.range(-70, 70);
     p.vy = this.rng.range(-110, -30);
     p.t = 0;
-    p.life = kind === 'prism' ? 12 : 16;
+    p.life = (kind === 'prism' ? 12 : 16) * (1 + (this.mods?.pickupLife ?? 0));
     p.value = opts.value ?? 1;
     p.magnetised = false;
     switch (kind) {
@@ -1407,6 +1413,9 @@ export class RunScene extends Scene {
         const gain = p.value * this.stats.xpMul;
         this.xp += gain;
         this.score += Math.round(p.value * 2 * SCORE_SCALE);
+        if (this.mods.prismUlt > 0) {
+          this.ult = Math.min(this.ultMax, this.ult + 0.9 * this.mods.prismUlt);
+        }
         this.fx.absorb(p.x, p.y, '#67e8f9');
         Sfx.play('pickup', { step: Math.min(24, this.combo * 0.4), gate: 0.012 });
         while (this.xp >= this.xpNeed) this.levelUp();
@@ -1459,6 +1468,14 @@ export class RunScene extends Scene {
     if (this.astra.passive?.key === 'bloomheal') {
       this.healPlayer(1);
       this.player.invuln = Math.max(this.player.invuln, 4);
+    }
+
+    if (this.mods.levelNova > 0) {
+      this.spawnShockwave(this.player.x, this.player.y, 560,
+        this.stats.damage * 5 * this.mods.levelNova,
+        { color: '#fbbf24', big: true, knockback: 320, stun: 0.6 });
+      this.screen.doFlash(0.4, '#fef3c7');
+      Sfx.play('explode', { size: 1.4 });
     }
 
     this.pendingCards = this.drawCards(3);
@@ -1744,6 +1761,17 @@ export class RunScene extends Scene {
 
   /** Passives whose value changes moment to moment. */
   updatePassives(dt) {
+    // OVERVERHITTING: standing your ground and keeping the trigger down builds
+    // heat; moving vents it. It gives a stationary playstyle a real payoff
+    // without ever being safer than moving.
+    if (this.mods.overheat > 0) {
+      const venting = this.player.thrust > 0.2;
+      this.heat = clamp(this.heat + (venting ? -dt * 1.6 : dt * 0.34), 0, 1);
+      this.overheatMul = 1 + this.heat * 0.5 * this.mods.overheat;
+    } else {
+      this.overheatMul = 1;
+    }
+
     if (this.passiveKey === 'tailwind') {
       this.tailwindT -= dt;
       if (this.tailwindT <= 0 && this.tailwind > 0) {

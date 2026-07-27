@@ -189,7 +189,7 @@ export async function renderShareCard(run) {
   ctx.fillRect(-360, -360, 720, 720);
 
   Assets.draw(ctx, astraSprite(astra, 'idle'), 0, 0, {
-    t: 1.4, scale: 4.6, tint: astra.colors.primary, tint2: astra.colors.secondary,
+    t: 1.4, scale: 6.4, tint: astra.colors.primary, tint2: astra.colors.secondary,
   });
   ctx.restore();
 
@@ -298,11 +298,31 @@ export async function renderShareCard(run) {
   ctx.textAlign = 'center';
   ctx.font = '600 28px Inter, system-ui, sans-serif';
   ctx.fillStyle = '#475569';
-  ctx.fillText(`${save.profile.name} · Lv ${save.profile.account.level}`, CARD_W / 2, 1830);
+  ctx.fillText(`${save.profile.name} · Lv ${save.profile.account.level}`, CARD_W / 2, 1812);
+
+  // Where to play it. A share card without an address is a screenshot of a
+  // score; with one it's an invitation.
+  const host = shareHost();
+  if (host) {
+    ctx.font = '700 26px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.letterSpacing = '3px';
+    ctx.fillText(host, CARD_W / 2 + 2, 1858);
+    ctx.letterSpacing = '0px';
+  }
   ctx.restore();
 
   const blob = await new Promise((res) => cv.toBlob(res, 'image/png', 0.95));
   return { canvas: cv, blob };
+}
+
+/** The address people should type, or nothing when running locally. */
+function shareHost() {
+  try {
+    const h = location.host;
+    if (!h || /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(h)) return null;
+    return h.replace(/^www\./, '');
+  } catch { return null; }
 }
 
 function roundRect(ctx, x, y, w, h, r) {
