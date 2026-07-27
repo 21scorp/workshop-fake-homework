@@ -194,10 +194,20 @@ npm test                          # qa.mjs + systems.mjs
 npm run balance                   # pacing-meting met een auto-player
 ```
 
-`qa.mjs` klikt door de schermen. `systems.mjs` vuurt af wat één speelsessie
-nooit raakt: elk geluid, elk wapenpatroon, elke ultimate, elke vijand, elke
-kaart — plus de sprite-atlasroute van begin tot eind. Die drie subsystemen
-falen stil, dus faalt die suite ook op een `console.warn`.
+`qa.mjs` klikt door de schermen (31 controles). `systems.mjs` vuurt af wat één
+speelsessie nooit raakt (43 controles): elk geluid, elk wapenpatroon, elke
+ultimate, elke vijand, elke kaart — plus de sprite-atlasroute van begin tot
+eind. Die drie subsystemen falen stil, dus faalt die suite ook op een
+`console.warn`.
+
+Een deel van die controles bewaakt iets wat nergens een fout gooit: of de
+tekst nog klopt met de code. Elke kaartregel op elke stapel, elk getal in een
+ultimate-beschrijving tegen zijn recept, elke winkelupgrade tegen de
+modifier-tas, elke prestatie tegen zijn voorwaarde, elk datavel tegen de vraag
+of iemand het leest, en de bannertabel tegen twintigduizend echte pulls. Zes
+bugs in deze build hadden precies die vorm — een passive die niets deed, een
+elite die niemand genas, kaarten die "+0%" beloofden — en geen ervan haalde
+ooit een suite neer, want beloftes crashen niet.
 
 De balanstest is geen test maar een meetinstrument: een bot speelt het echte
 spel en rapporteert de tijdlijn. Zo zijn de drie ergste pacing-problemen
