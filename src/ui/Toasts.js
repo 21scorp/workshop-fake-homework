@@ -25,7 +25,9 @@ export class Toasts {
     this.root.appendChild(node);
     this.items.push(node);
 
-    while (this.items.length > 3) this.dismiss(this.items[0]);
+    // Two at a time. Three stacked toasts cover the thing the player is
+    // looking at, which is the opposite of what a toast is for.
+    while (this.items.length > 2) this.dismiss(this.items[0]);
     setTimeout(() => this.dismiss(node), ttl);
   }
 

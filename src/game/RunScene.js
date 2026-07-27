@@ -137,7 +137,10 @@ export class RunScene extends Scene {
 
     this.astraId = params.astraId || p.equipped || STARTER_ID;
     this.astra = getAstra(this.astraId) ?? getAstra(STARTER_ID);
-    this.stars = p.collection[this.astraId]?.stars ?? 1;
+    // A trial flight loans an Astra you don't own, so the star level comes
+    // from the caller rather than from the collection.
+    this.isTrial = !!params.trial;
+    this.stars = params.stars ?? p.collection[this.astraId]?.stars ?? 1;
 
     this.mods = blankMods();
     this.cardStacks = {};
@@ -163,6 +166,7 @@ export class RunScene extends Scene {
     this.ultMax = 100;
     this.ultsFired = 0;
     this.bossesKilled = 0;
+    this.hitsTaken = 0;
     this.time = 0;
     this.fireTimer = 0;
     this.revivesLeft = 0;
@@ -453,6 +457,7 @@ export class RunScene extends Scene {
     }
 
     p.hp -= amount;
+    this.hitsTaken++;
     p.invuln = 1.35 * this.mods.iframeMul;
     p.flash = 1;
     this.combo = 0;
@@ -529,8 +534,10 @@ export class RunScene extends Scene {
       astraId: this.astraId,
       seed: this.seed,
       isDaily: this.isDaily,
+      isTrial: this.isTrial,
       bossesKilled: this.bossesKilled,
       ultsFired: this.ultsFired,
+      hitsTaken: this.hitsTaken,
       died,
     };
     bus.emit(EV.RUN_END, result);

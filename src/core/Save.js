@@ -57,6 +57,7 @@ export function defaultProfile() {
       questDay: null,
       quests: [],
       freePullDay: null,
+      trialDay: null,
       seedScores: {},      // seedCode → best score
     },
 
@@ -83,6 +84,9 @@ export function defaultProfile() {
 
     /** Owned SKUs / entitlements. Mirrors what a real IAP receipt store holds. */
     entitlements: {},
+
+    /** achievementId → { at } for everything unlocked. */
+    achievements: {},
   };
 }
 
@@ -94,7 +98,7 @@ export function defaultProfile() {
 const MIGRATIONS = {
   1: (p) => { p.loadout ??= [null, null, null]; p.entitlements ??= {}; return p; },
   2: (p) => { p.daily.seedScores ??= {}; p.stats.ultsFired ??= 0; return p; },
-  3: (p) => { p.settings.lang ??= 'nl'; p.stats.bestTime ??= 0; return p; },
+  3: (p) => { p.settings.lang ??= 'nl'; p.stats.bestTime ??= 0; p.achievements ??= {}; return p; },
 };
 
 /** Fill in anything a migration or a hand-edited save left out. */

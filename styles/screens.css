@@ -782,3 +782,61 @@
   .cgrid { grid-template-columns: repeat(4, 1fr); }
   .res__score { font-size: 68px; }
 }
+
+/* ---- trial flight ---- */
+.trial {
+  position: relative;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px 10px 8px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(120deg,
+    color-mix(in srgb, var(--c) 22%, transparent),
+    color-mix(in srgb, var(--r) 12%, transparent) 70%,
+    transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  text-align: left;
+  overflow: hidden;
+  transition: transform .16s var(--ease-snap);
+}
+.trial:active { transform: scale(.98); }
+.trial[data-used="1"] { opacity: .5; filter: saturate(.5); }
+.trial__art { flex: 0 0 auto; filter: drop-shadow(0 6px 14px rgba(0,0,0,.6)); animation: float 3.6s ease-in-out infinite; }
+.trial__mid { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.trial__eyebrow { font-size: 9px; font-weight: 900; letter-spacing: .2em; color: var(--c); }
+.trial__name { font-size: 17px; font-weight: 900; }
+.trial__desc { font-size: 11.5px; color: var(--text-dim); }
+.trial__go {
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--c) 26%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  color: #fff; font-size: 13px;
+}
+
+.home__statslinks { display: flex; gap: 12px; }
+
+/* ---- achievements ---- */
+.achgroup { margin-bottom: 6px; }
+.ach {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,.035);
+  margin-bottom: 6px;
+}
+.ach[data-done="1"] { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.26); }
+.ach__icon {
+  width: 32px; height: 32px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  font-size: 15px;
+}
+.ach[data-done="1"] .ach__icon { background: rgba(251,191,36,.2); color: var(--gold); }
+.ach__mid { flex: 1; display: grid; gap: 4px; min-width: 0; }
+.ach__name { font-size: 13px; font-weight: 800; }
+.ach__desc { font-size: 11px; color: var(--text-faint); }
+.ach__reward { font-size: 11px; font-weight: 800; color: var(--text-dim); white-space: nowrap; }
+.ach[data-done="1"] .ach__reward { color: var(--success); font-size: 15px; }

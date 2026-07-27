@@ -10,7 +10,9 @@
 import { save } from '../core/Save.js';
 import { bus, EV } from '../core/Events.js';
 import { grantAll } from './Economy.js';
-import { dailySeedCode } from '../core/RNG.js';
+import { dailySeedCode, RNG } from '../core/RNG.js';
+import { ASTRA } from '../data/astra.js';
+import { RARITY } from '../data/constants.js';
 
 /** Local calendar day key, so "today" matches the player's midnight. */
 export function dayKey(d = new Date()) {
@@ -164,6 +166,35 @@ export function claimQuest(id) {
 }
 
 export const questsComplete = () => todaysQuests().every((q) => q.claimed);
+
+/* ============================================================
+   TRIAL ASTRA — one free flight a day with something you don't own
+
+   The hardest thing to sell in a gacha is a unit nobody has felt. A player who
+   has flown SOLARIS for ninety seconds knows exactly what they'd be pulling
+   for; a player looking at a stat block does not. So every day one Astra you
+   don't have is unlocked for a single run, at two stars, for free.
+
+   It costs nothing to give away — the run is over in two minutes — and it is
+   the most honest advertisement the game can make.
+   ============================================================ */
+
+export function trialAstra() {
+  const rng = new RNG(`trial-${dayKey()}`);
+  const owned = save.profile.collection;
+  const unowned = ASTRA.filter((a) => !owned[a.id] && a.rarity >= RARITY.SR);
+  // Everything owned? Then the trial is a high-star loan instead of a demo.
+  const pool = unowned.length ? unowned : ASTRA.filter((a) => a.rarity >= RARITY.SSR);
+  return rng.pick(pool) ?? ASTRA[0];
+}
+
+export const trialStars = () => 2;
+export const trialUsed = () => save.profile.daily.trialDay === dayKey();
+
+export function consumeTrial() {
+  save.profile.daily.trialDay = dayKey();
+  save.touch();
+}
 
 /* ============================================================
    DAILY SEED

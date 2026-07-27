@@ -18,8 +18,9 @@ import { RARITY_INFO, ELEMENT } from '../../data/constants.js';
 import { abbrev, grouped, durationStr } from '../../core/Math2.js';
 import {
   streakState, claimDaily, todaysQuests, claimQuest, dailySeed, dailyBest,
-  msUntilReset, freePullAvailable,
+  msUntilReset, freePullAvailable, trialAstra, trialStars, trialUsed, consumeTrial,
 } from '../../systems/Daily.js';
+import { list as achievementList, summary as achievementSummary, GROUPS } from '../../systems/Achievements.js';
 import { collectionStats } from '../../systems/Gacha.js';
 import { leaderboard } from '../../systems/Economy.js';
 import { Sfx } from '../../core/Audio.js';
@@ -42,6 +43,7 @@ export function HomeScreen(ctx) {
   const quests = todaysQuests();
   const questsReady = quests.filter((q) => !q.claimed && q.progress >= q.target).length;
   const cstats = collectionStats();
+  const ach = achievementSummary();
 
   /* ---------------- hero ---------------- */
 
@@ -113,6 +115,38 @@ export function HomeScreen(ctx) {
       }),
       iconButton('↗', { label: 'Deel', onclick: () => ctx.share({ seed, score: best }) }),
     ),
+  );
+
+  /* ---------------- trial flight ---------------- */
+
+  const trial = trialAstra();
+  const trialDone = trialUsed();
+  const trialInfo = RARITY_INFO[trial.rarity];
+  const trialSprite = new SpriteCanvas(astraSprite(trial, 'idle'), {
+    size: 92, tint: trial.colors.primary, tint2: trial.colors.secondary, scale: 1,
+  });
+
+  const trialCard = el('button.trial', {
+    dataset: { used: trialDone ? '1' : '0' },
+    style: { '--c': trial.colors.primary, '--r': trialInfo.color },
+    onclick: () => {
+      if (trialDone) {
+        bus.emit(EV.TOAST, { text: 'Proefvlucht is vandaag al gebruikt', tone: 'info' });
+        return;
+      }
+      Sfx.play('confirm');
+      haptic('medium');
+      consumeTrial();
+      ctx.startRun({ astraId: trial.id, trial: true, stars: trialStars() });
+    },
+  },
+    el('div.trial__art', null, trialSprite.canvas),
+    el('div.trial__mid', null,
+      el('div.trial__eyebrow', { text: trialDone ? 'PROEFVLUCHT GEBRUIKT' : 'GRATIS PROEFVLUCHT' }),
+      el('div.trial__name', { text: trial.name }),
+      el('div.trial__desc', { text: trialDone ? 'Morgen weer een andere Astra' : `Vlieg ${trial.name} één run op ★${trialStars()}` }),
+    ),
+    el('div.trial__go', { text: trialDone ? '✓' : '▶' }),
   );
 
   /* ---------------- daily strip ---------------- */
@@ -215,6 +249,31 @@ export function HomeScreen(ctx) {
     node.appendChild(s);
   }
 
+  function openAchievements() {
+    const all = achievementList();
+    const body = el('div', null,
+      el('p.sheet__lead', { text: `${ach.done} van de ${ach.total} behaald. Beloningen worden automatisch uitgekeerd.` }),
+      progressBar(ach.pct, { color: '#fbbf24', height: 8 }),
+      ...GROUPS.map((g) => {
+        const items = all.filter((a) => a.group === g);
+        if (!items.length) return null;
+        return el('div.achgroup', null,
+          el('h3.sheet__h3', { text: g }),
+          ...items.map((a) => el('div.ach', { dataset: { done: a.done ? '1' : '0' } },
+            el('div.ach__icon', { text: a.icon }),
+            el('div.ach__mid', null,
+              el('div.ach__name', { text: a.name }),
+              el('div.ach__desc', { text: a.desc }),
+              a.done ? null : progressBar(a.progress, { color: '#22d3ee', height: 4 }),
+            ),
+            el('div.ach__reward', { text: a.done ? '✓' : rewardText(a.reward) }),
+          )),
+        );
+      }),
+    );
+    node.appendChild(sheet('Prestaties', body));
+  }
+
   function openLeaderboard() {
     const rows = leaderboard(10);
     const body = rows.length
@@ -239,10 +298,14 @@ export function HomeScreen(ctx) {
       hero,
       playBtn,
       el('div.pills', null, streakBtn, questBtn, summonBtn),
+      trialCard,
       dailyCard,
       el('div.home__statshead', null,
         el('h3', { text: 'Statistieken' }),
-        el('button.linkbtn', { text: 'Beste runs ›', onclick: openLeaderboard }),
+        el('div.home__statslinks', null,
+          el('button.linkbtn', { text: `Prestaties ${ach.done}/${ach.total} ›`, onclick: openAchievements }),
+          el('button.linkbtn', { text: 'Beste runs ›', onclick: openLeaderboard }),
+        ),
       ),
       stats,
       el('div.home__foot', null,
@@ -254,7 +317,7 @@ export function HomeScreen(ctx) {
 
   return {
     node,
-    dispose() { heroSprite.destroy(); },
+    dispose() { heroSprite.destroy(); trialSprite.destroy(); },
   };
 }
 

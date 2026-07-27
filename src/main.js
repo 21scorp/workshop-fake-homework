@@ -33,6 +33,7 @@ import { SettingsScreen } from './ui/screens/Settings.js';
 
 import { commitRun } from './systems/Economy.js';
 import { progressQuests } from './systems/Daily.js';
+import { evaluate as evaluateAchievements } from './systems/Achievements.js';
 import { readSeedFromUrl, clearSeedFromUrl, shareRun } from './systems/Share.js';
 import { getAstra, STARTER_ID } from './data/astra.js';
 
@@ -199,6 +200,10 @@ function createApp() {
       astraId: params.astraId ?? save.profile.equipped ?? STARTER_ID,
       seed: params.seed ?? randomSeedCode(),
       daily: !!params.daily,
+      // A trial flight loans an Astra the player does not own, at a fixed
+      // star level, so both have to survive the hand-off to the scene.
+      trial: !!params.trial,
+      stars: params.stars,
     });
   }
 
@@ -278,8 +283,14 @@ function createApp() {
     cardPicker.close();
     const { rewards, levels } = commitRun(result);
     progressQuests(result);
+    evaluateAchievements(result);
     toMenu('results', { run: result, rewards, levels });
   });
+
+  // Collection milestones can complete outside a run.
+  bus.on(EV.GACHA_DONE, () => evaluateAchievements());
+  bus.on(EV.ASTRA_NEW, () => evaluateAchievements());
+  bus.on(EV.ASTRA_STAR, () => evaluateAchievements());
 
   bus.on(EV.SCENE_ENTER, (name) => {
     if (name === 'run') hud.show();
