@@ -87,6 +87,9 @@ export function defaultProfile() {
 
     /** achievementId → { at } for everything unlocked. */
     achievements: {},
+
+    /** Season pass progress; reset when the season id changes. */
+    pass: null,
   };
 }
 

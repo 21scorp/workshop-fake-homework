@@ -30,10 +30,12 @@ import { CollectionScreen } from './ui/screens/Collection.js';
 import { ShopScreen } from './ui/screens/Shop.js';
 import { ResultsScreen } from './ui/screens/Results.js';
 import { SettingsScreen } from './ui/screens/Settings.js';
+import { StarpassScreen } from './ui/screens/Starpass.js';
 
 import { commitRun } from './systems/Economy.js';
 import { progressQuests } from './systems/Daily.js';
 import { evaluate as evaluateAchievements } from './systems/Achievements.js';
+import { addRunXp as addSeasonXp } from './systems/Starpass.js';
 import { readSeedFromUrl, clearSeedFromUrl, shareRun } from './systems/Share.js';
 import { getAstra, STARTER_ID } from './data/astra.js';
 
@@ -68,9 +70,11 @@ async function boot() {
   bootProgress(BOOT_STEPS[1][1], BOOT_STEPS[1][0]);
   registerAstraArt();
   registerEntityArt();
-  // If a real sprite atlas has been dropped in, use it. If not, the procedural
-  // drawers registered above stay in charge and nothing else changes.
-  await Assets.loadAtlas('./assets/sprites/core.json').catch(() => false);
+  // Sprite atlases are opt-in through a manifest rather than probed by name:
+  // probing means a 404 in every player's console on every load, which is the
+  // kind of thing that makes a shipped game look unfinished. An empty manifest
+  // simply means the procedural drawers registered above stay in charge.
+  await loadDeclaredAtlases();
   await frame();
 
   /* ---- audio ---- */
@@ -101,6 +105,20 @@ async function boot() {
 
   app.start();
   bus.emit(EV.BOOT_DONE);
+}
+
+/** Read assets/sprites/atlases.json and load whatever it declares. */
+async function loadDeclaredAtlases() {
+  try {
+    const res = await fetch('./assets/sprites/atlases.json');
+    if (!res.ok) return;
+    const manifest = await res.json();
+    for (const name of manifest.atlases ?? []) {
+      await Assets.loadAtlas(`./assets/sprites/${name}`);
+    }
+  } catch (err) {
+    console.info('[assets] no atlas manifest — procedural art only');
+  }
 }
 
 /** Everyone starts with one Astra so the first run works immediately. */
@@ -177,7 +195,8 @@ function createApp() {
       .register('collection', CollectionScreen)
       .register('shop', ShopScreen)
       .register('results', ResultsScreen)
-      .register('settings', SettingsScreen);
+      .register('settings', SettingsScreen)
+      .register('starpass', StarpassScreen);
     router.mount();
     return router;
   }
@@ -284,6 +303,7 @@ function createApp() {
     const { rewards, levels } = commitRun(result);
     progressQuests(result);
     evaluateAchievements(result);
+    addSeasonXp(result);
     toMenu('results', { run: result, rewards, levels });
   });
 

@@ -148,12 +148,16 @@ export function timeStr(seconds, showTenths = true) {
   return `${m}:${ss}`;
 }
 
-/** ms → "2u 14m" for countdowns. */
+/** ms → "12d 4u" / "2u 14m" / "45s" for countdowns. */
 export function durationStr(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(total / 3600);
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
+  // A season countdown in hours ("nog 887u") is technically correct and
+  // completely unreadable.
+  if (d > 0) return `${d}d ${h}u`;
   if (h > 0) return `${h}u ${String(m).padStart(2, '0')}m`;
   if (m > 0) return `${m}m ${String(s).padStart(2, '0')}s`;
   return `${s}s`;

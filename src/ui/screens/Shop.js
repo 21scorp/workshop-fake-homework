@@ -31,14 +31,21 @@ export function ShopScreen(ctx, params = {}) {
   const tabs = el('div.tabs', null,
     el('button.tab', { dataset: { on: '1' }, onclick: () => setTab('yard') }, '⬢ Werf'),
     el('button.tab', { onclick: () => setTab('store') }, '◈ Winkel'),
+    el('button.tab', { onclick: () => { Sfx.play('tap'); ctx.go('starpass'); } }, '★ Starpass'),
   );
+
+  const TAB_IDS = ['yard', 'store'];
+  const syncTabs = () => [...tabs.children].forEach((b, i) => {
+    // The third tab navigates away, so it is never the active one.
+    b.dataset.on = TAB_IDS[i] === tab ? '1' : '0';
+  });
 
   function setTab(t) {
     if (t === tab) return;
     tab = t;
     Sfx.play('tap');
     haptic('light');
-    [...tabs.children].forEach((b, i) => (b.dataset.on = (i === 0 ? 'yard' : 'store') === t ? '1' : '0'));
+    syncTabs();
     render();
   }
 
@@ -189,7 +196,7 @@ export function ShopScreen(ctx, params = {}) {
     el('div.shop__scroll', null, body),
   );
 
-  [...tabs.children].forEach((b, i) => (b.dataset.on = (i === 0 ? 'yard' : 'store') === tab ? '1' : '0'));
+  syncTabs();
   render();
 
   return { node };

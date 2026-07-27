@@ -1,0 +1,9 @@
+{
+  "_comment": [
+    "Atlases the game should load at boot, in order.",
+    "Empty means: draw everything with the procedural vector art in src/art/.",
+    "Add a filename here after dropping the .json + .png in this folder.",
+    "See README.md for the format and the full list of sprite keys."
+  ],
+  "atlases": []
+}
