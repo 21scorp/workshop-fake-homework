@@ -828,6 +828,38 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('de prestatielijst is compleet', r.listed === r.count, `${r.listed}/${r.count}`);
 }
 
+/* ---------------- achievement text matches its predicate ---------------- */
+{
+  const r = await page.evaluate(async () => {
+    const { ACHIEVEMENTS } = await import('./src/systems/Achievements.js');
+    // A goal is a contract with a number in it. The predicate is the only place
+    // that number lives, so the line has to quote it — a doel that says "golf
+    // 15" and tests for 12 pops early, and one that tests for 20 never pops at
+    // all. Neither throws, and neither is visible until someone complains.
+    const WORDS = {
+      één: 1, twee: 2, drie: 3, vier: 4, vijf: 5, zes: 6, zeven: 7, acht: 8,
+      negen: 9, tien: 10, twaalf: 12, twintig: 20, vijftig: 50, honderd: 100,
+    };
+    const bad = [];
+    for (const a of ACHIEVEMENTS) {
+      const src = String(a.progress);
+      // "100 000 punten" is one number to a reader; join the groups first.
+      const norm = a.desc.replace(/(\d)[\s.](?=\d{3}\b)/g, '$1');
+      const claimed = new Set();
+      for (const m of norm.matchAll(/(\d+(?:[.,]\d+)?)/g)) claimed.add(parseFloat(m[1].replace(',', '.')));
+      for (const w in WORDS) if (new RegExp(`\\b${w}\\b`, 'i').test(a.desc)) claimed.add(WORDS[w]);
+      const literals = new Set([...src.matchAll(/(\d+(?:\.\d+)?)/g)].map((m) => parseFloat(m[1])));
+      const missing = [...claimed].filter((n) => !literals.has(n));
+      if (missing.length) bad.push(`${a.id}: ${missing.join(',')} staat niet in de voorwaarde — "${a.desc}"`);
+      if (!a.desc?.trim()) bad.push(`${a.id}: geen omschrijving`);
+      if (!a.reward || !Object.values(a.reward).some((v) => v > 0)) bad.push(`${a.id}: beloont niets`);
+    }
+    return { count: ACHIEVEMENTS.length, bad };
+  });
+  check(`elk getal in de ${r.count} prestatieteksten staat ook in de voorwaarde`,
+    r.bad.length === 0, r.bad.slice(0, 5).join(' | '));
+}
+
 /* ---------------- dailies: streak, quests, trial, reset ---------------- */
 {
   const r = await page.evaluate(async () => {

@@ -101,6 +101,9 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
 - alle 36 prestaties evalueren tot een geldig getal, op een leeg én een
   maximaal profiel — `list()` vangt een gooiende predicate af en meldt 0, dus
   een kapot doel ziet er eeuwig uit als een onverdiend doel
+- elk getal in een prestatietekst staat ook in zijn voorwaarde, en elke
+  prestatie beloont echt iets. Een doel dat "golf 15" zegt en op 12 test popt
+  te vroeg; op 20 popt hij nooit — geen van beide gooit een fout
 - de dagelijkse laag: streak-claim, drie unieke opdrachten die door runs heen
   optellen, de gratis pull, beide takken van de proef-Astra, en een stabiele
   seed
