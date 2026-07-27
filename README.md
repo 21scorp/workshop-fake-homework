@@ -171,6 +171,25 @@ ASTRAFALL.Assets.useAtlas = false               // atlas tijdelijk negeren
 
 Zet **FPS tonen** aan onder Instellingen voor een frametijd-meter.
 
+### Tests
+
+Het spel heeft geen dependencies; de tests wel, want die draaien een echte
+browser. Dat is de enige manier om te controleren wat een speler werkelijk
+ziet: canvas-rendering, layout op vier schermformaten, en of een profiel van
+een oude versie nog migreert.
+
+```bash
+npm install                       # alleen playwright-core, alleen voor tests
+npx http-server -p 8080 -c-1 .    # in een tweede terminal
+npm test                          # 26 controles
+npm run balance                   # pacing-meting met een auto-player
+```
+
+De balanstest is geen test maar een meetinstrument: een bot speelt het echte
+spel en rapporteert de tijdlijn. Zo zijn de drie ergste pacing-problemen
+gevonden — golven die stilstonden, onbereikbare vijanden, en een kill-rate die
+te laag was voor het genre. Zie `tests/README.md`.
+
 ### Toevoegen van een Astra
 
 1. Een entry in `src/data/astra.js`. `form` bepaalt welke silhouet-familie hij

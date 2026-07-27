@@ -1,0 +1,15 @@
+{
+  "name": "astrafall",
+  "version": "0.9.0",
+  "private": true,
+  "description": "Verticale one-thumb bullet-heaven roguelite met gacha.",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes http-server -p 8080 -c-1 .",
+    "test": "node tests/qa.mjs",
+    "balance": "node tests/balance.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}
