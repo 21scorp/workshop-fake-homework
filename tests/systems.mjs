@@ -352,6 +352,59 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- new cards actually land ----------------
+ * The NaN sweep proves a card applies without breaking the bag; it does not
+ * prove the bag is ever read. Three of these were dead on the starter Astra
+ * because `passiveDamageMul` returned early for its passive, and nothing
+ * noticed. So check the effect, not the field. */
+{
+  await ensureRun(page);
+  const r = await page.evaluate(async () => {
+    const { getCard } = await import('./src/data/cards.js');
+    const run = globalThis.ASTRAFALL.scene;
+    const bad = [];
+    for (const id of ['longshot', 'prismlens', 'retaliate', 'crescendo', 'overwhelm', 'ultrefund']) {
+      const c = getCard(id);
+      if (!c) { bad.push(`${id} bestaat niet`); continue; }
+      for (let i = 0; i < c.max; i++) c.apply(run.mods, run.cardStacks ?? {});
+    }
+    run.stats = run.resolveStats();
+
+    if (!(run.mods.bulletLife > 1)) bad.push('longshot doet niets');
+    if (!(run.mods.prismValue > 1)) bad.push('prismlens doet niets');
+
+    // Crescendo has to move the shot multiplier with time untouched.
+    run.untouchedT = 0;
+    const cold = run.passiveDamageMul;
+    run.untouchedT = 8;
+    const hot = run.passiveDamageMul;
+    if (!(hot > cold * 1.2)) bad.push(`crescendo beweegt niet: ${cold} → ${hot}`);
+    run.untouchedT = 0;
+
+    // Overmacht has to move it with enemies on screen. Clear first: it caps,
+    // and a field that is already full proves nothing.
+    run.enemies.clear();
+    const empty = run.passiveDamageMul;
+    for (let i = 0; i < 6; i++) run.director.spawnAt('swarm', 100 + i * 40, 200);
+    const full = run.passiveDamageMul;
+    if (!(full > empty)) bad.push(`overmacht beweegt niet: ${empty} → ${full}`);
+
+    // TERUGSLAG has to leave part of the bar.
+    run.ult = run.ultMax;
+    run.tryUlt();
+    if (!(run.ult > 0)) bad.push('ultrefund geeft niets terug');
+
+    // Weerslag has to put a shockwave on the field.
+    const before = run.hazards.count;
+    run.player.invuln = 0;
+    run.hitPlayer(1, run.player.x, run.player.y - 20);
+    if (run.hazards.count <= before) bad.push('weerslag zet geen schokgolf');
+    run.player.invuln = 1e6;
+    return { bad };
+  });
+  check('de nieuwe kaarten hebben echt effect', r.bad.length === 0, r.bad.join(' | '));
+}
+
 /* ---------------- anomalies ----------------
  * They ride on multipliers the run already applies, so a broken one silently
  * does nothing rather than throwing. Drive every single one and check the

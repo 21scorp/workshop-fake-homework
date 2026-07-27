@@ -59,7 +59,10 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
 - alle wapenpatronen en alle ultimates op ster 5, dus inclusief de echo-tak
 - alle vijandtypes spawnen en updaten, en alle schietende types vuren echt
 - alle bossen in elke fase
-- alle kaarten tot hun maximum, met een NaN-sweep over de modifiers
+- alle kaarten tot hun maximum, met een NaN-sweep over de modifiers, plus een
+  aparte controle dat de nieuwste kaarten ook echt *effect* hebben — de
+  NaN-sweep bewijst dat een kaart de modifier-tas niet sloopt, niet dat die
+  tas ooit gelezen wordt
 - alle Astra tekenen, en hun verwijzingen naar patronen, ultimates en
   elementen bestaan echt
 - 60 000 gesimuleerde pulls: de effectieve Stellar+-rate ligt boven de

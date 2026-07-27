@@ -256,6 +256,45 @@ export const CARDS = [
     apply: (m) => { m.levelNova += 1; },
     requires: (st) => (st.xp ?? 0) >= 1,
   },
+
+  /* ================= nieuwe richtingen ================= */
+  {
+    id: 'longshot', name: 'Langebaan', icon: '⇢', rarity: RARITY.C, max: 4,
+    tag: 'Aanval', color: '#67e8f9',
+    desc: () => '+40% kogellevensduur',
+    apply: (m) => { m.bulletLife += 0.4; },
+  },
+  {
+    id: 'prismlens', name: 'Prismalens', icon: '◈', rarity: RARITY.R, max: 4,
+    tag: 'Nut', color: '#22d3ee',
+    desc: () => '+30% Prism-waarde',
+    apply: (m) => { m.prismValue += 0.3; },
+  },
+  {
+    id: 'retaliate', name: 'Weerslag', icon: '✺', rarity: RARITY.R, max: 3,
+    tag: 'Verdediging', color: '#fb923c',
+    desc: () => 'Een treffer op jou zet een schokgolf om je heen',
+    apply: (m) => { m.retaliate += 1; },
+  },
+  {
+    id: 'crescendo', name: 'Crescendo', icon: '↗', rarity: RARITY.SR, max: 3,
+    tag: 'Aanval', color: '#a78bfa',
+    desc: (s) => `+${5 * s}% schade per seconde ongeschonden, tot +${30 * s}%`,
+    apply: (m) => { m.crescendo += 1; },
+  },
+  {
+    id: 'overwhelm', name: 'Overmacht', icon: '❋', rarity: RARITY.SR, max: 2,
+    tag: 'Aanval', color: '#f43f5e',
+    desc: (s) => `+${3 * s}% schade per vijand in beeld, tot +${36 * s}%`,
+    apply: (m) => { m.overwhelm += 1; },
+  },
+  {
+    id: 'ultrefund', name: 'TERUGSLAG', icon: '⟲', rarity: RARITY.SSR, max: 1,
+    tag: 'Legendarisch', color: '#fbbf24',
+    desc: () => 'Je ultimate geeft 35% van zijn lading terug',
+    requires: (st) => (st.ultcharge ?? 0) >= 1,
+    apply: (m) => { m.ultRefund += 0.35; },
+  },
 ];
 
 const BY_ID = new Map(CARDS.map((c) => [c.id, c]));
@@ -302,5 +341,11 @@ export function blankMods() {
     pickupLife: 0,
     misfire: 0,
     levelNova: 0,
+    bulletLife: 1,
+    crescendo: 0,
+    retaliate: 0,
+    prismValue: 1,
+    overwhelm: 0,
+    ultRefund: 0,
   };
 }

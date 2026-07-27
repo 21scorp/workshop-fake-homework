@@ -39,7 +39,7 @@ function shoot(ctx, { x, y, angle, speed, dmgMul = 1, sizeMul = 1, extra = {} })
   b.sprite = weapon.bullet ?? 'bullet/basic';
   b.color = stats.color;
   b.color2 = stats.color2;
-  b.life = extra.life ?? 2.4;
+  b.life = (extra.life ?? 2.4) * (run.mods?.bulletLife ?? 1);
   b.pierce = stats.pierce + (weapon.pierce ?? 0);
   b.chains = stats.chains;
   b.homing = stats.homing + (weapon.turnRate ?? 0);

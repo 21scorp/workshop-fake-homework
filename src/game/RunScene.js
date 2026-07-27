@@ -513,6 +513,14 @@ export class RunScene extends Scene {
 
     this.untouchedT = 0;
 
+    // Weerslag: getting hit is the trigger, so it fires before the shield
+    // check — a shielded hit still counts as a hit taken.
+    if (this.mods.retaliate > 0) {
+      this.spawnShockwave(p.x, p.y, 150 + this.mods.retaliate * 45,
+        this.stats.damage * 2.2 * this.mods.retaliate,
+        { color: '#fb923c', knockback: 320, stun: 0.5, big: true });
+    }
+
     if (p.shield > 0) {
       p.shield--;
       p.invuln = 0.7;
@@ -1526,7 +1534,8 @@ export class RunScene extends Scene {
     const pl = this.player;
     switch (p.kind) {
       case 'prism': {
-        const harvest = (this.passiveKey === 'harvest' ? 1.25 : 1) * this.anomalyMods.prismValue;
+        const harvest = (this.passiveKey === 'harvest' ? 1.25 : 1)
+          * this.anomalyMods.prismValue * this.mods.prismValue;
         const gain = p.value * this.stats.xpMul * harvest;
         this.xp += gain;
         this.score += Math.round(p.value * 2 * SCORE_SCALE * harvest);
@@ -1650,7 +1659,9 @@ export class RunScene extends Scene {
 
   tryUlt() {
     if (this.state !== 'play' || this.ult < this.ultMax) return false;
-    this.ult = 0;
+    // TERUGSLAG hands part of the bar straight back, so a build around it
+    // fires far more often instead of hitting harder once.
+    this.ult = this.ultMax * this.mods.ultRefund;
     const name = fireUlt(this, this.astra, this.stars);
     bus.emit(EV.ULT_FIRED, { name });
     bus.emit(EV.TOAST, { text: name.toUpperCase(), tone: 'gold', ttl: 1600 });
@@ -1990,14 +2001,31 @@ export class RunScene extends Scene {
     }
   }
 
-  /** Multiplier applied to every shot, recomputed per volley. */
+  /**
+   * Multiplier applied to every shot, recomputed per volley.
+   *
+   * Everything here multiplies into one value — no early returns. An early
+   * return for `steady` meant that for Pip, the starter Astra, three cards
+   * quietly did nothing at all.
+   */
   get passiveDamageMul() {
+    let mul = 1;
     // Pip stands its ground: holding still is a real, readable choice.
-    if (this.passiveKey === 'steady' && this.player.thrust < 0.12) return 1.08;
+    if (this.passiveKey === 'steady' && this.player.thrust < 0.12) mul *= 1.08;
     // Carousel pays for every second you go untouched, and loses all of it
     // the moment you don't — a streak you can feel building.
-    if (this.passiveKey === 'carousel') return 1 + Math.min(0.4, this.untouchedT * 0.05);
-    return 1;
+    if (this.passiveKey === 'carousel') mul *= 1 + Math.min(0.4, this.untouchedT * 0.05);
+    // Crescendo is the card version of that streak, and stacks with it.
+    if (this.mods.crescendo > 0) {
+      const st = this.mods.crescendo;
+      mul *= 1 + Math.min(0.3 * st, this.untouchedT * 0.05 * st);
+    }
+    // Overmacht rewards letting the screen fill instead of clearing it.
+    if (this.mods.overwhelm > 0) {
+      const st = this.mods.overwhelm;
+      mul *= 1 + Math.min(0.36 * st, this.enemies.count * 0.03 * st);
+    }
+    return mul;
   }
 
   /** Crit bonus from a passive, added to the resolved crit chance. */
