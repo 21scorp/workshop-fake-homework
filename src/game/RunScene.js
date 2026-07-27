@@ -2079,6 +2079,7 @@ export class RunScene extends Scene {
         ? { name: this.bossRef.bossDef.name, hp: this.bossRef.hp / this.bossRef.maxHp }
         : null,
       kills: this.kills,
+      anomalies: this.anomalies,
     });
   }
 

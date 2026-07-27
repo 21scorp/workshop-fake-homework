@@ -9,7 +9,7 @@
  * whatever it's handed, so it can't desync and can't crash a run.
  */
 
-import { el, clear, pulse } from './dom.js';
+import { el, clear, fill, pulse } from './dom.js';
 import { bus, EV } from '../core/Events.js';
 import { abbrev, timeStr, clamp01 } from '../core/Math2.js';
 import { haptic } from '../core/Input.js';
@@ -69,6 +69,13 @@ export class HUD {
     );
     this.bossBar.hidden = true;
 
+    /* ---------- active anomalies ----------
+       Announced once and then gone is not enough: forty seconds later a
+       player has no way to tell which twists are still running, and a
+       modifier you cannot check is a modifier you cannot play around. */
+    this.anomRail = el('div.hud-anoms');
+    this.anomIds = '';
+
     /* ---------- bottom rail ---------- */
     this.hearts = el('div.hud-hearts');
     this.xpFill = el('i');
@@ -89,7 +96,7 @@ export class HUD {
       this.ultBtn,
     );
 
-    r.append(this.top, this.comboEl, this.bossBar, this.bottom);
+    r.append(this.top, this.comboEl, this.anomRail, this.bossBar, this.bottom);
     this.root.hidden = true;
   }
 
@@ -119,6 +126,14 @@ export class HUD {
     }
 
     this.timeEl.textContent = timeStr(s.time, false);
+
+    // Rebuilt only when the set changes — this runs every frame.
+    const ids = (s.anomalies ?? []).map((a) => a.id).join(',');
+    if (ids !== this.anomIds) {
+      this.anomIds = ids;
+      fill(this.anomRail, ...(s.anomalies ?? []).map((a) =>
+        el('span.hud-anom', { style: { '--c': a.color }, title: a.desc }, a.icon)));
+    }
 
     if (s.wave !== this._lastWave) {
       this.waveEl.textContent = String(s.wave);
