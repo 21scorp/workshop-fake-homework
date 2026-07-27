@@ -188,11 +188,18 @@ ziet: canvas-rendering, layout op vier schermformaten, en of een profiel van
 een oude versie nog migreert.
 
 ```bash
-npm install                       # alleen playwright-core, alleen voor tests
+npm install                       # alleen tests en de losse-bestand-build
 npx http-server -p 8080 -c-1 .    # in een tweede terminal
 npm test                          # qa.mjs + systems.mjs
 npm run balance                   # pacing-meting met een auto-player
+npm run build:single              # dist/astrafall.html — het hele spel in één bestand
 ```
+
+`build:single` is een *bezorg*-build, geen ontwikkelbuild: hij bundelt dezelfde
+modulegraaf die de browser zelf zou oplopen naar één HTML van ~400 KB, zodat je
+het spel kunt doorsturen als er geen host is om naar te wijzen. Het spel zelf
+blijft losse ES-modules zonder buildstap; niets in `tools/build-single.mjs` mag
+een afhankelijkheid van het spel worden.
 
 `qa.mjs` klikt door de schermen (31 controles). `systems.mjs` vuurt af wat één
 speelsessie nooit raakt (43 controles): elk geluid, elk wapenpatroon, elke

@@ -9,9 +9,11 @@
     "test": "node tests/qa.mjs && node tests/systems.mjs",
     "test:qa": "node tests/qa.mjs",
     "test:systems": "node tests/systems.mjs",
-    "balance": "node tests/balance.mjs"
+    "balance": "node tests/balance.mjs",
+    "build:single": "node tools/build-single.mjs"
   },
   "devDependencies": {
-    "playwright-core": "^1.49.0"
+    "playwright-core": "^1.49.0",
+    "esbuild": "^0.25.0"
   }
 }
