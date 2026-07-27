@@ -13,6 +13,14 @@
  *
  * `apply(mods, stacks)` mutates the run's modifier bag. The run engine reads
  * that bag every frame — cards never touch entities directly.
+ *
+ * `desc(s)` gets the stacks you *already* own, so it must describe the state
+ * after taking it — s + 1, not s. That matters more than it sounds: most cards
+ * add a fixed amount per pick and read the same at every stack, but a handful
+ * are read back by the engine as a function of the stack count (a shield every
+ * `14 / n` seconds, a heal every `40 / n` kills). For those, static text is a
+ * lie from the second pick onward, and a player with two stacks has no reason
+ * to take a third. Where the number moves, the line moves with it.
  */
 
 import { RARITY } from './constants.js';
@@ -25,7 +33,7 @@ export const CARDS = [
   {
     id: 'power', name: 'Overladen', icon: '⚡', rarity: RARITY.C, max: 8,
     tag: 'Aanval', color: '#f43f5e',
-    desc: (s) => `+${18}% schade`,
+    desc: () => '+18% schade',
     apply: (m) => { m.damageMul += 0.18; },
   },
   {
@@ -138,7 +146,9 @@ export const CARDS = [
   {
     id: 'explode', name: 'Kettingreactie', icon: '✺', rarity: RARITY.SR, max: 3,
     tag: 'Exotisch', color: '#fb923c',
-    desc: () => 'Vijanden exploderen bij hun dood',
+    desc: (s) => (s === 0
+      ? 'Vijanden exploderen bij hun dood'
+      : 'Grotere, hardere doodsexplosies'),
     apply: (m) => { m.explodeOnKill += 1; },
   },
   {
@@ -150,50 +160,54 @@ export const CARDS = [
   {
     id: 'homing', name: 'Zoeker', icon: '➹', rarity: RARITY.SR, max: 2,
     tag: 'Exotisch', color: '#f0abfc',
-    desc: () => 'Kogels sturen naar vijanden',
+    desc: (s) => (s === 0 ? 'Kogels sturen naar vijanden' : 'Kogels sturen veel scherper'),
     apply: (m) => { m.homing += 1.8; },
   },
   {
     id: 'thorns', name: 'Doornen', icon: '✵', rarity: RARITY.SR, max: 3,
     tag: 'Verdediging', color: '#f43f5e',
-    desc: () => 'Vijanden die je raken nemen zware schade',
+    desc: (s) => `Vijanden die je raken nemen ${40 * (s + 1)} schade`,
     apply: (m) => { m.thorns += 40; },
   },
   {
     id: 'shieldgen', name: 'Schildgenerator', icon: '⬡', rarity: RARITY.SR, max: 3,
     tag: 'Verdediging', color: '#67e8f9',
-    desc: () => 'Elke 14s een schild dat 1 klap opvangt',
+    desc: (s) => (s === 0
+      ? 'Elke 14s een schild dat 1 klap opvangt'
+      : `Elke ${(14 / (s + 1)).toFixed(1)}s een schild, tot ${s + 1} tegelijk`),
     apply: (m) => { m.shieldRegen += 1; },
   },
   {
     id: 'freeze', name: 'Nulpunt', icon: '❄', rarity: RARITY.SR, max: 3,
     tag: 'Exotisch', color: '#a5f3fc',
-    desc: () => 'Aura die vijanden om je heen vertraagt',
+    desc: (s) => `Aura vertraagt vijanden om je heen met ${Math.round((0.35 + (s + 1) * 0.1) * 100)}%`,
     apply: (m) => { m.freezeAura += 1; },
   },
   {
     id: 'vampiric', name: 'Levensdorst', icon: '❥', rarity: RARITY.SR, max: 2,
     tag: 'Verdediging', color: '#e11d48',
-    desc: () => 'Elke 40 kills herstelt 1 HP',
+    desc: (s) => `Elke ${Math.round(40 / (s + 1))} kills herstelt 1 HP`,
     apply: (m) => { m.lifesteal += 1; },
   },
   {
     id: 'ricochet', name: 'Kaatsing', icon: '⤺', rarity: RARITY.SR, max: 2,
     tag: 'Exotisch', color: '#5eead4',
-    desc: () => 'Kogels stuiteren van de randen',
+    desc: (s) => `Kogels stuiteren ${2 * (s + 1)}× van de randen`,
     apply: (m) => { m.bounce += 2; },
   },
 
   {
     id: 'siphon', name: 'Sifon', icon: '◍', rarity: RARITY.SR, max: 2,
     tag: 'Exotisch', color: '#22d3ee',
-    desc: () => 'Prisms geven ook Ultimate-lading',
+    desc: (s) => (s === 0
+      ? 'Prisms geven ook Ultimate-lading'
+      : 'Prisms geven dubbel zoveel Ultimate-lading'),
     apply: (m) => { m.prismUlt += 1; },
   },
   {
     id: 'overheat', name: 'Oververhitting', icon: '≡', rarity: RARITY.SR, max: 2,
     tag: 'Aanval', color: '#fb923c',
-    desc: () => 'Hoe langer je vuurt zonder te bewegen, hoe harder je slaat',
+    desc: (s) => `Stilstaan en vuren bouwt op tot +${50 * (s + 1)}% schade`,
     apply: (m) => { m.overheat += 1; },
   },
 
@@ -273,19 +287,21 @@ export const CARDS = [
   {
     id: 'retaliate', name: 'Weerslag', icon: '✺', rarity: RARITY.R, max: 3,
     tag: 'Verdediging', color: '#fb923c',
-    desc: () => 'Een treffer op jou zet een schokgolf om je heen',
+    desc: (s) => (s === 0
+      ? 'Een treffer op jou zet een schokgolf om je heen'
+      : 'Een bredere, hardere schokgolf als je geraakt wordt'),
     apply: (m) => { m.retaliate += 1; },
   },
   {
     id: 'crescendo', name: 'Crescendo', icon: '↗', rarity: RARITY.SR, max: 3,
     tag: 'Aanval', color: '#a78bfa',
-    desc: (s) => `+${5 * s}% schade per seconde ongeschonden, tot +${30 * s}%`,
+    desc: (s) => `+${5 * (s + 1)}% schade per seconde ongeschonden, tot +${30 * (s + 1)}%`,
     apply: (m) => { m.crescendo += 1; },
   },
   {
     id: 'overwhelm', name: 'Overmacht', icon: '❋', rarity: RARITY.SR, max: 2,
     tag: 'Aanval', color: '#f43f5e',
-    desc: (s) => `+${3 * s}% schade per vijand in beeld, tot +${36 * s}%`,
+    desc: (s) => `+${3 * (s + 1)}% schade per vijand in beeld, tot +${36 * (s + 1)}%`,
     apply: (m) => { m.overwhelm += 1; },
   },
   {

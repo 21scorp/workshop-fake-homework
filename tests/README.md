@@ -63,6 +63,11 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   aparte controle dat de nieuwste kaarten ook echt *effect* hebben — de
   NaN-sweep bewijst dat een kaart de modifier-tas niet sloopt, niet dat die
   tas ooit gelezen wordt
+- elke kaarttekst klopt op elke stapel: geen `+0%` op de eerste aanbieding, en
+  een kaart die stapelt moet ook iets anders zeggen zodra je er één hebt —
+  tenzij zijn regel een optelling is die elke keer even waar is. Twee kaarten
+  beloofden letterlijk niets bij de eerste aanbieding en twee logen zodra je
+  ze stapelde; niets daarvan gooit een fout
 - alle Astra tekenen, en hun verwijzingen naar patronen, ultimates en
   elementen bestaan echt
 - een veegcontrole over álle datavelden — vijanden, bazen, wapenconfig en de

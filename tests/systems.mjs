@@ -292,6 +292,44 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check(`alle ${r.count} kaarten passen toe zonder NaN`, r.failed.length === 0, r.failed.join(' | '));
 }
 
+/* ---------------- card text tells the truth at every stack ---------------- */
+{
+  const r = await page.evaluate(async () => {
+    const { CARDS } = await import('./src/data/cards.js');
+    // Cards whose line is an increment ("+18% schade"): the same sentence is
+    // true at every stack, because every pick adds exactly that much. Anything
+    // NOT on this list must say something different once you own one — either
+    // the number moves, or the card scales silently and the player can't tell.
+    const INCREMENTAL = new Set([
+      'power', 'rate', 'hp', 'speed', 'magnet', 'xp', 'multishot', 'pierce',
+      'crit', 'critdmg', 'bulletsize', 'bulletspeed', 'iframes', 'ultcharge',
+      'luck', 'scavenge', 'gambler', 'chain', 'longshot', 'prismlens',
+    ]);
+    const bad = [];
+    for (const c of CARDS) {
+      const at = (s) => (typeof c.desc === 'function' ? c.desc(s) : c.desc);
+      const lines = [];
+      for (let s = 0; s < c.max; s++) {
+        let t;
+        try { t = at(s); } catch (e) { bad.push(`${c.id}@${s}: ${e.message}`); continue; }
+        if (typeof t !== 'string' || !t.trim()) { bad.push(`${c.id}@${s}: leeg`); continue; }
+        // A description is read while a boss is on screen. One line, no holes.
+        if (/undefined|NaN|Infinity/.test(t)) bad.push(`${c.id}@${s}: "${t}"`);
+        if (/(^|[^\d])\+?0(\.0+)?\s*[%×x]/.test(t)) bad.push(`${c.id}@${s}: belooft niets — "${t}"`);
+        if (t.length > 64) bad.push(`${c.id}@${s}: ${t.length} tekens — "${t}"`);
+        lines.push(t);
+      }
+      if (c.max > 1 && !INCREMENTAL.has(c.id) && new Set(lines).size === 1) {
+        bad.push(`${c.id}: zelfde tekst op stapel 1 t/m ${c.max}`);
+      }
+      if (c.max === 1 && INCREMENTAL.has(c.id)) bad.push(`${c.id}: stapelt niet, hoort niet op de lijst`);
+    }
+    return { count: CARDS.length, bad };
+  });
+  check(`alle ${r.count} kaartteksten kloppen op elke stapel`, r.bad.length === 0,
+    r.bad.slice(0, 6).join(' | '));
+}
+
 /* ---------------- every Astra is renderable and coherent ---------------- */
 {
   const r = await page.evaluate(async () => {
