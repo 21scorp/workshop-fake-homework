@@ -373,6 +373,44 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
     `${r.have}/${r.total} ontdekt, ${r.rows} rijen`);
 }
 
+/* ---------------- rank + share card ----------------
+ * The card is the artifact that actually leaves the phone, so it has to
+ * render at full size for any run — including a zero-score one, which is what
+ * a first-time player who dies in wave one will try to share. */
+{
+  const r = await page.evaluate(async () => {
+    const { RANKS, rankFor } = await import('./src/systems/Rank.js');
+    const { renderShareCard } = await import('./src/systems/Share.js');
+    const bad = [];
+
+    // Monotonic, and every threshold lands on its own letter.
+    let prev = -1;
+    for (const t of RANKS) {
+      const got = rankFor(t.at).key;
+      if (got !== t.key) bad.push(`${t.at} → ${got}, verwacht ${t.key}`);
+      if (t.at <= prev) bad.push(`drempel ${t.at} niet oplopend`);
+      prev = t.at;
+    }
+    if (rankFor(0).key !== RANKS[0].key) bad.push('score 0 valt niet in de laagste rang');
+    if (rankFor(1e12).next !== null) bad.push('hoogste rang heeft nog een volgende');
+
+    // Cards for the extremes.
+    const sizes = [];
+    for (const run of [
+      { score: 0, wave: 1, kills: 0, time: 4, maxCombo: 0, astraId: 'pip' },
+      { score: 1500000, wave: 22, kills: 2000, time: 300, maxCombo: 140,
+        astraId: 'kairos', seed: 'ABC123', personalBest: true },
+    ]) {
+      const { canvas, blob } = await renderShareCard(run);
+      sizes.push(`${canvas.width}x${canvas.height}:${blob ? blob.size > 1000 : false}`);
+    }
+    return { bad, sizes, tiers: RANKS.length };
+  });
+  check(`${r.tiers} rangen lopen op en kloppen op hun drempel`, r.bad.length === 0, r.bad.join(' | '));
+  check('sharekaart rendert voor een lege én een maximale run',
+    r.sizes.every((s) => s === '1080x1920:true'), r.sizes.join(' | '));
+}
+
 /* ---------------- the sprite swap, end to end ----------------
  * The entire renderer rests on one promise: drop an atlas in and the game
  * draws artwork instead of vectors, with nothing else changed. Left untested

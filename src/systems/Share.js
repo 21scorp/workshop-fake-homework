@@ -14,6 +14,7 @@
 
 import Assets from '../core/AssetRegistry.js';
 import { getAstra, astraSprite } from '../data/astra.js';
+import { rankFor } from './Rank.js';
 import { RARITY_INFO, ELEMENT } from '../data/constants.js';
 import { grouped, timeStr } from '../core/Math2.js';
 import { hexA, mixHex } from '../core/Renderer.js';
@@ -178,6 +179,40 @@ export async function renderShareCard(run) {
   ctx.letterSpacing = '0px';
   ctx.restore();
 
+  /* ---- rank ribbon ----
+     A score is a number you have to compare to something; a rank is a verdict
+     you can put in a caption. It goes directly under the logo, in the dead
+     space above the hero, so it is the first thing read after the name. */
+  {
+    const rank = rankFor(run.score ?? 0);
+    const w = 520, h = 104, x = (CARD_W - w) / 2, y = 244;
+    roundRect(ctx, x, y, w, h, 52);
+    const rg = ctx.createLinearGradient(x, y, x + w, y + h);
+    rg.addColorStop(0, hexA(rank.color, 0.22));
+    rg.addColorStop(1, hexA(rank.color, 0.06));
+    ctx.fillStyle = rg;
+    ctx.fill();
+    ctx.strokeStyle = hexA(rank.color, 0.55);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 72px Inter, system-ui, sans-serif';
+    ctx.fillStyle = rank.color;
+    ctx.shadowColor = hexA(rank.color, 0.8);
+    ctx.shadowBlur = 28;
+    ctx.fillText(rank.key, x + 46, y + h / 2 + 4);
+    ctx.shadowBlur = 0;
+    ctx.font = '800 30px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.letterSpacing = '6px';
+    ctx.fillText(rank.label.toUpperCase(), x + 46 + (rank.key.length > 1 ? 128 : 84), y + h / 2 + 2);
+    ctx.letterSpacing = '0px';
+    ctx.restore();
+  }
+
   /* ---- astra art ---- */
   ctx.save();
   ctx.translate(CARD_W / 2, 560);
@@ -239,6 +274,31 @@ export async function renderShareCard(run) {
   ctx.shadowBlur = 50;
   ctx.fillText(grouped(run.score ?? 0), CARD_W / 2, 1272);
   ctx.restore();
+
+  // Personal best. The one line that turns a score into news.
+  //
+  // Sits astride the top edge of the score block rather than under the number:
+  // below it, the badge lands in the glow of a 138px digit and reads as a
+  // collision. On the border it reads as a seal.
+  if (run.personalBest) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const w = 396, x = (CARD_W - w) / 2, y = 1060 - 25;
+    roundRect(ctx, x, y, w, 50, 25);
+    ctx.fillStyle = '#140f22';
+    ctx.fill();
+    ctx.fillStyle = 'rgba(251,191,36,.2)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(251,191,36,.75)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.font = '800 25px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#fde68a';
+    ctx.letterSpacing = '5px';
+    ctx.fillText('PERSOONLIJK RECORD', CARD_W / 2 + 3, y + 26);
+    ctx.restore();
+  }
 
   /* ---- stat row ---- */
   const stats = [

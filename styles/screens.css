@@ -720,6 +720,24 @@
 .res__seed span { display: block; font-size: 9px; letter-spacing: .2em; color: #67e8f9; font-weight: 800; }
 .res__seed b { font-family: var(--font-num); font-size: 20px; letter-spacing: .12em; }
 
+.res__rank {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 16px 9px 12px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  margin-top: 4px;
+}
+.res__rankk {
+  font-family: var(--font-num);
+  font-size: 30px; font-weight: 900; line-height: 1;
+  color: var(--c);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--c) 70%, transparent);
+}
+.res__rankm { display: grid; gap: 1px; text-align: left; }
+.res__rankm span { font-size: 12.5px; font-weight: 800; }
+.res__rankm i { font-size: 10.5px; font-style: normal; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
 .res__actions {
   display: grid; gap: 8px;
   padding: 10px 16px calc(var(--safe-b) + 14px);

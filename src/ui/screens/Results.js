@@ -18,6 +18,7 @@ import { save } from '../../core/Save.js';
 import { Sfx, Music } from '../../core/Audio.js';
 import { haptic } from '../../core/Input.js';
 import { renderShareCard, shareRun, downloadBlob } from '../../systems/Share.js';
+import { rankFor } from '../../systems/Rank.js';
 import { accountProgress } from '../../systems/Economy.js';
 import { bus, EV } from '../../core/Events.js';
 
@@ -30,6 +31,7 @@ export function ResultsScreen(ctx, params = {}) {
   const astra = getAstra(run.astraId) ?? getAstra('pip');
   const info = RARITY_INFO[astra.rarity];
   const isBest = run.score >= (save.profile.stats.bestScore ?? 0) && run.score > 0;
+  const rank = rankFor(run.score ?? 0);
 
   ctx.backdrop?.setAccent(astra.colors.primary, info.color);
   ctx.backdrop?.setIntensity(0.25);
@@ -70,6 +72,19 @@ export function ResultsScreen(ctx, params = {}) {
           `Golf ${run.wave ?? 1}`, el('i'), `${run.kills ?? 0} kills`,
           el('i'), timeStr(run.time ?? 0, false),
         ),
+        // The rank turns the score into something you can say out loud, and
+        // the bar under it gives the next run a target that is nearer than
+        // the personal best.
+        el('div.res__rank', { style: { '--c': rank.color } },
+          el('b.res__rankk', { text: rank.key }),
+          el('div.res__rankm', null,
+            el('span', { text: rank.label }),
+            rank.next
+              ? el('i', { text: `nog ${abbrev(rank.toNext)} voor ${rank.next.key}` })
+              : el('i', { text: 'hoogste rang' }),
+          ),
+        ),
+        rank.next ? progressBar(rank.pct, { color: rank.color, height: 6 }) : null,
       ),
 
       el('div.res__astra', null,
@@ -184,7 +199,7 @@ export function ResultsScreen(ctx, params = {}) {
     sharing = true;
     bus.emit(EV.TOAST, { text: 'Kaart maken…', tone: 'info', ttl: 1200 });
     try {
-      const { blob, canvas } = await renderShareCard(run);
+      const { blob, canvas } = await renderShareCard({ ...run, personalBest: isBest });
       const res = await shareRun({ ...run, blob });
       if (!res.ok || res.via === 'clipboard') {
         // No native share sheet — hand them the file so they can post it anyway.

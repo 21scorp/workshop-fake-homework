@@ -228,6 +228,7 @@ schermflitsen en camera-shake te dempen.
 | Starpass | 6 weken | 30 tiers, gratis spoor tot het einde, premium keert met terugwerkende kracht uit |
 | Prestaties | open | 34 doelen die zichzelf uitkeren zodra ze kloppen |
 | Bestiarium | open | 15 vijanden en bazen, per stuk vrijgespeeld door ze tegen te komen |
+| Rang | per run | D t/m S+, met de afstand tot de volgende rang erbij |
 | Werf | permanent | Cores in permanente upgrades |
 
 ## Status
