@@ -33,7 +33,6 @@ import { bus, EV } from '../core/Events.js';
  * @property {string} currency  ISO code for display
  * @property {Object} grants    currency bag
  * @property {boolean} [oneTime]
- * @property {number} [bonusPct]
  * @property {string} [badge]
  */
 
@@ -65,7 +64,6 @@ export const SKUS = [
     name: '420 Nova Shards',
     priceCents: 899, currency: 'EUR',
     grants: { shards: 420 },
-    bonusPct: 5,
     accent: '#ff5cf0',
   },
   {
@@ -74,7 +72,6 @@ export const SKUS = [
     name: '980 Nova Shards',
     priceCents: 1999, currency: 'EUR',
     grants: { shards: 980 },
-    bonusPct: 22,
     badge: 'POPULAIR',
     accent: '#ff5cf0',
   },
@@ -84,7 +81,6 @@ export const SKUS = [
     name: '2.600 Nova Shards',
     priceCents: 4999, currency: 'EUR',
     grants: { shards: 2600 },
-    bonusPct: 30,
     accent: '#ff5cf0',
   },
   {
@@ -131,6 +127,24 @@ export function valuePerEuro(sku) {
   const shards = sku.grants.shards ?? 0;
   if (!shards) return null;
   return shards / (sku.priceCents / 100);
+}
+
+/**
+ * Bonus versus the cheapest shard pack — derived, never typed.
+ *
+ * The badge on a pack is a value claim, and a value claim that is maintained
+ * by hand drifts the moment a price moves: one pack here advertised +5% while
+ * it actually paid +16%. Computing it from the two numbers the player can
+ * already see means the badge cannot be wrong, in either direction.
+ */
+export function bonusPct(sku) {
+  if (sku.kind !== 'currency') return 0;
+  const mine = valuePerEuro(sku);
+  if (!mine) return 0;
+  const base = SKUS.filter((s) => s.kind === 'currency' && (s.grants.shards ?? 0))
+    .reduce((lo, s) => (s.priceCents < lo.priceCents ? s : lo));
+  if (sku.id === base.id) return 0;
+  return Math.round((mine / valuePerEuro(base) - 1) * 100);
 }
 
 export const owned = (id) => !!save.profile.entitlements[id];

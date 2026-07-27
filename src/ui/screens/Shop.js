@@ -13,7 +13,7 @@
 import { el, clear } from '../dom.js';
 import { currencyRail, button, progressBar, sheet } from '../components/Chrome.js';
 import {
-  SKUS, priceLabel, valuePerEuro, owned, buy, restorePurchases,
+  SKUS, priceLabel, valuePerEuro, bonusPct, owned, buy, restorePurchases,
   META_UPGRADES, upgradeLevel, buyUpgrade,
 } from '../../data/shop.js';
 import { save } from '../../core/Save.js';
@@ -124,7 +124,7 @@ export function ShopScreen(ctx, params = {}) {
           ...Object.entries(sku.grants).map(([k, v]) =>
             el('span.sku__g', { style: { '--c': CURRENCY[k].color } },
               CURRENCY[k].symbol, ' ', abbrev(v))),
-          sku.bonusPct ? el('span.sku__bonus', { text: `+${sku.bonusPct}% bonus` }) : null,
+          bonusPct(sku) > 0 ? el('span.sku__bonus', { text: `+${bonusPct(sku)}% bonus` }) : null,
         ),
         sku.extra ? el('div.sku__extra', { text: sku.extra }) : null,
         el('div.sku__foot', null,

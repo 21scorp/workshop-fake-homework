@@ -107,6 +107,9 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   niet meer verdient wordt vanzelf weer vergrendeld, elke skin die achter een
   prestatie zit noemt die prestatie ook echt bij naam, en geen enkele beloning
   wordt negatief of NaN
+- de winkel: het getal in de naam van een pakket is ook het getal dat je
+  krijgt, en de bonusbadge komt overeen met de gemeten waarde per euro ten
+  opzichte van het instappakket. Eén pakket adverteerde +5% en betaalde +16%
 - alle 36 prestaties evalueren tot een geldig getal, op een leeg én een
   maximaal profiel — `list()` vangt een gooiende predicate af en meldt 0, dus
   een kapot doel ziet er eeuwig uit als een onverdiend doel

@@ -813,6 +813,28 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
       if (!unlockLabel(sk, goal.desc).includes(goal.desc)) bad.push(`${sk.id}: noemt zijn doel niet`);
     }
 
+    // --- de winkelbadge is een waardeclaim, dus meet hem ---
+    {
+      const { SKUS, bonusPct, valuePerEuro } = await import('./src/data/shop.js');
+      const packs = SKUS.filter((s) => s.kind === 'currency' && (s.grants.shards ?? 0));
+      const base = packs.reduce((lo, s) => (s.priceCents < lo.priceCents ? s : lo));
+      for (const sku of SKUS) {
+        // Het getal in de naam is wat je koopt; wat je krijgt moet dat zijn.
+        const named = parseFloat((sku.name.match(/([\d.]+)/) ?? [])[1]?.replace(/\./g, '') ?? 'NaN');
+        const got = (sku.grants.shards ?? 0) || (sku.grants.stardust ?? 0);
+        if (Number.isFinite(named) && named !== got && sku.kind === 'currency') {
+          bad.push(`${sku.id}: heet ${named} maar geeft ${got}`);
+        }
+        const shown = bonusPct(sku);
+        if (!Number.isFinite(shown) || shown < 0) bad.push(`${sku.id}: bonus ${shown}`);
+        if (packs.includes(sku) && sku !== base) {
+          const real = Math.round((valuePerEuro(sku) / valuePerEuro(base) - 1) * 100);
+          if (shown !== real) bad.push(`${sku.id}: badge +${shown}% maar echt +${real}%`);
+          if (real < 0) bad.push(`${sku.id}: duurder per shard dan het instappakket`);
+        }
+      }
+    }
+
     // --- run rewards: never negative, never NaN, more run pays more ---
     const zero = runRewards({});
     for (const k of ['stardust', 'shards', 'cores', 'xp']) {
