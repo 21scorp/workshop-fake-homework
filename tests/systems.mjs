@@ -329,6 +329,77 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- loadout, skins and rewards ----------------
+ * Three formula-driven systems with no UI of their own to fail in. A support
+ * bonus that inverts, a skin that unlocks itself, or a reward that goes
+ * negative would all ship silently. */
+{
+  const r = await page.evaluate(async () => {
+    const { save } = await import('./src/core/Save.js');
+    const { ASTRA, getAstra } = await import('./src/data/astra.js');
+    const L = await import('./src/systems/Loadout.js');
+    const S = await import('./src/systems/Skins.js');
+    const { SKINS } = await import('./src/data/skins.js');
+    const { runRewards } = await import('./src/systems/Economy.js');
+    const bad = [];
+
+    // --- support bonus: monotonic in rarity and in stars, never negative ---
+    const byRarity = [0, 1, 2, 3, 4].map((tier) => {
+      const a = ASTRA.find((x) => x.rarity === tier);
+      return a ? L.supportBonus(a, 1).damage : null;
+    }).filter((v) => v !== null);
+    for (let i = 1; i < byRarity.length; i++) {
+      if (!(byRarity[i] > byRarity[i - 1])) bad.push(`steunbonus stijgt niet met zeldzaamheid: ${byRarity}`);
+    }
+    const a5 = ASTRA.find((x) => x.rarity === 4) ?? ASTRA[0];
+    for (let s = 2; s <= 5; s++) {
+      if (!(L.supportBonus(a5, s).damage > L.supportBonus(a5, s - 1).damage)) {
+        bad.push(`steunbonus stijgt niet van ster ${s - 1} naar ${s}`);
+      }
+    }
+    for (const a of ASTRA) {
+      const b = L.supportBonus(a, 5);
+      for (const k of ['damage', 'fireRate', 'magnet', 'ultCharge', 'elementPower']) {
+        if (!Number.isFinite(b[k]) || b[k] < 0) bad.push(`${a.id}.${k} = ${b[k]}`);
+      }
+    }
+    if (L.supportBonus(null) !== null) bad.push('supportBonus(null) geeft geen null');
+
+    // --- the lead Astra can never also sit in a support slot ---
+    save.profile.equipped = ASTRA[0].id;
+    save.profile.loadout = [ASTRA[0].id, ASTRA[1].id];
+    L.clearLeadFromSupports();
+    if (L.supports().includes(save.profile.equipped)) bad.push('leider staat nog in een steunslot');
+
+    // --- skins: unlocks are derived, so a wipe must relock them ---
+    save.profile.achievements = {};
+    save.profile.pass = null;
+    save.profile.entitlements = {};
+    const lockedNow = SKINS.filter((s) => !S.isUnlocked(s)).length;
+    if (lockedNow !== SKINS.length - 1) bad.push(`${SKINS.length - lockedNow} skins vrij op een leeg profiel`);
+    save.profile.skin = SKINS[SKINS.length - 1].id;         // pretend we own a locked one
+    if (S.currentSkinId() !== 'standard') bad.push('een vergrendelde skin blijft actief');
+    save.profile.achievements = { wave_15: true };
+    const voidSkin = SKINS.find((s) => s.unlock.type === 'achievement' && s.unlock.id === 'wave_15');
+    if (voidSkin && !S.isUnlocked(voidSkin)) bad.push('prestatie ontgrendelt de skin niet');
+
+    // --- run rewards: never negative, never NaN, more run pays more ---
+    const zero = runRewards({});
+    for (const k of ['stardust', 'shards', 'cores', 'xp']) {
+      if (!Number.isFinite(zero[k]) || zero[k] < 0) bad.push(`lege run: ${k}=${zero[k]}`);
+    }
+    const small = runRewards({ score: 1000, wave: 2, time: 20, kills: 30 });
+    const big = runRewards({ score: 900000, wave: 18, time: 240, kills: 1200, bossesKilled: 3 });
+    if (!(big.stardust > small.stardust && big.xp > small.xp)) bad.push('grotere run betaalt niet meer');
+    if (!(runRewards({ score: 1000, wave: 2, time: 20, kills: 30, isDaily: true }).stardust > small.stardust)) {
+      bad.push('dagelijkse bonus doet niets');
+    }
+    return { bad, skins: SKINS.length };
+  });
+  check('loadout, skins en runbeloningen gedragen zich', r.bad.length === 0,
+    r.bad.slice(0, 4).join(' | '));
+}
+
 /* ---------------- every achievement predicate, both extremes ----------------
  * `list()` wraps each predicate in try/catch and reports 0 on a throw, so a
  * broken goal looks exactly like an unearned one — forever. Evaluate all of

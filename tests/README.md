@@ -64,6 +64,10 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   elementen bestaan echt
 - 60 000 gesimuleerde pulls: de effectieve Stellar+-rate ligt boven de
   basisrate en geen enkele reeks overschrijdt de harde pity
+- loadout, skins en runbeloningen: de steunbonus stijgt met zeldzaamheid en
+  sterren, de leider kan nooit in zijn eigen steunslot staan, een skin die je
+  niet meer verdient wordt vanzelf weer vergrendeld, en geen enkele beloning
+  wordt negatief of NaN
 - alle 34 prestaties evalueren tot een geldig getal, op een leeg én een
   maximaal profiel — `list()` vangt een gooiende predicate af en meldt 0, dus
   een kapot doel ziet er eeuwig uit als een onverdiend doel
