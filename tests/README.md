@@ -64,6 +64,12 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   elementen bestaan echt
 - 60 000 gesimuleerde pulls: de effectieve Stellar+-rate ligt boven de
   basisrate en geen enkele reeks overschrijdt de harde pity
+- de drie beloftes van de Starpass: het gratis spoor keert uit tot waar je
+  staat, later kopen keert met terugwerkende kracht uit, en twee keer ophalen
+  betaalt niet twee keer
+- de muziek volgt het scherm en geeft de bazentrack terug
+- de rangen lopen op, en de sharekaart rendert voor een lege én een
+  maximale run
 
 De sweep lost tussendoor level-ups op. Twintig ultimates achter elkaar veegt
 het scherm leeg, en dat is XP: de run parkeert dan in `levelup` en simuleert

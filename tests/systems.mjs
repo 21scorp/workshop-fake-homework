@@ -329,6 +329,53 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- starpass: the promise it makes ----------------
+ * The pass promises three things in writing — the free track runs to the end,
+ * buying late pays out retroactively, and nothing pays twice. All three are
+ * economy-critical and none of them throws when broken. */
+{
+  const r = await page.evaluate(async () => {
+    const { save } = await import('./src/core/Save.js');
+    const P = await import('./src/systems/Starpass.js');
+    save.profile.pass = null;
+    save.profile.entitlements = {};
+    const out = { fresh: P.pending().total };
+
+    for (let i = 0; i < 400 && P.progress().tier < 15; i++) {
+      P.addRunXp({ score: 200000, wave: 12, kills: 500, time: 200, bossesKilled: 2 });
+    }
+    out.tier = P.progress().tier;
+
+    const dust0 = save.profile.currency.stardust;
+    out.freeClaimed = P.claimAll().count;
+    out.freePaid = save.profile.currency.stardust - dust0;
+    out.afterFree = P.pending().total;
+
+    // Buying the pass at tier 15 must make all fifteen premium tiers claimable.
+    save.profile.entitlements.starpass_season = { season: P.SEASON.id, at: 1 };
+    out.premiumPending = P.pending().total;
+    out.premiumClaimed = P.claimAll().count;
+
+    // And claiming again must pay nothing.
+    const dust1 = save.profile.currency.stardust;
+    P.claimAll();
+    out.doublePaid = save.profile.currency.stardust - dust1;
+
+    for (let i = 0; i < 300; i++) P.addRunXp({ score: 400000, wave: 20, kills: 900, time: 300, bossesKilled: 4 });
+    out.maxTier = P.progress().tier;
+    out.tiers = P.TIERS.length;
+    return out;
+  });
+  check('starpass: gratis spoor keert uit tot waar je staat',
+    r.fresh === 0 && r.tier === 15 && r.freeClaimed === 15 && r.freePaid > 0 && r.afterFree === 0,
+    JSON.stringify({ tier: r.tier, claimed: r.freeClaimed, paid: r.freePaid }));
+  check('starpass: later kopen keert met terugwerkende kracht uit',
+    r.premiumPending === 15 && r.premiumClaimed === 15, `${r.premiumClaimed} van ${r.premiumPending}`);
+  check('starpass: twee keer ophalen betaalt niet twee keer', r.doublePaid === 0, `+${r.doublePaid}`);
+  check('starpass: tier stopt bij het einde van de tabel', r.maxTier === r.tiers,
+    `${r.maxTier}/${r.tiers}`);
+}
+
 /* ---------------- music follows the screen ----------------
  * Five tracks exist; three of them were only reachable by accident. The boss
  * track never handed back, so every wave after the first boss sounded like a
