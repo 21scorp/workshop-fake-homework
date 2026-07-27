@@ -248,18 +248,27 @@ export function groundShadow(ctx, r, y, alpha = 0.35) {
   ctx.fill();
 }
 
-/** White hit-flash overlay for the whole local shape. */
+/**
+ * White hit-flash over the local shape.
+ *
+ * A flat white disc works at 20px and destroys anything bigger — on a 92-radius
+ * boss it simply erased the creature every time it was shot. A radial falloff
+ * flashes the silhouette instead of replacing it, at any size.
+ */
 export function flashOverlay(ctx, r, amount) {
-  if (amount <= 0.01) return;
-  const prev = ctx.globalCompositeOperation;
+  if (amount <= 0.01 || r <= 0) return;
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+  g.addColorStop(0, 'rgba(255,255,255,0.95)');
+  g.addColorStop(0.55, 'rgba(255,255,255,0.55)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   ctx.globalAlpha *= amount;
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = g;
   ctx.fill();
-  ctx.globalAlpha /= amount;
-  ctx.globalCompositeOperation = prev;
+  ctx.restore();
 }
 
 /** Chevron / arrow used for directional enemies. */

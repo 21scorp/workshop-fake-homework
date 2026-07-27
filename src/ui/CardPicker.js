@@ -58,8 +58,11 @@ export class CardPicker {
       el('div.lvl__panel', null, title, el('div.lvl__cards', null, ...cardEls), reroll),
     );
 
-    this.root.appendChild(this.node);
-    requestAnimationFrame(() => this.node.dataset.in = '1');
+    const node = this.node;
+    this.root.appendChild(node);
+    // Capture the node: close() can land between this frame and the next
+    // (a card resolved from elsewhere), and `this.node` would already be null.
+    requestAnimationFrame(() => { node.dataset.in = '1'; });
     Sfx.play('levelup');
   }
 

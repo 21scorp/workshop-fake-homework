@@ -16,6 +16,7 @@ import { Scene } from '../core/Game.js';
 import { Pool, Ring } from '../core/Pool.js';
 import { Particles } from '../fx/Particles.js';
 import { ScreenFX, Starfield } from '../fx/Screen.js';
+import { Environment, biomeForWave } from '../fx/Environment.js';
 import { Tweens } from '../core/Tween.js';
 import { RNG } from '../core/RNG.js';
 import Assets from '../core/AssetRegistry.js';
@@ -181,7 +182,8 @@ export class RunScene extends Scene {
     this.beam = { active: false, x: 0, y: 0, width: 0, dmg: 0, heat: 0, color: '#fff', color2: '#fff', tick: 0 };
 
     this.screen = new ScreenFX(this.game.renderer);
-    this.stars_bg = new Starfield(view, { layers: 3, count: 170 });
+    this.stars_bg = new Starfield(view, { layers: 3, count: 140 });
+    this.env = new Environment(view);
     this.director = new WaveDirector(this, this.rng.fork('waves'));
 
     this.applyMetaUpgrades();
@@ -298,7 +300,10 @@ export class RunScene extends Scene {
 
   realUpdate(dt) {
     this.screen.update(dt);
-    this.stars_bg.update(dt * (this.state === 'play' ? 1 : 0.3));
+    const bgScale = this.state === 'play' ? 1 : 0.3;
+    this.stars_bg.update(dt * bgScale);
+    this.env.speed = this.state === 'intro' ? 4 : 1;
+    this.env.update(dt * bgScale);
     this.tweens.update(dt);
     if (this.state === 'play' || this.state === 'intro') this.fx.update(dt);
   }
@@ -981,7 +986,9 @@ export class RunScene extends Scene {
     dmg = Math.max(1, dmg);
 
     e.hp -= dmg;
-    e.flash = 1;
+    // Bosses are shot continuously; a full-strength flash would leave them
+    // permanently white instead of reading as individual hits.
+    e.flash = e.isBoss ? 0.55 : 1;
 
     if (opts.knockback) {
       const a = opts.fromX !== undefined ? angleTo(opts.fromX, opts.fromY, e.x, e.y) : -Math.PI / 2;
@@ -1516,10 +1523,17 @@ export class RunScene extends Scene {
 
   onWaveStart(wave, isBoss) {
     bus.emit(EV.WAVE_START, { wave, isBoss });
+    this.env.setWave(wave);
     if (!isBoss) {
       // A banner on the canvas rather than a toast: it sits in the play field,
       // reads at a glance, and clears itself out of the way in under a second.
-      this.banner = { text: `GOLF ${wave}`, sub: null, t: 0, dur: 1.5 };
+      const biome = biomeForWave(wave);
+      const newBiome = wave === 1 || (wave - 1) % 5 === 0;
+      this.banner = {
+        text: `GOLF ${wave}`,
+        sub: newBiome ? biome.name.toUpperCase() : null,
+        t: 0, dur: newBiome ? 2.1 : 1.5,
+      };
       Sfx.play('tick');
     }
   }
@@ -1824,6 +1838,7 @@ export class RunScene extends Scene {
     const ctx = r.ctx;
     const view = this.view;
 
+    this.env.drawBack(r);
     this.stars_bg.draw(r);
     this.drawHazards(r, false);
     this.fx.draw(r, 0);
@@ -1835,6 +1850,7 @@ export class RunScene extends Scene {
     this.drawBullets(r);
     this.drawHazards(r, true);
     this.fx.draw(r, 1);
+    this.env.drawFront(r);
 
     if (this.banner) this.drawBanner(r);
     if (this.state === 'intro') this.drawIntro(r);
@@ -1853,12 +1869,12 @@ export class RunScene extends Scene {
     let i = 0;
     this.trail.each((s) => {
       i++;
-      if (i % 2) return;
-      const a = (1 - i / this.trail.cap) * 0.18;
+      if (i % 3) return;
+      const a = (1 - i / this.trail.cap) * 0.1;
       if (a <= 0.01) return false;
       ctx.globalAlpha = a;
       Assets.draw(ctx, 'vessel/idle', s.x, s.y, {
-        scale: 1 - i * 0.02, tint: this.stats.color, tint2: this.stats.color2,
+        scale: 1 - i * 0.045, tint: this.stats.color, tint2: this.stats.color2,
         data: { tilt: s.a, thrust: 0, shield: 0, invuln: 0 },
       });
     });
@@ -2100,6 +2116,12 @@ export class RunScene extends Scene {
       size: 44, weight: 900, color: '#ffffff', alpha,
       letterSpacing: 8, shadow: this.stats.color, shadowBlur: 26,
     });
+    if (b.sub) {
+      r.text(b.sub, view.w / 2 - slide, y + 44, {
+        size: 17, weight: 800, color: this.env._col('rim'), alpha: alpha * 0.9,
+        letterSpacing: 7,
+      });
+    }
   }
 
   drawIntro(r) {
@@ -2157,6 +2179,7 @@ export class RunScene extends Scene {
 
   resize(r) {
     this.stars_bg.resize(r.view);
+    this.env.resize(r.view);
     this.player.x = clamp(this.player.x, 26, r.view.w - 26);
     this.player.y = clamp(this.player.y, r.view.h * 0.22, r.view.h - 66);
   }

@@ -268,6 +268,11 @@ function createApp() {
     show(cards);
   });
 
+  // Safety net: the picker normally closes from its own callback, but the run
+  // can also resolve a card by other means (tools, future auto-pick). If a card
+  // is applied and the overlay is still up, it would trap the player.
+  bus.on(EV.CARD_PICKED, () => cardPicker.close());
+
   bus.on(EV.RUN_END, (result) => {
     hud.hide();
     cardPicker.close();

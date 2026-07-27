@@ -358,7 +358,7 @@ function drawBossWarden(ctx, s) {
     ctx.stroke();
     ctx.restore();
   }
-  flashOverlay(ctx, r * 1.5, s.flash);
+  flashOverlay(ctx, r * 1.1, s.flash * 0.6);
 }
 
 /** DEVOURER — a maw. Radial teeth that open before a big attack. */
@@ -403,7 +403,7 @@ function drawBossDevourer(ctx, s) {
   ctx.fill();
   ctx.restore();
 
-  flashOverlay(ctx, r * 1.4, s.flash);
+  flashOverlay(ctx, r * 1.05, s.flash * 0.6);
 }
 
 /** NOVA — a collapsing star. Rings contract before it detonates. */
@@ -443,7 +443,7 @@ function drawBossNova(ctx, s) {
     ctx.stroke();
   }
   ctx.restore();
-  flashOverlay(ctx, r * 1.2, s.flash);
+  flashOverlay(ctx, r * 1.0, s.flash * 0.6);
 }
 
 /* ============================================================
@@ -498,24 +498,41 @@ function drawBulletOrb(ctx, s) {
   ctx.restore();
 }
 
+/**
+ * Enemy shot.
+ *
+ * The one thing on screen the player must never fail to see, including against
+ * a bright nebula or their own muzzle flash. So it gets a dark outline *under*
+ * the additive body — contrast that survives any background — and a white core
+ * big enough to read at 12px in a re-encoded video.
+ */
 function drawBulletEnemy(ctx, s) {
   const r = s.w * 0.5;
+  const star = (rr, inner) => {
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * TAU;
+      const k = i % 2 ? rr * inner : rr;
+      const x = Math.cos(a) * k, y = Math.sin(a) * k;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  };
+
   ctx.save();
+  ctx.rotate(s.t * 8);
+  // Dark backing, drawn normally so it reads on light backdrops too.
+  star(r * 1.28, 0.45);
+  ctx.fillStyle = 'rgba(3,4,12,.75)';
+  ctx.fill();
+
   ctx.globalCompositeOperation = 'lighter';
   halo(ctx, r * 3, s.tint, 0.6);
-  ctx.rotate(s.t * 8);
-  ctx.beginPath();
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * TAU;
-    const rr = i % 2 ? r * 0.45 : r;
-    const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  }
-  ctx.closePath();
+  star(r, 0.45);
   ctx.fillStyle = s.tint;
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.35, 0, TAU);
+  ctx.arc(0, 0, r * 0.46, 0, TAU);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.restore();
