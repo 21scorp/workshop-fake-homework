@@ -11,7 +11,7 @@ import { bus, EV } from './Events.js';
 
 const KEY = 'astrafall.profile.v1';
 const BACKUP_KEY = 'astrafall.profile.backup';
-const SCHEMA = 4;
+const SCHEMA = 5;
 
 export function defaultProfile() {
   const now = Date.now();
@@ -47,6 +47,9 @@ export function defaultProfile() {
       pulls: 0, ssrCount: 0, urCount: 0,
       cardsPicked: 0, bossesKilled: 0, ultsFired: 0,
     },
+
+    /** id → { kills, seen } for every enemy archetype and boss met so far. */
+    bestiary: {},
 
     /** Permanent meta upgrades bought with Cores. */
     meta: { upgrades: {} },
@@ -106,6 +109,10 @@ const MIGRATIONS = {
   1: (p) => { p.loadout ??= [null, null]; p.entitlements ??= {}; return p; },
   2: (p) => { p.daily.seedScores ??= {}; p.stats.ultsFired ??= 0; return p; },
   3: (p) => { p.settings.lang ??= 'nl'; p.stats.bestTime ??= 0; p.achievements ??= {}; return p; },
+  // The bestiary is discovery-gated, so an existing player starts it empty
+  // rather than fully unlocked — the entries are worth more when they arrive
+  // one at a time, and nothing in the game depends on the history.
+  4: (p) => { p.bestiary ??= {}; return p; },
 };
 
 /** Fill in anything a migration or a hand-edited save left out. */

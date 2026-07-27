@@ -31,6 +31,7 @@ import { ShopScreen } from './ui/screens/Shop.js';
 import { ResultsScreen } from './ui/screens/Results.js';
 import { SettingsScreen } from './ui/screens/Settings.js';
 import { StarpassScreen } from './ui/screens/Starpass.js';
+import { BestiaryScreen } from './ui/screens/Bestiary.js';
 
 import { commitRun } from './systems/Economy.js';
 import { progressQuests } from './systems/Daily.js';
@@ -197,7 +198,8 @@ function createApp() {
       .register('shop', ShopScreen)
       .register('results', ResultsScreen)
       .register('settings', SettingsScreen)
-      .register('starpass', StarpassScreen);
+      .register('starpass', StarpassScreen)
+      .register('bestiary', BestiaryScreen);
     router.mount();
     return router;
   }

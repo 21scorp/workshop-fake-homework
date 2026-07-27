@@ -61,7 +61,7 @@ export function SettingsScreen(ctx) {
       ]),
 
       section('Over', [
-        row('Versie', 'ASTRAFALL v0.9.0'),
+        row('Versie', 'ASTRAFALL v0.10.0'),
         row('Rendermodus', Assets.report().mode),
         el('p.settings__note', {
           text: 'Alle artwork is nu procedureel getekend. De sprite-registry staat klaar ' +

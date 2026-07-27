@@ -329,6 +329,50 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- bestiary: marks match behaviour ----------------
+ * The whole point of the role marks is that they cannot lie: the sprite is
+ * drawn from the archetype's own definition. That only holds while the two
+ * agree, so check every archetype both ways — every gun has a barrel, and
+ * nothing without a gun claims one. */
+{
+  const r = await page.evaluate(async () => {
+    const { ENEMY, BOSSES } = await import('./src/data/enemies.js');
+    const { marksFor } = await import('./src/art/entities.js');
+    const A = globalThis.ASTRAFALL.Assets;
+    const wrong = [];
+    const ids = new Set();
+    for (const id in ENEMY) {
+      const def = ENEMY[id];
+      const marks = marksFor(def);
+      if (!!def.gun !== marks.includes('barrel')) wrong.push(`${id}: gun/barrel`);
+      if ((def.ai === 'charge') !== marks.includes('lance')) wrong.push(`${id}: charge/lance`);
+      if (!!def.splitInto !== marks.includes('seam')) wrong.push(`${id}: split/seam`);
+      if (!A.has(def.sprite)) wrong.push(`${id}: geen sprite ${def.sprite}`);
+      if (!def.desc) wrong.push(`${id}: geen omschrijving`);
+      ids.add(def.sprite);
+    }
+    for (const b of BOSSES) if (!A.has(b.sprite)) wrong.push(`${b.id}: geen sprite`);
+    return { count: Object.keys(ENEMY).length, unique: ids.size, wrong };
+  });
+  check(`alle ${r.count} vijanden hebben een eigen sprite`, r.unique === r.count,
+    `${r.unique} unieke keys voor ${r.count} archetypes`);
+  check('rolmarkeringen komen overeen met het gedrag', r.wrong.length === 0, r.wrong.join(' | '));
+}
+
+/* ---------------- bestiary screen renders every row ---------------- */
+{
+  const r = await page.evaluate(async () => {
+    const { save } = await import('./src/core/Save.js');
+    save.profile.bestiary = { drone: { seen: 9, kills: 8 }, 'boss/warden': { seen: 2, kills: 1 } };
+    const { bestiaryProgress, enemyRows, bossRows } = await import('./src/systems/Bestiary.js');
+    const pr = bestiaryProgress();
+    const rows = [...enemyRows(), ...bossRows()];
+    return { have: pr.have, total: pr.total, rows: rows.length, named: rows.every((x) => x.def.name) };
+  });
+  check('bestiarium telt ontdekkingen en kent elke rij', r.have === 2 && r.total === r.rows && r.named,
+    `${r.have}/${r.total} ontdekt, ${r.rows} rijen`);
+}
+
 /* ---------------- the sprite swap, end to end ----------------
  * The entire renderer rests on one promise: drop an atlas in and the game
  * draws artwork instead of vectors, with nothing else changed. Left untested

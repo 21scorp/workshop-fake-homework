@@ -181,9 +181,14 @@ een oude versie nog migreert.
 ```bash
 npm install                       # alleen playwright-core, alleen voor tests
 npx http-server -p 8080 -c-1 .    # in een tweede terminal
-npm test                          # 26 controles
+npm test                          # qa.mjs (26) + systems.mjs (21)
 npm run balance                   # pacing-meting met een auto-player
 ```
+
+`qa.mjs` klikt door de schermen. `systems.mjs` vuurt af wat één speelsessie
+nooit raakt: elk geluid, elk wapenpatroon, elke ultimate, elke vijand, elke
+kaart — plus de sprite-atlasroute van begin tot eind. Die drie subsystemen
+falen stil, dus faalt die suite ook op een `console.warn`.
 
 De balanstest is geen test maar een meetinstrument: een bot speelt het echte
 spel en rapporteert de tijdlijn. Zo zijn de drie ergste pacing-problemen
@@ -193,7 +198,9 @@ te laag was voor het genre. Zie `tests/README.md`.
 ### Toevoegen van een Astra
 
 1. Een entry in `src/data/astra.js`. `form` bepaalt welke silhouet-familie hij
-   gebruikt en dus welke sprite-keys.
+   gebruikt; zijn eigen silhouet volgt uit een hash van zijn `id`, en zijn
+   sprite-keys staan onder `astra/<id>/…`. Wil je een knop met de hand zetten,
+   gebruik dan `art: {}` op de entry.
 2. Als het wapenpatroon nieuw is: een functie in `PATTERNS` in
    `src/game/Weapons.js`.
 3. Als de ultimate nieuw is: een recept in `RECIPES` in `src/game/Ults.js`,
@@ -220,14 +227,17 @@ schermflitsen en camera-shake te dempen.
 | Dagelijks | 1 dag | Inlogreeks, drie opdrachten, gratis summon, gratis proefvlucht met een Astra die je niet bezit, dagelijkse seed |
 | Starpass | 6 weken | 30 tiers, gratis spoor tot het einde, premium keert met terugwerkende kracht uit |
 | Prestaties | open | 31 doelen die zichzelf uitkeren zodra ze kloppen |
+| Bestiarium | open | 15 vijanden en bazen, per stuk vrijgespeeld door ze tegen te komen |
 | Werf | permanent | Cores in permanente upgrades |
 
 ## Status
 
-v0.9 — speelbaar van begin tot eind: run, gacha, collectie, loadout, winkel,
-Starpass, dailies, prestaties, delen. Getest tot golf 13 met een uitgebouwd
-profiel (ruim 500.000 punten in drieënhalve minuut).
+v0.10 — speelbaar van begin tot eind: run, gacha, collectie, loadout, winkel,
+Starpass, dailies, prestaties, bestiarium, delen. Getest tot golf 13 met een
+uitgebouwd profiel (ruim 500.000 punten in drieënhalve minuut).
 
-De volgende stap is de sprite-atlas; het spel staat er al klaar voor.
+De sprite-atlas is geen belofte meer: `tools/bake-atlas.mjs` bakt de hele
+vector-art naar een echte atlas en het spel draait daar volledig op. Wat er
+nog rest is echte art in dat formaat.
 
 Zie `DESIGN.md` voor de volledige designbijbel.

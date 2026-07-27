@@ -107,8 +107,19 @@ Er wordt **nu al** gerenderd via `AssetRegistry`. Elke entity vraagt een *sprite
 1. **Atlas-frame** als er een texture-atlas geladen is (`assets/sprites/*.json` + `.png`)
 2. **Procedural vector-drawer** als fallback (wat er nu draait)
 
-Sprites toevoegen = atlas droppen in `assets/sprites/`, key registreren. Nul gameplay-code
-raakt aangetast. Anchors, pivots, hitboxen en animatie-timelines zitten al in de data.
+Sprites toevoegen = atlas droppen in `assets/sprites/`, naam in `atlases.json`. Nul
+gameplay-code raakt aangetast. Anchors, pivots, hitboxen en animatie-timelines zitten al
+in de data.
+
+Dat is uitgevoerd, niet aangenomen: `tools/bake-atlas.mjs` bakt elke geregistreerde key
+naar een echte atlas en het spel rendert daar volledig uit — nul procedurele draws. Twee
+dingen kwamen daarbij boven die alleen een échte bak laat zien: de atlas-route liet
+`tint` vallen (het hele spel rende wit), en een animatie die over twee sheets viel
+verloor frames. Beide zijn opgelost; zie `assets/sprites/README.md`.
+
+**Keys staan per personage**, niet per vorm (`astra/pip/idle`, `enemy/lancer`). Een
+artist tekent toch per personage, en twee Astra van dezelfde vorm moeten er verschillend
+uitzien.
 
 ## 9. Juice-checklist (elke actie)
 
@@ -141,5 +152,7 @@ Astra is gebalanceerd zodra hij bestaat.
 - [x] v0.6 Onboarding, omgeving met biomes, elementen en passives
 - [x] v0.7 Prestaties, proefvlucht, Starpass
 - [x] v0.9 Loadout met steun-Astra
-- [ ] v1.0 Sprite-atlas swap
+- [x] v0.10 Eigen silhouet per Astra en per vijand, bestiarium, bak-tool voor
+      atlassen — de sprite-swap is end-to-end aangetoond
+- [ ] v1.0 Echte sprite-art in dat formaat
 - [ ] later Vessel-skins uit de Starpass, echte betaalprovider, server-leaderboard

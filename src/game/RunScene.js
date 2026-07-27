@@ -170,6 +170,9 @@ export class RunScene extends Scene {
 
     this.score = 0;
     this.kills = 0;
+    // Per-type tally for the bestiary. Accumulated here and written once at
+    // the end of the run — a save write per kill would land in the hot loop.
+    this.seenTypes = new Map();
     this.level = 1;
     this.xp = 0;
     this.xpNeed = 8;
@@ -574,6 +577,7 @@ export class RunScene extends Scene {
       bossesKilled: this.bossesKilled,
       ultsFired: this.ultsFired,
       hitsTaken: this.hitsTaken,
+      bestiary: Object.fromEntries(this.seenTypes),
       died,
     };
     bus.emit(EV.RUN_END, result);
@@ -1149,11 +1153,24 @@ export class RunScene extends Scene {
     e.burnDmg = Math.max(e.burnDmg, dmgPerTick);
   }
 
+  /** Record an encounter (and optionally a kill) for the bestiary. */
+  noteType(e, killed = 0) {
+    const id = e.isBoss ? `boss/${e.type}` : e.type;
+    if (!id) return;
+    const cur = this.seenTypes.get(id) ?? { seen: 0, kills: 0 };
+    // Counted once at spawn, never again on death — otherwise every enemy you
+    // actually killed is counted twice and "met" drifts above what appeared.
+    if (killed) cur.kills += killed;
+    else cur.seen++;
+    this.seenTypes.set(id, cur);
+  }
+
   killEnemy(e, opts = {}) {
     if (!e._alive) return;
     e._alive = false;
 
     this.kills++;
+    this.noteType(e, 1);
     this.director.killedThisWave++;
     this.combo++;
     this.comboT = 2.6;
@@ -1661,6 +1678,7 @@ export class RunScene extends Scene {
     e.stunT = 0; e.slowT = 0; e.burnT = 0; e.marked = 0;
     e.flash = 0; e.knockX = 0; e.knockY = 0; e.spawnT = 0;
 
+    this.noteType(e, 0);
     this.director.bossRef = e;
     this.bossRef = e;
   }

@@ -22,6 +22,7 @@ import {
   msUntilReset, freePullAvailable, trialAstra, trialStars, trialUsed, consumeTrial,
 } from '../../systems/Daily.js';
 import { list as achievementList, summary as achievementSummary, GROUPS } from '../../systems/Achievements.js';
+import { bestiaryProgress } from '../../systems/Bestiary.js';
 import { collectionStats } from '../../systems/Gacha.js';
 import { supports, setSupport, totals as supportTotals, supportBonus, SUPPORT_SLOTS } from '../../systems/Loadout.js';
 import { ASTRA } from '../../data/astra.js';
@@ -49,6 +50,7 @@ export function HomeScreen(ctx) {
   const questsReady = quests.filter((q) => !q.claimed && q.progress >= q.target).length;
   const cstats = collectionStats();
   const ach = achievementSummary();
+  const bes = bestiaryProgress();
   const skins = skinSummary();
 
   /* ---------------- hero ---------------- */
@@ -426,12 +428,13 @@ export function HomeScreen(ctx) {
         el('div.home__statslinks', null,
           el('button.linkbtn', { text: `Prestaties ${ach.done}/${ach.total} ›`, onclick: openAchievements }),
           el('button.linkbtn', { text: 'Beste runs ›', onclick: openLeaderboard }),
+          el('button.linkbtn', { text: `Bestiarium ${bes.have}/${bes.total} ›`, onclick: () => ctx.go('bestiary') }),
         ),
       ),
       stats,
       el('div.home__foot', null,
         el('button.linkbtn', { text: '⚙ Instellingen', onclick: () => ctx.go('settings') }),
-        el('span.home__ver', { text: 'ASTRAFALL v0.9' }),
+        el('span.home__ver', { text: 'ASTRAFALL v0.10' }),
       ),
     ),
   );

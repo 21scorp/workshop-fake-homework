@@ -1063,3 +1063,125 @@
 .skin__desc { font-size: 11px; color: var(--text-faint); }
 .skin__on { font-size: 16px; color: var(--accent); }
 .skin__lock { font-size: 12px; }
+
+/* ============================================================
+   BESTIARY
+   ============================================================ */
+
+.bes { display: flex; flex-direction: column; overflow: hidden; }
+.bes__scroll {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 4px 14px calc(var(--safe-b) + 18px);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.bes__scroll > * { flex: 0 0 auto; }
+.bes__head { display: flex; flex-direction: column; gap: 12px; }
+
+.bes__prog {
+  display: grid; gap: 8px;
+  padding: 13px 15px;
+  border-radius: var(--r-lg);
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  backdrop-filter: blur(14px);
+}
+.bes__progtop { display: flex; align-items: baseline; justify-content: space-between; }
+.bes__progtop span { font-size: 10.5px; font-weight: 800; letter-spacing: .28em; color: var(--text-faint); }
+.bes__progtop b { font-family: var(--font-num); font-size: 21px; font-weight: 900; }
+.bes__progsub { font-size: 11px; color: var(--text-faint); }
+
+/* The legend is the point of the screen; give it the weight of a card. */
+.bes__legend {
+  display: grid; gap: 9px;
+  padding: 13px 15px;
+  border-radius: var(--r-lg);
+  background: rgba(244,63,94,.07);
+  border: 1px solid rgba(244,63,94,.22);
+}
+.bes__leg { display: flex; gap: 11px; align-items: flex-start; }
+.bes__leg div { display: grid; gap: 1px; min-width: 0; }
+.bes__leg b { font-size: 12.5px; font-weight: 800; }
+.bes__leg span { font-size: 11px; line-height: 1.45; color: var(--text-dim); }
+
+.mark {
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  width: 24px; height: 24px;
+  border-radius: 8px;
+  font-size: 13px; line-height: 1;
+  background: rgba(255,255,255,.07);
+  border: 1px solid var(--hairline);
+  color: #fff;
+}
+.mark[data-m="barrel"] { color: #fca5a5; border-color: rgba(252,165,165,.45); }
+.mark[data-m="lance"]  { color: #fdba74; border-color: rgba(253,186,116,.45); }
+.mark[data-m="seam"]   { color: #6ee7b7; border-color: rgba(110,231,183,.45); }
+.mark[data-m="fins"]   { color: #67e8f9; border-color: rgba(103,232,249,.45); }
+
+.bes__section {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .28em;
+  color: var(--text-faint); margin: 4px 0 -6px;
+}
+.bes__list { display: flex; flex-direction: column; gap: 14px; }
+.bes__list > * { flex: 0 0 auto; }
+.bes__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+.bescard {
+  display: flex; gap: 10px; align-items: center;
+  padding: 10px;
+  border-radius: var(--r-lg);
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  text-align: left; min-width: 0;
+  transition: transform .16s var(--ease-snap), border-color .3s;
+}
+.bescard:active { transform: scale(.97); }
+.bescard[data-known="0"] { opacity: .55; }
+/* Boss drawers paint their own palette and ignore tint, so a locked boss
+   would arrive fully lit. Desaturate the art itself. */
+.bescard[data-known="0"] .bescard__art { filter: grayscale(1) brightness(.55); }
+.bescard[data-boss="1"] { grid-column: 1 / -1; border-color: rgba(168,85,247,.35); }
+.bescard__art { flex: 0 0 auto; display: grid; place-items: center; width: 56px; height: 56px; overflow: hidden; }
+.bescard__art canvas { max-width: 100%; max-height: 100%; }
+.bescard__body { flex: 1; display: grid; gap: 3px; min-width: 0; }
+.bescard__name {
+  font-size: 13px; font-weight: 800;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bescard__marks { display: flex; gap: 4px; }
+.bescard__marks .mark { width: 18px; height: 18px; font-size: 10px; border-radius: 6px; }
+.bescard__kills { font-size: 10.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+.bes__elites { display: grid; gap: 8px; }
+.beselite {
+  display: grid; gap: 2px;
+  padding: 10px 13px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--c) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
+}
+.beselite b { font-size: 12.5px; font-weight: 800; color: var(--c); }
+.beselite span { font-size: 11px; color: var(--text-dim); }
+
+/* ---- detail sheet ---- */
+.besdet { display: grid; gap: 14px; }
+.besdet__art { display: grid; place-items: center; }
+.besdet__lore { font-size: 13px; line-height: 1.55; color: var(--text-dim); margin: 0; }
+.besdet__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.besdet__marks, .besdet__phases { display: grid; gap: 8px; }
+.besdet h4 { font-size: 10.5px; font-weight: 800; letter-spacing: .26em; color: var(--text-faint); margin: 0; }
+.besdet__mark { display: flex; gap: 11px; align-items: flex-start; }
+.besdet__mark div { display: grid; gap: 1px; }
+.besdet__mark b { font-size: 12.5px; }
+.besdet__mark span { font-size: 11px; line-height: 1.45; color: var(--text-dim); }
+.besdet__phase {
+  display: flex; gap: 10px; align-items: center;
+  padding: 8px 11px; border-radius: var(--r-md);
+  background: rgba(255,255,255,.04); border: 1px solid var(--hairline);
+}
+.besdet__phase b { font-family: var(--font-num); font-size: 14px; color: var(--accent); }
+.besdet__phase span { flex: 1; font-size: 12px; }
+.besdet__phase i { font-size: 10.5px; color: var(--text-faint); font-style: normal; font-variant-numeric: tabular-nums; }
+
+.topbar__title { font-size: 14px; font-weight: 800; letter-spacing: .04em; }
+.bes__locked { filter: grayscale(1) brightness(.6); }

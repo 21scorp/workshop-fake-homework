@@ -128,6 +128,12 @@ export function commitRun(result) {
 
   if (result.astraId && p.collection[result.astraId]) p.collection[result.astraId].uses++;
 
+  for (const id in result.bestiary ?? {}) {
+    const entry = (p.bestiary[id] ??= { seen: 0, kills: 0, firstAt: Date.now() });
+    entry.seen += result.bestiary[id].seen;
+    entry.kills += result.bestiary[id].kills;
+  }
+
   if (result.seed) {
     const prev = p.daily.seedScores[result.seed] ?? 0;
     if ((result.score ?? 0) > prev) p.daily.seedScores[result.seed] = result.score;

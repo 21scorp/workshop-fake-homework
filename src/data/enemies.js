@@ -12,6 +12,7 @@ export const ENEMY = {
     sprite: 'enemy/drone',   // own key: see art/entities.js
     form: 'drone',
     name: 'Drone',
+    desc: 'Valt recht naar beneden en raakt je als je blijft staan. Het eerste wat je leert ontwijken.',
     hp: 12, dmg: 1, speed: 105, radius: 20,
     score: 10, xp: 3,
     color: '#f43f5e', color2: '#fecdd3',
@@ -25,6 +26,7 @@ export const ENEMY = {
     sprite: 'enemy/swarm',   // own key: see art/entities.js
     form: 'swarm',
     name: 'Zwerm',
+    desc: 'Nooit alleen. Volgt je traag maar geeft niet op; een zwerm is gevaarlijker dan de som.',
     hp: 5, dmg: 1, speed: 190, radius: 12,
     score: 6, xp: 2,
     color: '#fb7185', color2: '#ffe4e6',
@@ -39,6 +41,7 @@ export const ENEMY = {
     sprite: 'enemy/tank',   // own key: see art/entities.js
     form: 'tank',
     name: 'Bastion',
+    desc: 'Traag, gepantserd, en hij komt precies zo hard aan als hij eruitziet. Ga eromheen.',
     hp: 95, dmg: 2, speed: 46, radius: 37,
     score: 55, xp: 14,
     color: '#94a3b8', color2: '#e2e8f0',
@@ -54,6 +57,7 @@ export const ENEMY = {
     sprite: 'enemy/shooter',   // own key: see art/entities.js
     form: 'shooter',
     name: 'Wachter',
+    desc: 'Zakt tot een band, blijft daar hangen en mikt. De aanloop is te zien in de loop.',
     hp: 26, dmg: 1, speed: 62, radius: 25,
     score: 30, xp: 8,
     color: '#c084fc', color2: '#f3e8ff',
@@ -69,6 +73,7 @@ export const ENEMY = {
     sprite: 'enemy/splitter',   // own key: see art/entities.js
     form: 'splitter',
     name: 'Splijter',
+    desc: 'Doodgaan is niet zijn einde. Wat eruit komt is sneller dan wat je net raakte.',
     hp: 34, dmg: 1, speed: 78, radius: 27,
     score: 34, xp: 9,
     color: '#34d399', color2: '#d1fae5',
@@ -84,6 +89,7 @@ export const ENEMY = {
     sprite: 'enemy/weaver',   // own key: see art/entities.js
     form: 'weaver',
     name: 'Wever',
+    desc: 'Cirkelt om het veld en laat een spoor achter dat blijft branden. De vloer is het gevaar.',
     hp: 40, dmg: 1, speed: 130, radius: 24,
     score: 42, xp: 11,
     color: '#22d3ee', color2: '#cffafe',
@@ -99,6 +105,7 @@ export const ENEMY = {
     sprite: 'enemy/lancer',   // own key: see art/entities.js
     form: 'swarm',
     name: 'Lansier',
+    desc: 'Staat stil, laadt, en stormt dan in een rechte lijn. De lans wijst naar waar hij heen gaat.',
     hp: 22, dmg: 2, speed: 95, radius: 17,
     score: 26, xp: 7,
     color: '#fbbf24', color2: '#fef3c7',
@@ -114,6 +121,7 @@ export const ENEMY = {
     sprite: 'enemy/turret',   // own key: see art/entities.js
     form: 'shooter',
     name: 'Geschutstoren',
+    desc: 'Beweegt nauwelijks en vuurt een waaier. Vijf kogels tegelijk, dus zijwaarts helpt niet.',
     hp: 70, dmg: 1, speed: 26, radius: 30,
     score: 60, xp: 16,
     color: '#f472b6', color2: '#fce7f3',
@@ -130,6 +138,7 @@ export const ENEMY = {
     sprite: 'enemy/warden',   // own key: see art/entities.js
     form: 'tank',
     name: 'Schildwacht',
+    desc: 'Pantser plus een kanon. Hij houdt je op afstand terwijl de rest binnenkomt.',
     hp: 130, dmg: 2, speed: 38, radius: 40,
     score: 90, xp: 22,
     color: '#38bdf8', color2: '#e0f2fe',
@@ -146,6 +155,7 @@ export const ENEMY = {
     sprite: 'enemy/reaper',   // own key: see art/entities.js
     form: 'splitter',
     name: 'Maaier',
+    desc: 'Sneller dan de Lancer, en hij breekt open als je hem velt. Twee problemen in één.',
     hp: 60, dmg: 2, speed: 150, radius: 26,
     score: 70, xp: 18,
     // Not the Drone's rose: a Reaper closes fast and lethally, and sharing a
@@ -163,6 +173,7 @@ export const ENEMY = {
     sprite: 'enemy/seraph',   // own key: see art/entities.js
     form: 'weaver',
     name: 'Serafijn',
+    desc: 'Cirkelt hoog en strooit een spiraal rond. Er is altijd een gat; je moet hem alleen vinden.',
     hp: 100, dmg: 2, speed: 90, radius: 30,
     score: 120, xp: 26,
     // Lancer already owns amber. Two archetypes in one colour is one
@@ -182,6 +193,7 @@ export const ENEMY = {
     sprite: 'enemy/spinner',   // own key: see art/entities.js
     form: 'weaver',
     name: 'Tolwezen',
+    desc: 'Zakt zigzaggend en vuurt in alle richtingen. Sta nooit stil in zijn buurt.',
     hp: 55, dmg: 1, speed: 70, radius: 26,
     score: 48, xp: 13,
     color: '#818cf8', color2: '#e0e7ff',

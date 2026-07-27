@@ -307,6 +307,9 @@ export class WaveDirector {
 
     this.spawnedThisWave++;
     this.totalSpawned++;
+    // Met counts, not just killed — the bestiary should list the thing that
+    // ran you over as well as the things you got.
+    this.run.noteType?.(e, 0);
     return e;
   }
 

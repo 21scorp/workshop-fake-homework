@@ -220,8 +220,11 @@ for (const [label, vp] of [
 /* ---------------- 8. save migration from an old schema ---------------- */
 {
   const page = await makePage();
-  await page.goto(URL, { waitUntil: 'domcontentloaded' });
-  await page.evaluate(() => {
+  // Seed before any app code runs. Writing it after a load and reloading
+  // races the store's own debounced first write, which lands 600ms after
+  // boot and would quietly replace the old profile with a fresh one — the
+  // test then "passes" against defaults, or fails for no reason at all.
+  await page.addInitScript(() => {
     localStorage.setItem('astrafall.profile.v1', JSON.stringify({
       v: 1,
       currency: { stardust: 999, shards: 1 },
@@ -232,14 +235,13 @@ for (const [label, vp] of [
       meta: { upgrades: {} }, gacha: {}, history: [],
     }));
   });
-  await page.reload({ waitUntil: 'domcontentloaded' });
-
+  await page.goto(URL, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2600);
   const m = await page.evaluate(() => {
     const p = globalThis.ASTRAFALL.save.profile;
-    return { v: p.v, dust: p.currency.stardust, runs: p.stats.runs, ach: !!p.achievements, loadout: p.loadout, seedScores: !!p.daily.seedScores };
+    return { v: p.v, dust: p.currency.stardust, runs: p.stats.runs, ach: !!p.achievements, loadout: p.loadout, seedScores: !!p.daily.seedScores, bestiary: !!p.bestiary };
   });
-  check('oud profiel migreert zonder verlies', m.v === 4 && m.dust === 999 && m.runs === 5 && m.ach && m.seedScores, JSON.stringify(m));
+  check('oud profiel migreert zonder verlies', m.v === 5 && m.dust === 999 && m.runs === 5 && m.ach && m.seedScores && m.bestiary, JSON.stringify(m));
   check('geen fouten na migratie', page.errs.length === 0, page.errs.join(' | '));
   await page.close();
 }

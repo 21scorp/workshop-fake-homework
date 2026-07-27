@@ -6,7 +6,7 @@
  * Bump CACHE to invalidate.
  */
 
-const CACHE = 'astrafall-v0.9.0';
+const CACHE = 'astrafall-v0.10.0';
 
 const SHELL = [
   './',
