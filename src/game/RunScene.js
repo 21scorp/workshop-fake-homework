@@ -40,6 +40,13 @@ import { WaveDirector } from './WaveDirector.js';
 import { updateWeapon, fireEchoes, nearestEnemy } from './Weapons.js';
 import { fireUlt } from './Ults.js';
 
+/**
+ * Ceiling on simultaneous hostile projectiles. Tuned from a deep-run probe:
+ * past roughly this many the pattern reads as noise rather than as something
+ * you can thread.
+ */
+const MAX_ENEMY_BULLETS = 190;
+
 /* ------------------------------------------------------------------
    Pool factories
    ------------------------------------------------------------------ */
@@ -773,6 +780,22 @@ export class RunScene extends Scene {
   }
 
   spawnEnemyBullet(x, y, angle, speed, opts = {}) {
+    // Hard ceiling on hostile fire.
+    //
+    // Late waves stack several shooters, a boss pattern and a spinner, and the
+    // count climbed past 250 in testing — at which point the screen stops being
+    // a bullet pattern and becomes a texture you cannot read. Retiring the
+    // oldest shot keeps the newest, most relevant threats on screen and bounds
+    // the chaos without touching how any single pattern is authored.
+    if (this.ebullets.count >= MAX_ENEMY_BULLETS) {
+      let oldest = null;
+      this.ebullets.each((o) => { if (!oldest || o.t > oldest.t) oldest = o; });
+      if (oldest) {
+        this.fx.hit(oldest.x, oldest.y, oldest.color, 0, 0.4);
+        oldest._alive = false;
+      }
+    }
+
     const b = this.ebullets.spawn();
     b.x = x; b.y = y;
     b.angle = angle;
