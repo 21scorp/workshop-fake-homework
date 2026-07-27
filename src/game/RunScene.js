@@ -192,6 +192,7 @@ export class RunScene extends Scene {
     this.overheatMul = 1;
     this.tailwind = 0;       // Zephyr: fire-rate stacks that decay
     this.untouchedT = 0;     // Carousel: seconds since the last hit taken
+    this.bossMusicT = 0;     // countdown to handing the boss track back
     this.tailwindT = 0;
     this.hitCount = 0;       // Basalt: every 4th hit shockwaves
     this.feastKills = 0;     // Umbra: heal every 25 kills
@@ -333,6 +334,24 @@ export class RunScene extends Scene {
      UPDATE
      ============================================================ */
 
+  /**
+   * Hand the boss track back to the run track.
+   *
+   * This lives in realUpdate, not in updatePlay, and is not a scheduled
+   * callback. Killing a boss is enough XP to level up, so by the time any
+   * play-state timer would fire the run is sitting on the card screen with
+   * its simulation frozen — and the boss track stayed on for the rest of the
+   * run. Unscaled real time also means it is not stretched by slow-motion.
+   */
+  updateBossMusic(dt) {
+    if (this.bossMusicT > 0) {
+      this.bossMusicT -= dt;
+      if (this.bossMusicT <= 0) Music.start('run', { fade: 1.2 });
+    } else if (this.state !== 'dead' && Music.trackName === 'boss' && !this.bossRef?._alive) {
+      this.bossMusicT = 1.6;
+    }
+  }
+
   update(dt) {
     switch (this.state) {
       case 'intro':   this.updateIntro(dt); break;
@@ -343,6 +362,7 @@ export class RunScene extends Scene {
   }
 
   realUpdate(dt) {
+    this.updateBossMusic(dt);
     this.screen.update(dt);
     const bgScale = this.state === 'play' ? 1 : 0.3;
     this.stars_bg.update(dt * bgScale);
@@ -1295,6 +1315,11 @@ export class RunScene extends Scene {
       this.fx.celebrate(e.x, e.y, '#fbbf24', 1.4);
       bus.emit(EV.TOAST, { text: `${e.bossDef?.name ?? 'BOSS'} VERSLAGEN`, tone: 'gold', ttl: 2600 });
       haptic('success');
+      // Hand the music back after a beat of victory. Scheduling it with a
+      // `state === 'play'` guard did not work: killing a boss is enough XP to
+      // level up, so the run is sitting on the card screen when the timer
+      // fires and the boss track stayed on for the rest of the run.
+      this.bossMusicT = 1.6;
     }
 
     bus.emit(EV.ENEMY_KILLED, { type: e.type, elite: !!e.elite, boss: e.isBoss, score: gained });

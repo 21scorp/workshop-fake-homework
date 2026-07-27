@@ -29,11 +29,17 @@ import { ASTRA } from '../../data/astra.js';
 import { SKINS, unlockLabel } from '../../data/skins.js';
 import { isUnlocked, currentSkinId, setSkin, skinSummary } from '../../systems/Skins.js';
 import { leaderboard } from '../../systems/Economy.js';
-import { Sfx } from '../../core/Audio.js';
+import { Sfx, Music } from '../../core/Audio.js';
 import { haptic } from '../../core/Input.js';
 import { bus, EV } from '../../core/Events.js';
 
 export function HomeScreen(ctx) {
+  // The menu scene starts the menu track once, but screens inside it swap
+  // without re-entering the scene — so coming back from Summon would leave
+  // the gacha track running over the home screen. Idempotent: Music.start
+  // returns immediately if this track is already playing.
+  Music.start('menu', { fade: 0.6 });
+
   const p = save.profile;
   const astra = getAstra(p.equipped) ?? getAstra(STARTER_ID);
   const entry = p.collection[astra.id];

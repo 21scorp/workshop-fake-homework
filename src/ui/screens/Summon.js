@@ -17,7 +17,7 @@ import { pull, pityInfo, canAfford } from '../../systems/Gacha.js';
 import { freePullAvailable, consumeFreePull } from '../../systems/Daily.js';
 import { save } from '../../core/Save.js';
 import { abbrev, pct, clamp01 } from '../../core/Math2.js';
-import { Sfx } from '../../core/Audio.js';
+import { Sfx, Music } from '../../core/Audio.js';
 import { haptic } from '../../core/Input.js';
 import { bus, EV } from '../../core/Events.js';
 import { PullReveal } from '../PullReveal.js';
@@ -39,6 +39,10 @@ function defaultBannerId() {
 }
 
 export function SummonScreen(ctx, params = {}) {
+  // The anticipation screen should not sound like the home screen. The gacha
+  // track already existed but only played during the reveal — by then the
+  // decision to spend has been made.
+  Music.start('gacha', { fade: 0.6 });
   let bannerIdx = Math.max(0, BANNERS.findIndex((b) => b.id === (params.banner ?? defaultBannerId())));
   const sprites = [];
 

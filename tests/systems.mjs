@@ -329,6 +329,41 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- music follows the screen ----------------
+ * Five tracks exist; three of them were only reachable by accident. The boss
+ * track never handed back, so every wave after the first boss sounded like a
+ * boss fight, and the summon screen — the one where you decide to spend —
+ * played the home track. None of that throws, so nothing caught it. */
+{
+  const seen = [];
+  const track = () => page.evaluate(async () => (await import('./src/core/Audio.js')).Music.trackName);
+
+  await page.evaluate(async () => {
+    const { Music } = await import('./src/core/Audio.js');
+    Music.start('menu');
+  });
+  seen.push(['menu', await track()]);
+
+  await page.evaluate(async () => {
+    const { BOSSES } = await import('./src/data/enemies.js');
+    const run = globalThis.ASTRAFALL.scene;
+    run.enemies.clear();
+    run.onBossWave(BOSSES[0]);
+  });
+  seen.push(['boss', await track()]);
+
+  await page.evaluate(() => {
+    const run = globalThis.ASTRAFALL.scene;
+    if (run.bossRef) run.killEnemy(run.bossRef);
+  });
+  await page.waitForTimeout(2200);
+  seen.push(['run', await track()]);
+
+  const wrong = seen.filter(([want, got]) => want !== got);
+  check('muziek volgt het scherm en geeft de bazentrack terug',
+    wrong.length === 0, seen.map(([w, g]) => `${w}→${g}`).join(' '));
+}
+
 /* ---------------- bestiary: marks match behaviour ----------------
  * The whole point of the role marks is that they cannot lie: the sprite is
  * drawn from the archetype's own definition. That only holds while the two
