@@ -1,14 +1,13 @@
 # Publishes the game to GitHub Pages.
 #
-# There is no build step — the repository *is* the deployable artifact — so this
-# workflow just uploads the checkout. It only does anything once Pages is
-# enabled for the repository with "GitHub Actions" as the source; until then it
-# is inert.
+# There is no build step — the game is vanilla ES modules — so this only
+# gathers the files a browser actually needs. node_modules and the tests are
+# for the development machine and would make the upload needlessly heavy.
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, claude/viral-gacha-game-2wx9k0]
   workflow_dispatch:
 
 permissions:
@@ -30,9 +29,23 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Collect the playable files
+        run: |
+          mkdir -p _site
+          cp -r index.html src styles assets manifest.webmanifest _site/
+          # A 404 that falls back to the game, so a shared ?s=CODE link still
+          # lands on something playable if the path is off.
+          cp index.html _site/404.html
+          du -sh _site
+
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
+
       - id: deployment
         uses: actions/deploy-pages@v4
