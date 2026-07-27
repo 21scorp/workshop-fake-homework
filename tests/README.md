@@ -65,6 +65,9 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   tas ooit gelezen wordt
 - alle Astra tekenen, en hun verwijzingen naar patronen, ultimates en
   elementen bestaan echt
+- elke elite-modifier wordt ergens gelezen, en de genezende aura geneest ook
+  echt — met een patiënt die taai genoeg is om de puls te halen, want een
+  controle die slaagt omdat het doelwit stierf bewijst niets
 - elke passive wordt ook echt waargemaakt: door een tak in de code, of door
   een veld in het wapen — en dan wordt dat veld gecontroleerd. Een passive
   zonder implementatie is een personage waarvan het hele verkoopargument een

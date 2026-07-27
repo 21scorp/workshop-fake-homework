@@ -771,6 +771,18 @@ export class RunScene extends Scene {
     }
   }
 
+  /** A visible ring so the heal is something the player can react to. */
+  _auraPulse(e) {
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * TAU;
+      this.fx.emit({
+        x: e.x + Math.cos(a) * 40, y: e.y + Math.sin(a) * 40,
+        vx: Math.cos(a) * 150, vy: Math.sin(a) * 150,
+        life: 0.5, size: 3, color: '#fb7185', shape: 1, weight: 0,
+      });
+    }
+  }
+
   /** Orbiters damage on a per-enemy cooldown instead of dying on contact. */
   collideOrbiter(b, dt) {
     const map = b.cooldownMap ??= new Map();
@@ -934,6 +946,30 @@ export class RunScene extends Scene {
 
       // Weapons.
       if (e.def?.gun && e.stunT <= 0) this.updateEnemyGun(e, dt);
+
+      // Vampiric elites heal their neighbours.
+      //
+      // The modifier was pure data: `healAura: true` and nothing read it. The
+      // bestiary screen advertises "geneest zijn buren", so the enemy was
+      // being described by a promise the code never kept.
+      if (e.eliteMod?.healAura) {
+        e.auraT = (e.auraT ?? 0) - dt;
+        if (e.auraT <= 0) {
+          e.auraT = 1.4;
+          const r2 = 190 * 190;
+          let healed = 0;
+          this.enemies.each((o) => {
+            if (o === e || !o._alive || o.hp >= o.maxHp) return;
+            if (dist2(o.x, o.y, e.x, e.y) > r2) return;
+            o.hp = Math.min(o.maxHp, o.hp + o.maxHp * 0.12);
+            healed++;
+          });
+          if (healed) {
+            this.fx.burst(e.x, e.y, '#f43f5e', 0.9);
+            this._auraPulse(e);
+          }
+        }
+      }
 
       // Hazard trails (weavers).
       if (e.def?.trail) {

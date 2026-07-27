@@ -352,6 +352,55 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- every elite modifier is read ----------------
+ * `healAura: true` sat in the data for the whole build and nothing read it,
+ * while the bestiary screen advertised it. Same class as the passives: data
+ * that describes behaviour nobody implements. */
+{
+  await ensureRun(page);
+  const r = await page.evaluate(async () => {
+    const { ELITE_MODS } = await import('./src/data/enemies.js');
+    const sources = await Promise.all(
+      ['./src/game/RunScene.js', './src/game/WaveDirector.js']
+        .map((f) => fetch(f).then((r2) => r2.text())));
+    const code = sources.join('\n');
+    const bad = [];
+    for (const [key, mod] of Object.entries(ELITE_MODS)) {
+      for (const field of Object.keys(mod)) {
+        if (['name', 'color'].includes(field)) continue;
+        if (!new RegExp(`\\b${field}\\b`).test(code)) bad.push(`${key}.${field} wordt nergens gelezen`);
+      }
+    }
+
+    // And the heal actually heals: hurt a neighbour, wait for a pulse.
+    const run = globalThis.ASTRAFALL.scene;
+    run.enemies.clear();
+    const healer = run.director.spawnAt('tank', 300, 300, { elite: 'vampiric' });
+    const hurt = run.director.spawnAt('drone', 340, 320);
+    if (!healer || !hurt) bad.push('kon geen elite + buur spawnen');
+    else {
+      // Tough enough to still be there when the pulse lands — otherwise the
+      // check passes because the patient died, which proves nothing.
+      hurt.maxHp = 50000;
+      hurt.hp = 10000;
+      healer.hp = healer.maxHp = 50000;
+      healer.auraT = 0.05;
+      return { bad, before: hurt.hp, id: hurt.id };
+    }
+    return { bad, before: -1, id: -1 };
+  });
+  await page.waitForTimeout(1200);
+  const after = await page.evaluate((id) => {
+    const run = globalThis.ASTRAFALL.scene;
+    let hp = -1;
+    run.enemies.each((e) => { if (e.id === id) hp = e.hp; });
+    return hp;
+  }, r.id);
+  check('elke elite-modifier wordt gelezen, en de heal geneest echt',
+    r.bad.length === 0 && after > r.before,
+    r.bad.slice(0, 3).join(' | ') || `hp ${r.before} → ${after}`);
+}
+
 /* ---------------- every passive is kept by something ----------------
  * A passive key with no implementation is a character whose whole selling
  * point is a lie, and nothing throws. Three of them are honestly kept by the
