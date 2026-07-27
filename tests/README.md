@@ -65,6 +65,11 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   tas ooit gelezen wordt
 - alle Astra tekenen, en hun verwijzingen naar patronen, ultimates en
   elementen bestaan echt
+- een veegcontrole over álle datavelden — vijanden, bazen, wapenconfig en de
+  modifier-tas — op velden die niemand leest. Twee bugs in deze build hadden
+  precies die vorm, en geen van beide gooide ooit een fout. De controle zoekt
+  op property-toegang (`.veld`), nooit op de kale naam, zodat een definitie
+  zichzelf niet als gelezen kan aanmerken
 - elke elite-modifier wordt ergens gelezen, en de genezende aura geneest ook
   echt — met een patiënt die taai genoeg is om de puls te halen, want een
   controle die slaagt omdat het doelwit stierf bewijst niets

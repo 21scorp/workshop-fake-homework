@@ -352,6 +352,47 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- no data describes behaviour nobody implements ----------------
+ * Two bugs this build were the same shape: a field in the data that reads
+ * like a feature and that no code ever looks at. OUROBOROS's passive and the
+ * vampiric elite's heal aura both sat there for the whole build. Neither
+ * threw, neither showed up in a playthrough, and both were advertised in the
+ * UI. So sweep every data surface for fields nothing reads.
+ *
+ * Searches for *property access* (`.field`), not for the bare name: a
+ * definition is `field:`, so it can never match itself and mark itself read. */
+{
+  const r = await page.evaluate(async () => {
+    const grab = (f) => fetch(f).then((r2) => r2.text());
+    const READERS = [
+      './src/game/RunScene.js', './src/game/Weapons.js', './src/game/Ults.js',
+      './src/game/WaveDirector.js', './src/art/entities.js', './src/systems/Loadout.js',
+      './src/systems/Bestiary.js', './src/ui/screens/Bestiary.js',
+      './src/data/enemies.js', './src/data/cards.js',
+    ];
+    const code = (await Promise.all(READERS.map(grab))).join('\n');
+
+    const enemies = await grab('./src/data/enemies.js');
+    const cards = await grab('./src/data/cards.js');
+    const fields = new Set();
+    for (const m of enemies.matchAll(/^ {4}(\w+):/gm)) fields.add(m[1]);
+    for (const m of enemies.matchAll(/(gun|charge|trail|splitInto|minions):\s*\{([^}]*)\}/g)) {
+      for (const f of m[2].matchAll(/(\w+):/g)) fields.add(f[1]);
+    }
+    const bag = cards.slice(cards.indexOf('export function blankMods'));
+    for (const m of bag.matchAll(/^ {4}(\w+):/gm)) fields.add(m[1]);
+
+    // Presentation only — nothing in the simulation should read these.
+    const COSMETIC = new Set(['name', 'desc', 'color', 'color2', 'icon', 'subtitle',
+                              'id', 'sprite', 'note', 'tag', 'form', 'at', 'pattern']);
+    const dead = [...fields].filter((f) => !COSMETIC.has(f) &&
+      !new RegExp(`\\.${f}\\b`).test(code));
+    return { dead, checked: fields.size };
+  });
+  check(`alle ${r.checked} datavelden worden ergens gelezen`, r.dead.length === 0,
+    r.dead.slice(0, 6).join(', '));
+}
+
 /* ---------------- every elite modifier is read ----------------
  * `healAura: true` sat in the data for the whole build and nothing read it,
  * while the bestiary screen advertised it. Same class as the passives: data
