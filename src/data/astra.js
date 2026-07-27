@@ -59,7 +59,9 @@ export const ASTRA = [
   {
     id: 'pebble', name: 'Pebble', title: 'Kiezel',
     rarity: RARITY.C, element: 'terra', form: 'construct',
-    colors: { primary: '#fbbf24', secondary: '#fde68a' },
+    // Stone, not gold. Sharing a palette with SOLARIS made a Common and an
+    // SSR of the same form read as the same character on a collection card.
+    colors: { primary: '#a8a29e', secondary: '#e7e5e4' },
     stats: { power: 14, fireRate: 3.4, projectiles: 1, spread: 0, speed: 0.9, hp: 4, crit: 0.04, critDmg: 1.8, magnet: 0.9 },
     weapon: { type: 'straight', bullet: 'bullet/shard', bulletSpeed: 700, pierce: 1, knockback: 60 },
     passive: { key: 'bulwark', name: 'Bolwerk', desc: '+1 maximale HP.' },
@@ -209,6 +211,9 @@ export const ASTRA = [
     id: 'solaris', name: 'SOLARIS', title: 'Kroon van de Dag',
     rarity: RARITY.SSR, element: 'lumen', form: 'construct',
     colors: { primary: '#fbbf24', secondary: '#fffbeb' },
+    // A crown: the widest chassis in the game, two rows of pods, oversized.
+    // An SSR has to be recognisable from across the room.
+    art: { c: 4, a: 1, bulk: 1.14 },
     stats: { power: 24, fireRate: 2.2, projectiles: 1, spread: 0, speed: 1.0, hp: 4, crit: 0.14, critDmg: 2.1, magnet: 1.3 },
     weapon: { type: 'beam', bullet: 'bullet/laser', width: 26, tickRate: 12, pierce: 99 },
     passive: { key: 'daybreak', name: 'Dageraad', desc: 'De straal wordt breder en sterker hoe langer je vuurt.' },
@@ -272,5 +277,12 @@ export const astraIds = () => ASTRA.map((a) => a.id);
 /** The Astra every new player starts with. */
 export const STARTER_ID = 'pip';
 
-/** Sprite key helpers — the single place that knows the naming convention. */
-export const astraSprite = (astra, state = 'idle') => `astra/${astra.form}/${state}`;
+/**
+ * Sprite key helpers — the single place that knows the naming convention.
+ *
+ * Keyed per character, not per form. Two Astra sharing a form still get their
+ * own silhouette (art/astra.js hashes a variant from the id), and an artist
+ * drawing a real sheet works per character anyway — nobody paints "the beast
+ * form" and recolours it four times.
+ */
+export const astraSprite = (astra, state = 'idle') => `astra/${astra.id}/${state}`;

@@ -63,7 +63,10 @@ export const ELEMENT = {
             trait: 'Stroom', traitDesc: 'Geraakte vijanden worden vertraagd.' },
   gale:   { key: 'gale',   name: 'Gale',   icon: '❃', color: '#5eead4', accent: '#ccfbf1',
             trait: 'Windstoot', traitDesc: 'Kans om vijanden weg te blazen.' },
-  terra:  { key: 'terra',  name: 'Terra',  icon: '❖', color: '#fbbf24', accent: '#fde68a',
+  // Terra used to be #fbbf24, a hair from Lumen's #facc15 — two of seven
+  // elements the same yellow. Elements have to be readable in a three-second
+  // clip, so Terra is earthen amber now and Lumen keeps the bright light.
+  terra:  { key: 'terra',  name: 'Terra',  icon: '❖', color: '#d97706', accent: '#fcd34d',
             trait: 'Breuk', traitDesc: 'Schade schokgolft naar vijanden ernaast.' },
   void:   { key: 'void',   name: 'Void',   icon: '◈', color: '#a855f7', accent: '#e9d5ff',
             trait: 'Leegte', traitDesc: 'Kills trekken nabije Prisms aan.' },

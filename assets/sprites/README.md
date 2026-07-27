@@ -87,15 +87,26 @@ twee afspeelt. `Assets.report().unresolved` laat zien wat er nog ontbreekt.
 ## Welke keys moeten er zijn
 
 ### Astra
-Voor elke vorm (`orb`, `blade`, `wisp`, `beast`, `construct`, `bloom`,
-`serpent`, `prism`):
+
+Keys staan **per personage**, niet per vorm — voor elke `id` uit
+`src/data/astra.js` (`pip`, `cinder`, `pebble`, … `ouroboros`):
 
 ```
-astra/<vorm>/idle       72×72   8 frames @ 10fps   loop
-astra/<vorm>/cast       72×72   6 frames @ 14fps   loop
-astra/<vorm>/hurt       72×72   2 frames @ 12fps   geen loop
-astra/<vorm>/portrait  200×200  1 frame            (collectie/summon)
+astra/<id>/idle       72×72   8 frames @ 10fps   loop
+astra/<id>/cast       72×72   6 frames @ 14fps   loop
+astra/<id>/hurt       72×72   2 frames @ 12fps   geen loop
+astra/<id>/portrait  200×200  1 frame            (collectie/summon)
 ```
+
+Dezelfde vier keys bestaan ook per vórm (`astra/orb/idle`, `astra/beast/idle`,
+…). Die zijn de terugval: een personage zonder eigen frames valt terug op zijn
+vorm, en een vorm zonder frames op de vectortekenaar. Zo kun je één Astra
+tegelijk vervangen.
+
+Waarom per personage: twee Astra van dezelfde vorm moeten er verschillend
+uitzien. De vectortekenaars regelen dat met een variant (aantal bloembladen,
+hoorns, segmenten, facetten) die uit de id gehasht wordt; een artist tekent
+toch al per personage.
 
 ### Speler
 ```

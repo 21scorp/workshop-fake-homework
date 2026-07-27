@@ -37,7 +37,7 @@ import { progressQuests } from './systems/Daily.js';
 import { evaluate as evaluateAchievements } from './systems/Achievements.js';
 import { addRunXp as addSeasonXp } from './systems/Starpass.js';
 import { readSeedFromUrl, clearSeedFromUrl, shareRun } from './systems/Share.js';
-import { getAstra, STARTER_ID } from './data/astra.js';
+import { ASTRA, getAstra, STARTER_ID } from './data/astra.js';
 
 /* ============================================================
    BOOT
@@ -68,7 +68,7 @@ async function boot() {
 
   /* ---- art ---- */
   bootProgress(BOOT_STEPS[1][1], BOOT_STEPS[1][0]);
-  registerAstraArt();
+  registerAstraArt(ASTRA);
   registerEntityArt();
   // Sprite atlases are opt-in through a manifest rather than probed by name:
   // probing means a 404 in every player's console on every load, which is the
