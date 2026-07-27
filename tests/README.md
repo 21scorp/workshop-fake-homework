@@ -8,7 +8,9 @@ profiel van een oude versie nog migreert — daar helpt een unit test niet bij.
 ```bash
 npm install                 # alleen playwright-core, alleen voor tests
 npx http-server -p 8080 -c-1 .   # in een tweede terminal
-npm test                    # QA-sweep
+npm test                    # qa.mjs + systems.mjs
+npm run test:qa             # alleen de QA-sweep
+npm run test:systems        # alleen de systeemsweep
 npm run balance             # pacing-meting met een auto-player
 ```
 
@@ -36,6 +38,36 @@ Zesentwintig controles over de paden die je bij normaal doorklikken mist:
 
 Elke controle faalt ook op een console-fout, dus een stille exception in een
 scherm haalt de suite neer.
+
+## systems.mjs
+
+`qa.mjs` klikt door schermen; deze sweep vuurt de systemen af die één
+speelsessie nooit raakt. Eén run gebruikt één wapenpatroon en één ultimate —
+de andere veertien patronen en twintig ultimates hebben dan nog nooit
+gedraaid. En juist die drie subsystemen falen *stil*: `Sfx` slikt fouten,
+een ultimate die gooit wordt opgevangen, en een AI-tak die niets doet ziet er
+precies zo uit als een AI-tak die klaar is.
+
+Daarom draait dit bestand alles één keer, en faalt het ook op een
+`console.warn` uit `[audio]`, `[ult]` of `[assets] no sprite`:
+
+- de AudioContext wordt met een echte muisklik ontgrendeld — zonder dat
+  gebaar bewijzen twintig geluiden niets
+- alle geluiden, plus het reveal-geluid per zeldzaamheid
+- alle wapenpatronen en alle ultimates op ster 5, dus inclusief de echo-tak
+- alle vijandtypes spawnen en updaten, en alle schietende types vuren echt
+- alle bossen in elke fase
+- alle kaarten tot hun maximum, met een NaN-sweep over de modifiers
+- alle Astra tekenen, en hun verwijzingen naar patronen, ultimates en
+  elementen bestaan echt
+- 60 000 gesimuleerde pulls: de effectieve Stellar+-rate ligt boven de
+  basisrate en geen enkele reeks overschrijdt de harde pity
+
+De sweep lost tussendoor level-ups op. Twintig ultimates achter elkaar veegt
+het scherm leeg, en dat is XP: de run parkeert dan in `levelup` en simuleert
+niet meer. Zonder die stap meet een latere controle een bevroren wereld en
+geeft ze het verkeerde subsysteem de schuld — precies hoe "vijanden schieten
+niet" hier als eerste vals alarm boven kwam.
 
 ## balance.mjs
 

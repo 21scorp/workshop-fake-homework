@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "npx --yes http-server -p 8080 -c-1 .",
-    "test": "node tests/qa.mjs",
+    "test": "node tests/qa.mjs && node tests/systems.mjs",
+    "test:qa": "node tests/qa.mjs",
+    "test:systems": "node tests/systems.mjs",
     "balance": "node tests/balance.mjs"
   },
   "devDependencies": {
