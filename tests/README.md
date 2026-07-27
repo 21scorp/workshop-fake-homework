@@ -24,7 +24,7 @@ Configuratie via omgevingsvariabelen:
 
 ## qa.mjs
 
-Negenentwintig controles over de paden die je bij normaal doorklikken mist:
+Eenendertig controles over de paden die je bij normaal doorklikken mist:
 
 - layout op 360×640, 430×932, tablet en desktop, plus horizontale overflow
 - `?s=CODE` deeplinks starten de juiste run en ruimen de adresbalk op
@@ -35,6 +35,9 @@ Negenentwintig controles over de paden die je bij normaal doorklikken mist:
   dagelijkse summon meteen in beeld
 - sterren verhogen, mock-aankoop, export/import van een profiel
 - migratie van een schema-v1 profiel zonder verlies
+- de langste kaartregel van het hele dek blijft binnen twee regels op een
+  telefoon van 360 breed, en de kaartkiezer blijft heel in beeld. De doos
+  groeit mee, dus afkappen is niet de faalmodus — uitdijen is het
 - `prefers-reduced-motion`
 - opstarten met een `localStorage` die gooit (privémodus)
 

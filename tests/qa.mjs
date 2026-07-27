@@ -296,6 +296,60 @@ for (const [label, vp] of [
   await page.close();
 }
 
+/* ---------------- de langste kaartregels passen nog ---------------- */
+{
+  // De kaarttekst is de enige tekst in het spel die een speler onder tijdsdruk
+  // leest, in een vaste doos, op een telefoon van 360 breed. Een regel die een
+  // teken te lang is wordt afgekapt zonder dat iets faalt — en het weggevallen
+  // stuk is precies het getal waar de keuze op rust.
+  const page = await makePage({ width: 360, height: 640 }, 1);
+  await boot(page);
+  const m = await page.evaluate(async () => {
+    const { CARDS } = await import('./src/data/cards.js');
+    // Neem van elke kaart zijn langste regel over alle stapels heen.
+    const worst = CARDS.map((c) => {
+      let text = '', at = 0;
+      for (let i = 0; i < c.max; i++) {
+        const t = typeof c.desc === 'function' ? c.desc(i) : c.desc;
+        if (t.length > text.length) { text = t; at = i; }
+      }
+      return { c, text, at };
+    }).sort((a, b) => b.text.length - a.text.length).slice(0, 6);
+
+    globalThis.ASTRAFALL.startRun({});
+    await new Promise((r) => setTimeout(r, 2200));
+    const run = globalThis.ASTRAFALL.scene;
+    const { bus, EV } = globalThis.ASTRAFALL;
+    const stacks = {};
+    for (const w of worst) stacks[w.c.id] = w.at;
+    run.cardStacks = stacks;
+    const clipped = [];
+    // Drie tegelijk, want dat is hoe de kaartkiezer ze toont.
+    for (let i = 0; i < worst.length; i += 3) {
+      const group = worst.slice(i, i + 3);
+      bus.emit(EV.LEVEL_UP, { level: 9, cards: group.map((w) => w.c) });
+      await new Promise((r) => setTimeout(r, 260));
+      for (const n of document.querySelectorAll('.card__desc')) {
+        // De doos groeit mee, dus afkappen is niet de faalmodus — uitdijen is
+        // het. Drie regels tekst duwt de kaartkiezer van het scherm af.
+        const lh = parseFloat(getComputedStyle(n).lineHeight) || 19;
+        const lines = Math.round(n.scrollHeight / lh);
+        if (lines > 2) clipped.push(`"${n.textContent}" ${lines} regels`);
+      }
+      const list = document.querySelector('.picker__cards') ?? document.querySelector('.cards');
+      const box = list?.getBoundingClientRect();
+      if (box && (box.bottom > window.innerHeight + 2 || box.top < -2)) {
+        clipped.push(`kaartkiezer valt buiten beeld (${Math.round(box.top)}..${Math.round(box.bottom)} van ${window.innerHeight})`);
+      }
+    }
+    return { clipped, longest: worst[0].text.length, overflow: document.documentElement.scrollWidth > window.innerWidth + 1 };
+  });
+  check(`de langste kaartregel (${m.longest} tekens) blijft binnen twee regels op 360 breed`,
+    m.clipped.length === 0 && !m.overflow, m.clipped.slice(0, 3).join(' | '));
+  check('geen fouten in de kaartkiezer', page.errs.length === 0, page.errs.join(' | '));
+  await page.close();
+}
+
 console.log('\n' + '='.repeat(60));
 const failed = results.filter((r) => !r.ok);
 console.log(`${results.length - failed.length}/${results.length} geslaagd`);
