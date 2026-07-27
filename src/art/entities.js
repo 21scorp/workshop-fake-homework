@@ -9,6 +9,22 @@
  *   • angular + spiky→ contact damage
  *   • has an eye     → it shoots at you
  *   • plated ring    → armoured, takes a while
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ *  THE RULE WAS BEING BROKEN
+ * ─────────────────────────────────────────────────────────────────────────
+ *  Twelve archetypes were sharing six drawers. A Lancer, which pauses and
+ *  then dashes straight at you, looked exactly like a Swarm, which drifts. A
+ *  Turret looked like a Shooter with different numbers. That is not a
+ *  cosmetic problem — it is the player being denied the information the
+ *  encounter is built on, and every death to it feels cheap.
+ *
+ *  Each archetype now has its own key and its own silhouette, built from two
+ *  things: a variant (see art/variant.js) so no two share a shape, and a set
+ *  of *role marks* derived from the archetype's own definition. A gun in the
+ *  data puts a barrel on the sprite; a charge AI puts a lance on it; a split
+ *  puts a seam on it. The art cannot drift from the behaviour, because the
+ *  behaviour is what draws it.
  */
 
 import Assets from '../core/AssetRegistry.js';
@@ -17,6 +33,7 @@ import { hexA, mixHex } from '../core/Renderer.js';
 import {
   halo, orb, crystal, plate, eye, chevron, flashOverlay, ring, satellites,
 } from './shapes.js';
+import { NEUTRAL, variantsFor } from './variant.js';
 
 /* ============================================================
    PLAYER VESSEL
@@ -147,13 +164,14 @@ function drawVessel(ctx, s) {
    ============================================================ */
 
 /** DRONE — basic diamond, drifts downward. Contact damage. */
-function drawDrone(ctx, s) {
-  const t = s.t;
-  const r = s.w * 0.4;
+function drawDrone(ctx, s, v = NEUTRAL) {
+  const t = s.t * v.rate + v.phase;
+  const r = s.w * 0.4 * v.bulk;
+  const sides = 3 + (v.c % 4);          // 3–6 sided body
   halo(ctx, r * 1.9, s.tint, 0.3);
   ctx.save();
-  ctx.rotate(t * 1.1);
-  crystal(ctx, r, 4, s.tint, 0, 0.62);
+  ctx.rotate(t * 1.1 * v.flip);
+  crystal(ctx, r, sides, s.tint, 0, 0.62);
   ctx.restore();
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
@@ -166,15 +184,17 @@ function drawDrone(ctx, s) {
 }
 
 /** SWARM — tiny fast triangle. Comes in tens. */
-function drawSwarm(ctx, s) {
-  const t = s.t;
-  const r = s.w * 0.38;
+function drawSwarm(ctx, s, v = NEUTRAL) {
+  const t = s.t * v.rate + v.phase;
+  const r = s.w * 0.38 * v.bulk;
+  const notch = 0.15 + (v.c / 4) * 0.5;   // how deeply the tail is cut in
   halo(ctx, r * 1.5, s.tint, 0.25);
   ctx.save();
-  ctx.rotate(Math.sin(t * 9) * 0.28);
+  ctx.rotate(Math.sin(t * 9) * 0.28 * v.flip);
   ctx.beginPath();
   ctx.moveTo(0, r);
   ctx.lineTo(r * 0.8, -r * 0.7);
+  ctx.lineTo(0, -r * (0.7 - notch));
   ctx.lineTo(-r * 0.8, -r * 0.7);
   ctx.closePath();
   const g = ctx.createLinearGradient(0, -r, 0, r);
@@ -187,20 +207,22 @@ function drawSwarm(ctx, s) {
 }
 
 /** TANK — armoured hexagon with rotating plates. Slow, high HP. */
-function drawTank(ctx, s) {
-  const t = s.t;
-  const r = s.w * 0.42;
+function drawTank(ctx, s, v = NEUTRAL) {
+  const t = s.t * v.rate + v.phase;
+  const r = s.w * 0.42 * v.bulk;
+  const plates = 3 + (v.c % 4);         // 3–6 armour segments
+  const sides = 5 + (v.a % 4);
   halo(ctx, r * 1.8, s.tint, 0.28);
 
   ctx.save();
-  ctx.rotate(t * 0.5);
-  for (let i = 0; i < 4; i++) {
-    const a0 = (i / 4) * TAU + 0.18;
-    plate(ctx, r, a0, a0 + TAU / 4 - 0.36, mixHex(s.tint, '#64748b', 0.35), r * 0.26);
+  ctx.rotate(t * 0.5 * v.flip);
+  for (let i = 0; i < plates; i++) {
+    const a0 = (i / plates) * TAU + 0.18;
+    plate(ctx, r, a0, a0 + TAU / plates - 0.36, mixHex(s.tint, '#64748b', 0.35), r * 0.26);
   }
   ctx.restore();
 
-  crystal(ctx, r * 0.66, 6, s.tint, Math.PI / 6, 0.95);
+  crystal(ctx, r * 0.66, sides, s.tint, Math.PI / sides, 0.95);
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   ctx.beginPath();
@@ -212,16 +234,17 @@ function drawTank(ctx, s) {
 }
 
 /** SHOOTER — has an eye, so you know it shoots. Telegraphs by widening. */
-function drawShooter(ctx, s) {
-  const t = s.t;
-  const r = s.w * 0.4;
+function drawShooter(ctx, s, v = NEUTRAL) {
+  const t = s.t * v.rate + v.phase;
+  const r = s.w * 0.4 * v.bulk;
+  const lids = 1 + (v.c % 2);           // one shell or two
   const aim = s.data?.aim ?? Math.PI / 2;
   const charge = s.charge;
 
   halo(ctx, r * 2 + charge * r * 2, s.tint, 0.3 + charge * 0.5);
 
-  // Shell: two arcs like eyelids.
-  for (const sy of [-1, 1]) {
+  // Shell: arcs like eyelids.
+  for (const sy of lids === 1 ? [1] : [-1, 1]) {
     ctx.beginPath();
     ctx.ellipse(0, sy * r * 0.42 * (1 - charge * 0.4), r * 0.98, r * 0.5, 0, 0, TAU);
     ctx.fillStyle = mixHex(s.tint, sy < 0 ? '#ffffff' : '#0a0f24', 0.35);
@@ -248,13 +271,14 @@ function drawShooter(ctx, s) {
 }
 
 /** SPLITTER — soft blob. Dies into smaller blobs, so it looks unstable. */
-function drawSplitter(ctx, s) {
-  const t = s.t;
-  const r = s.w * 0.4;
+function drawSplitter(ctx, s, v = NEUTRAL) {
+  const t = s.t * v.rate + v.phase;
+  const r = s.w * 0.4 * v.bulk;
+  const nuclei = 2 + (v.c % 4);         // how many it looks like it holds
   halo(ctx, r * 1.9, s.tint, 0.32);
 
   ctx.beginPath();
-  const lobes = 7;
+  const lobes = 5 + (v.a % 4);
   for (let i = 0; i <= lobes; i++) {
     const a = (i / lobes) * TAU;
     const wob = 1 + Math.sin(a * 3 + t * 4) * 0.13 + Math.sin(a * 5 - t * 2.6) * 0.07;
@@ -271,8 +295,8 @@ function drawSplitter(ctx, s) {
   // Internal nuclei hint at what it splits into.
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 3; i++) {
-    const a = t * 1.4 + (i / 3) * TAU;
+  for (let i = 0; i < nuclei; i++) {
+    const a = t * 1.4 + (i / nuclei) * TAU;
     ctx.beginPath();
     ctx.arc(Math.cos(a) * r * 0.36, Math.sin(a) * r * 0.36, r * 0.15, 0, TAU);
     ctx.fillStyle = hexA(s.tint2, 0.8);
@@ -283,17 +307,137 @@ function drawSplitter(ctx, s) {
 }
 
 /** WEAVER — a ring that orbits and lays hazard trails. */
-function drawWeaver(ctx, s) {
-  const t = s.t;
-  const r = s.w * 0.4;
+function drawWeaver(ctx, s, v = NEUTRAL) {
+  const t = s.t * v.rate + v.phase;
+  const r = s.w * 0.4 * v.bulk;
+  const sats = 2 + (v.c % 5);           // 2–6 orbiting motes
   halo(ctx, r * 2, s.tint, 0.3);
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  ring(ctx, r, r, hexA(s.tint, 0.9), t * 2.2, Math.max(2, r * 0.2), 0.9);
-  ring(ctx, r * 0.6, r * 0.6, hexA(s.tint2, 0.8), -t * 3.1, Math.max(1.4, r * 0.14), 1.4);
+  ring(ctx, r, r, hexA(s.tint, 0.9), t * 2.2 * v.flip, Math.max(2, r * 0.2), 0.9);
+  ring(ctx, r * 0.6, r * 0.6, hexA(s.tint2, 0.8), -t * 3.1 * v.flip, Math.max(1.4, r * 0.14), 1.4);
   ctx.restore();
-  satellites(ctx, r * 1.15, 4, s.tint2, t * 2.6, Math.max(1.6, r * 0.16));
+  satellites(ctx, r * 1.15, sats, s.tint2, t * 2.6 * v.flip, Math.max(1.6, r * 0.16));
   flashOverlay(ctx, r, s.flash);
+}
+
+/* ------------------------------------------------------------------
+   ROLE MARKS
+   ------------------------------------------------------------------
+   Drawn on top of the base form, in the accent colour so they stay legible
+   against every enemy palette. Each one is a promise about behaviour:
+
+     barrel  → this thing shoots, and that is the direction
+     lance   → this thing will stop, wind up, and dash at you
+     seam    → killing this makes more of them
+     fins    → this thing circles instead of closing in
+
+   Keep them large and few. A mark that needs a second look is not a mark.
+   ------------------------------------------------------------------ */
+
+function markBarrel(ctx, s, r) {
+  const aim = s.data?.aim ?? Math.PI / 2;
+  ctx.save();
+  ctx.rotate(aim - Math.PI / 2);
+  const len = r * (0.72 + s.charge * 0.3);
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(-r * 0.16, r * 0.28, r * 0.32, len * 0.7, r * 0.08);
+  else ctx.rect(-r * 0.16, r * 0.28, r * 0.32, len * 0.7);
+  ctx.fillStyle = mixHex(s.tint, '#0a0f24', 0.45);
+  ctx.fill();
+  ctx.strokeStyle = hexA(s.tint2, 0.75);
+  ctx.lineWidth = Math.max(1, r * 0.06);
+  ctx.stroke();
+  // Aperture: brightens as the shot charges, so the wind-up is visible.
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.beginPath();
+  ctx.arc(0, r * 0.28 + len * 0.7, r * (0.11 + s.charge * 0.13), 0, TAU);
+  ctx.fillStyle = hexA(s.tint2, 0.5 + s.charge * 0.5);
+  ctx.fill();
+  ctx.restore();
+}
+
+function markLance(ctx, s, r) {
+  const aim = s.data?.aim ?? Math.PI / 2;
+  const out = 1 + s.charge * 0.55;      // extends while it winds up
+  ctx.save();
+  ctx.rotate(aim - Math.PI / 2);
+  ctx.beginPath();
+  ctx.moveTo(0, r * 2.1 * out);
+  ctx.lineTo(r * 0.34, r * 0.15);
+  ctx.lineTo(-r * 0.34, r * 0.15);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, r * 2.1 * out, 0, 0);
+  g.addColorStop(0, mixHex(s.tint2, '#ffffff', 0.75));
+  g.addColorStop(1, hexA(s.tint, 0.35));
+  ctx.fillStyle = g;
+  ctx.fill();
+  // Swept-back wings: reads as "aimed", not just "pointy".
+  ctx.strokeStyle = hexA(s.tint2, 0.7);
+  ctx.lineWidth = Math.max(1.2, r * 0.1);
+  ctx.lineCap = 'round';
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(sx * r * 0.28, -r * 0.1);
+    ctx.lineTo(sx * r * 0.82, -r * 0.72);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function markSeam(ctx, s, r) {
+  ctx.save();
+  ctx.rotate(Math.sin(s.t * 1.3) * 0.25);
+  // A crack, not a hairline: it has to survive a 32px enemy on a bright
+  // background, because it is the only warning that killing this makes more.
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createLinearGradient(-r, 0, r, 0);
+  g.addColorStop(0, 'transparent');
+  g.addColorStop(0.5, mixHex(s.tint2, '#ffffff', 0.6));
+  g.addColorStop(1, 'transparent');
+  ctx.strokeStyle = g;
+  ctx.lineWidth = Math.max(2, r * 0.2);
+  ctx.beginPath();
+  ctx.moveTo(-r * 1.05, 0);
+  ctx.lineTo(r * 1.05, 0);
+  ctx.stroke();
+  // Two pips on the seam: "this comes apart here".
+  ctx.fillStyle = hexA('#ffffff', 0.85);
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.arc(sx * r * 0.55, 0, Math.max(1, r * 0.1), 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function markFins(ctx, s, r) {
+  ctx.save();
+  ctx.fillStyle = hexA(s.tint2, 0.8);
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(sx * r * 0.85, -r * 0.28);
+    ctx.lineTo(sx * r * 1.5, 0);
+    ctx.lineTo(sx * r * 0.85, r * 0.28);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+const MARKS = { barrel: markBarrel, lance: markLance, seam: markSeam, fins: markFins };
+
+/**
+ * Which marks an archetype earns — read straight off its own definition so
+ * the sprite can never claim a behaviour the enemy does not have.
+ */
+export function marksFor(def) {
+  const out = [];
+  if (def.gun) out.push('barrel');
+  if (def.ai === 'charge') out.push('lance');
+  if (def.splitInto) out.push('seam');
+  if (def.ai === 'orbit') out.push('fins');
+  return out;
 }
 
 /** ELITE — any enemy can be promoted: gold crown ring + bigger halo. */
@@ -652,17 +796,53 @@ function drawCoinPickup(ctx, s) {
    REGISTRATION
    ============================================================ */
 
-export function registerEntityArt() {
+/** The six base bodies, and the nominal box each one is authored at. */
+export const ENEMY_FORMS = {
+  drone:    { draw: drawDrone,    w: 44, h: 44, frames: 6, fps: 12 },
+  swarm:    { draw: drawSwarm,    w: 26, h: 26, frames: 6, fps: 16 },
+  tank:     { draw: drawTank,     w: 74, h: 74, frames: 6, fps: 8 },
+  shooter:  { draw: drawShooter,  w: 52, h: 52, frames: 6, fps: 10 },
+  splitter: { draw: drawSplitter, w: 56, h: 56, frames: 8, fps: 12 },
+  weaver:   { draw: drawWeaver,   w: 50, h: 50, frames: 8, fps: 14 },
+};
+
+/**
+ * @param {Object} [enemyDefs]  data/enemies.js ENEMY, keyed by id. Each
+ *   archetype gets its own key, its own silhouette and the role marks its
+ *   own definition earns it.
+ */
+export function registerEntityArt(enemyDefs = {}) {
+  for (const form in ENEMY_FORMS) {
+    const { draw, ...box } = ENEMY_FORMS[form];
+    Assets.define(`enemy/${form}`, { ...box, draw: (ctx, s) => draw(ctx, s, NEUTRAL) });
+  }
+
+  const list = Object.values(enemyDefs);
+  const variants = variantsFor(list, (d) => d.form ?? 'drone');
+  for (const def of list) {
+    const form = ENEMY_FORMS[def.form];
+    if (!form) {
+      console.warn(`[assets] enemy "${def.id}" has unknown form "${def.form}"`);
+      continue;
+    }
+    const { draw, ...box } = form;
+    const v = variants.get(def.id);
+    const marks = marksFor(def).map((m) => MARKS[m]);
+    Assets.define(`enemy/${def.id}`, {
+      ...box,
+      draw(ctx, s) {
+        draw(ctx, s, v);
+        // Marks last, so the promise about behaviour is never painted over.
+        const r = s.w * 0.4 * v.bulk;
+        for (const mark of marks) mark(ctx, s, r);
+      },
+    });
+  }
+
   Assets
     .define('vessel/idle', { w: 68, h: 68, frames: 1, draw: drawVessel })
     .alias('vessel/idle', 'vessel/hurt', 'vessel/boost')
 
-    .define('enemy/drone',    { w: 44, h: 44, frames: 6, fps: 12, draw: drawDrone })
-    .define('enemy/swarm',    { w: 26, h: 26, frames: 6, fps: 16, draw: drawSwarm })
-    .define('enemy/tank',     { w: 74, h: 74, frames: 6, fps: 8,  draw: drawTank })
-    .define('enemy/shooter',  { w: 52, h: 52, frames: 6, fps: 10, draw: drawShooter })
-    .define('enemy/splitter', { w: 56, h: 56, frames: 8, fps: 12, draw: drawSplitter })
-    .define('enemy/weaver',   { w: 50, h: 50, frames: 8, fps: 14, draw: drawWeaver })
     .define('enemy/elite',    { w: 80, h: 80, frames: 8, fps: 12, draw: drawEliteAura })
 
     .define('boss/warden',   { w: 200, h: 200, frames: 8, fps: 10, draw: drawBossWarden })

@@ -38,6 +38,7 @@ import { evaluate as evaluateAchievements } from './systems/Achievements.js';
 import { addRunXp as addSeasonXp } from './systems/Starpass.js';
 import { readSeedFromUrl, clearSeedFromUrl, shareRun } from './systems/Share.js';
 import { ASTRA, getAstra, STARTER_ID } from './data/astra.js';
+import { ENEMY } from './data/enemies.js';
 
 /* ============================================================
    BOOT
@@ -69,7 +70,7 @@ async function boot() {
   /* ---- art ---- */
   bootProgress(BOOT_STEPS[1][1], BOOT_STEPS[1][0]);
   registerAstraArt(ASTRA);
-  registerEntityArt();
+  registerEntityArt(ENEMY);
   // Sprite atlases are opt-in through a manifest rather than probed by name:
   // probing means a 404 in every player's console on every load, which is the
   // kind of thing that makes a shipped game look unfinished. An empty manifest

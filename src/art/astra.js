@@ -33,66 +33,9 @@ import { hexA, mixHex } from '../core/Renderer.js';
 import {
   halo, orb, crystal, flame, ring, satellites, tail, eye, flashOverlay,
 } from './shapes.js';
+import { NEUTRAL, variantsFor } from './variant.js';
 
 const BASE = { w: 72, h: 72, anchor: { x: 0.5, y: 0.5 }, frames: 8, fps: 10 };
-
-/* ------------------------------------------------------------------
-   VARIANTS
-   ------------------------------------------------------------------ */
-
-/** FNV-1a. Small, stable, and no dependency on where the id sits in an array. */
-function hashId(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-/**
- * Seven knobs every drawer can read. `a`/`b`/`c` are small integers each form
- * maps onto whatever it has to count — petals, horns, segments, facets.
- */
-export function variantFor(id) {
-  const h = hashId(id);
-  const byte = (shift) => (h >>> shift) & 0xff;
-  const span = (shift, lo, hi) => lo + (byte(shift) / 255) * (hi - lo);
-  return {
-    a: byte(0) % 4,
-    b: byte(6) % 3,
-    c: byte(12) % 5,
-    bulk: span(18, 0.9, 1.12),
-    rate: span(24, 0.85, 1.2),
-    tilt: span(3, -0.15, 0.15),
-    phase: span(9, 0, TAU),
-    flip: byte(15) & 1 ? 1 : -1,
-  };
-}
-
-/** The look a form has with no character attached — used by the fallback keys. */
-const NEUTRAL = { a: 1, b: 1, c: 2, bulk: 1, rate: 1, tilt: 0, phase: 0, flip: 1 };
-
-/**
- * A hash alone is not enough.
- *
- * Hashing 21 ids into a handful of small integers collides: the first pass put
- * two amber Constructs on the same face count and two pale Blooms on the same
- * petal count, and on a collection card those are the same character twice.
- *
- * So the knobs that drive the *primary* count are handed out by position
- * within the form group instead of by hash, which makes distinctness a
- * guarantee rather than a probability. The order is the group sorted by id, so
- * it does not move when the roster is reordered — only when a new Astra lands
- * alphabetically before an existing one, and then only for that form.
- */
-function spreadWithinForm(index) {
-  return {
-    c: index % 5,
-    a: (index * 3 + 1) % 4,
-    bulk: 0.9 + (index % 4) * 0.055,
-  };
-}
 
 /* ------------------------------------------------------------------
    ORB — serene, floating sphere with orbital rings. The "starter" look.
@@ -551,21 +494,14 @@ export function registerAstraArt(roster = []) {
   }
 
   // Then one set per character, so no two Astra share a silhouette.
-  const groups = new Map();
-  for (const a of roster) {
-    if (!groups.has(a.form)) groups.set(a.form, []);
-    groups.get(a.form).push(a);
-  }
-  for (const group of groups.values()) group.sort((x, y) => x.id.localeCompare(y.id));
-
+  const variants = variantsFor(roster, (a) => a.form);
   for (const a of roster) {
     const draw = ASTRA_FORMS[a.form];
     if (!draw) {
       console.warn(`[assets] Astra "${a.id}" has unknown form "${a.form}"`);
       continue;
     }
-    const index = groups.get(a.form).indexOf(a);
-    const v = { ...variantFor(a.id), ...spreadWithinForm(index), ...(a.art ?? {}) };
+    const v = variants.get(a.id);
     defineStates(`astra/${a.id}`, (ctx, s) => draw(ctx, s, v));
   }
 }

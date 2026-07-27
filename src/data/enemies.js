@@ -9,7 +9,8 @@
 export const ENEMY = {
   drone: {
     id: 'drone',
-    sprite: 'enemy/drone',
+    sprite: 'enemy/drone',   // own key: see art/entities.js
+    form: 'drone',
     name: 'Drone',
     hp: 12, dmg: 1, speed: 105, radius: 20,
     score: 10, xp: 3,
@@ -21,7 +22,8 @@ export const ENEMY = {
 
   swarm: {
     id: 'swarm',
-    sprite: 'enemy/swarm',
+    sprite: 'enemy/swarm',   // own key: see art/entities.js
+    form: 'swarm',
     name: 'Zwerm',
     hp: 5, dmg: 1, speed: 190, radius: 12,
     score: 6, xp: 2,
@@ -34,7 +36,8 @@ export const ENEMY = {
 
   tank: {
     id: 'tank',
-    sprite: 'enemy/tank',
+    sprite: 'enemy/tank',   // own key: see art/entities.js
+    form: 'tank',
     name: 'Bastion',
     hp: 95, dmg: 2, speed: 46, radius: 37,
     score: 55, xp: 14,
@@ -48,7 +51,8 @@ export const ENEMY = {
 
   shooter: {
     id: 'shooter',
-    sprite: 'enemy/shooter',
+    sprite: 'enemy/shooter',   // own key: see art/entities.js
+    form: 'shooter',
     name: 'Wachter',
     hp: 26, dmg: 1, speed: 62, radius: 25,
     score: 30, xp: 8,
@@ -62,7 +66,8 @@ export const ENEMY = {
 
   splitter: {
     id: 'splitter',
-    sprite: 'enemy/splitter',
+    sprite: 'enemy/splitter',   // own key: see art/entities.js
+    form: 'splitter',
     name: 'Splijter',
     hp: 34, dmg: 1, speed: 78, radius: 27,
     score: 34, xp: 9,
@@ -76,7 +81,8 @@ export const ENEMY = {
 
   weaver: {
     id: 'weaver',
-    sprite: 'enemy/weaver',
+    sprite: 'enemy/weaver',   // own key: see art/entities.js
+    form: 'weaver',
     name: 'Wever',
     hp: 40, dmg: 1, speed: 130, radius: 24,
     score: 42, xp: 11,
@@ -90,7 +96,8 @@ export const ENEMY = {
 
   lancer: {
     id: 'lancer',
-    sprite: 'enemy/swarm',
+    sprite: 'enemy/lancer',   // own key: see art/entities.js
+    form: 'swarm',
     name: 'Lansier',
     hp: 22, dmg: 2, speed: 95, radius: 17,
     score: 26, xp: 7,
@@ -104,7 +111,8 @@ export const ENEMY = {
 
   turret: {
     id: 'turret',
-    sprite: 'enemy/shooter',
+    sprite: 'enemy/turret',   // own key: see art/entities.js
+    form: 'shooter',
     name: 'Geschutstoren',
     hp: 70, dmg: 1, speed: 26, radius: 30,
     score: 60, xp: 16,
@@ -119,7 +127,8 @@ export const ENEMY = {
 
   warden: {
     id: 'warden',
-    sprite: 'enemy/tank',
+    sprite: 'enemy/warden',   // own key: see art/entities.js
+    form: 'tank',
     name: 'Schildwacht',
     hp: 130, dmg: 2, speed: 38, radius: 40,
     score: 90, xp: 22,
@@ -134,11 +143,14 @@ export const ENEMY = {
 
   reaper: {
     id: 'reaper',
-    sprite: 'enemy/splitter',
+    sprite: 'enemy/reaper',   // own key: see art/entities.js
+    form: 'splitter',
     name: 'Maaier',
     hp: 60, dmg: 2, speed: 150, radius: 26,
     score: 70, xp: 18,
-    color: '#f43f5e', color2: '#fecdd3',
+    // Not the Drone's rose: a Reaper closes fast and lethally, and sharing a
+    // colour with the wave-one chaff is a lie about how much time you have.
+    color: '#ea580c', color2: '#fed7aa',
     ai: 'charge',           // faster, meaner lancer for the late waves
     contact: true,
     weight: 4,
@@ -148,11 +160,14 @@ export const ENEMY = {
 
   seraph: {
     id: 'seraph',
-    sprite: 'enemy/weaver',
+    sprite: 'enemy/seraph',   // own key: see art/entities.js
+    form: 'weaver',
     name: 'Serafijn',
     hp: 100, dmg: 2, speed: 90, radius: 30,
     score: 120, xp: 26,
-    color: '#fbbf24', color2: '#fef3c7',
+    // Lancer already owns amber. Two archetypes in one colour is one
+    // archetype as far as the player is concerned.
+    color: '#a3e635', color2: '#ecfccb',
     ai: 'orbit',
     contact: true,
     armor: 0.1,
@@ -164,7 +179,8 @@ export const ENEMY = {
 
   spinner: {
     id: 'spinner',
-    sprite: 'enemy/weaver',
+    sprite: 'enemy/spinner',   // own key: see art/entities.js
+    form: 'weaver',
     name: 'Tolwezen',
     hp: 55, dmg: 1, speed: 70, radius: 26,
     score: 48, xp: 13,

@@ -116,15 +116,27 @@ vessel/boost  68×68   1 frame
 ```
 
 ### Vijanden
+
+Net als bij de Astra: een key per archetype (`enemy/lancer`, `enemy/reaper`,
+…), met de vorm-keys als terugval. De maat komt van de vorm:
+
 ```
-enemy/drone     44×44   6 frames @ 12fps
-enemy/swarm     26×26   6 frames @ 16fps
-enemy/tank      74×74   6 frames @  8fps
-enemy/shooter   52×52   6 frames @ 10fps
-enemy/splitter  56×56   8 frames @ 12fps
-enemy/weaver    50×50   8 frames @ 14fps
-enemy/elite     80×80   8 frames @ 12fps   (aura-overlay, wordt ónder de vijand getekend)
+vorm drone     44×44   6 frames @ 12fps    → drone
+vorm swarm     26×26   6 frames @ 16fps    → swarm, lancer
+vorm tank      74×74   6 frames @  8fps    → tank, warden
+vorm shooter   52×52   6 frames @ 10fps    → shooter, turret
+vorm splitter  56×56   8 frames @ 12fps    → splitter, reaper
+vorm weaver    50×50   8 frames @ 14fps    → weaver, seraph, spinner
+
+enemy/elite    80×80   8 frames @ 12fps    (aura-overlay, ónder de vijand)
 ```
+
+**Teken het gedrag mee.** De vectorversie zet automatisch markeringen op elk
+archetype, afgeleid uit zijn eigen definitie: een `gun` levert een loop op die
+meedraait met het mikpunt, een `charge`-AI een lans die uitschuift tijdens de
+aanloop, `splitInto` een naad, en een `orbit`-AI zijvinnen. Een speler moet in
+een halve seconde zien of iets schiet of op hem af stormt. Levert je sheet die
+informatie niet, dan is de vijand oneerlijk — hoe mooi het plaatje ook is.
 
 ### Bosses
 ```
