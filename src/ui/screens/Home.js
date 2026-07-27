@@ -27,6 +27,7 @@ import { collectionStats } from '../../systems/Gacha.js';
 import { supports, setSupport, totals as supportTotals, supportBonus, SUPPORT_SLOTS } from '../../systems/Loadout.js';
 import { ASTRA } from '../../data/astra.js';
 import { SKINS, unlockLabel } from '../../data/skins.js';
+import { ACHIEVEMENTS } from '../../systems/Achievements.js';
 import { isUnlocked, currentSkinId, setSkin, skinSummary } from '../../systems/Skins.js';
 import { leaderboard } from '../../systems/Economy.js';
 import { Sfx, Music } from '../../core/Audio.js';
@@ -95,6 +96,11 @@ export function HomeScreen(ctx) {
     ),
   );
 
+  /** The line the achievement itself prints, so the two can't drift apart. */
+  const goalOf = (sk) => (sk.unlock?.type === 'achievement'
+    ? (ACHIEVEMENTS.find((a) => a.id === sk.unlock.id)?.desc ?? '')
+    : '');
+
   function openSkins() {
     const cur = currentSkinId();
     const list = el('div.skins', null, ...SKINS.map((sk) => {
@@ -103,7 +109,7 @@ export function HomeScreen(ctx) {
         dataset: { on: sk.id === cur ? '1' : '0', locked: un ? '0' : '1' },
         style: { '--a': sk.hull[0], '--b': sk.hull[1], '--c': sk.hull[2], '--t': sk.trim },
         onclick: () => {
-          if (!un) { Sfx.play('error'); bus.emit(EV.TOAST, { text: unlockLabel(sk), tone: 'info' }); return; }
+          if (!un) { Sfx.play('error'); bus.emit(EV.TOAST, { text: unlockLabel(sk, goalOf(sk)), tone: 'info' }); return; }
           setSkin(sk.id);
           sh.close();
           ctx.go('home', { force: true, replace: true });
@@ -112,7 +118,7 @@ export function HomeScreen(ctx) {
         el('div.skin__swatch'),
         el('div.skin__mid', null,
           el('div.skin__name', { text: sk.name }),
-          el('div.skin__desc', { text: un ? sk.desc : unlockLabel(sk) }),
+          el('div.skin__desc', { text: un ? sk.desc : unlockLabel(sk, goalOf(sk)) }),
         ),
         sk.id === cur ? el('div.skin__on', { text: '✓' }) : (un ? null : el('div.skin__lock', { text: '🔒' })),
       );

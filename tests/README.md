@@ -104,7 +104,8 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   en worden gezaaid getrokken zonder zichzelf te herhalen
 - loadout, skins en runbeloningen: de steunbonus stijgt met zeldzaamheid en
   sterren, de leider kan nooit in zijn eigen steunslot staan, een skin die je
-  niet meer verdient wordt vanzelf weer vergrendeld, en geen enkele beloning
+  niet meer verdient wordt vanzelf weer vergrendeld, elke skin die achter een
+  prestatie zit noemt die prestatie ook echt bij naam, en geen enkele beloning
   wordt negatief of NaN
 - alle 36 prestaties evalueren tot een geldig getal, op een leeg én een
   maximaal profiel — `list()` vangt een gooiende predicate af en meldt 0, dus

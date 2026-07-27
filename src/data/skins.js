@@ -57,11 +57,18 @@ const BY_ID = new Map(SKINS.map((s) => [s.id, s]));
 export const getSkin = (id) => BY_ID.get(id) ?? SKINS[0];
 export const DEFAULT_SKIN = 'standard';
 
-/** Human-readable unlock condition, for the picker. */
-export function unlockLabel(skin) {
+/**
+ * Human-readable unlock condition, for the picker.
+ *
+ * A locked skin that only says "Prestatie" is a locked door without a
+ * keyhole — the goal exists in the data, so name it. The caller passes the
+ * achievement's own line rather than this module importing the achievement
+ * list, which keeps the data layer free of a dependency on a system.
+ */
+export function unlockLabel(skin, goal = '') {
   const u = skin.unlock;
   if (u.type === 'default') return 'Altijd beschikbaar';
   if (u.type === 'pass') return `Starpass tier ${u.tier}${u.track === 'premium' ? ' (premium)' : ''}`;
-  if (u.type === 'achievement') return 'Prestatie';
+  if (u.type === 'achievement') return goal ? `Prestatie · ${goal}` : 'Prestatie';
   return '';
 }

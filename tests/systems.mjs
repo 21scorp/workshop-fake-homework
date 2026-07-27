@@ -802,6 +802,16 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
     save.profile.achievements = { wave_15: true };
     const voidSkin = SKINS.find((s) => s.unlock.type === 'achievement' && s.unlock.id === 'wave_15');
     if (voidSkin && !S.isUnlocked(voidSkin)) bad.push('prestatie ontgrendelt de skin niet');
+    // Een vergrendelde skin die alleen "Prestatie" zegt is een deur zonder
+    // sleutelgat. Het doel staat in de data, dus het moet ook bestaan.
+    const { ACHIEVEMENTS } = await import('./src/systems/Achievements.js');
+    const { unlockLabel } = await import('./src/data/skins.js');
+    for (const sk of SKINS) {
+      if (sk.unlock.type !== 'achievement') continue;
+      const goal = ACHIEVEMENTS.find((a) => a.id === sk.unlock.id);
+      if (!goal) { bad.push(`${sk.id}: verwijst naar prestatie ${sk.unlock.id} die niet bestaat`); continue; }
+      if (!unlockLabel(sk, goal.desc).includes(goal.desc)) bad.push(`${sk.id}: noemt zijn doel niet`);
+    }
 
     // --- run rewards: never negative, never NaN, more run pays more ---
     const zero = runRewards({});
