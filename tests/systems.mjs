@@ -329,6 +329,70 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- the sprite swap, end to end ----------------
+ * The entire renderer rests on one promise: drop an atlas in and the game
+ * draws artwork instead of vectors, with nothing else changed. Left untested
+ * that is a guess, and the first real bake proved it: geometry and timing
+ * were pixel-perfect, and every sprite came out white because the atlas path
+ * dropped the runtime tint.
+ *
+ * assets/sprites/pickups.json is a small real atlas baked by
+ * tools/bake-atlas.mjs, kept for exactly this check. It is deliberately not
+ * listed in atlases.json — the shipped game stays procedural.
+ * Runs last: loading an atlas changes rendering for good. */
+{
+  const r = await page.evaluate(async () => {
+    const A = globalThis.ASTRAFALL.Assets;
+    const ok = await A.loadAtlas('./assets/sprites/pickups.json');
+    const key = 'pickup/prism';
+    const before = A.stats.atlasDraws;
+
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 96;
+    const ctx = cv.getContext('2d');
+    const paint = (tint) => {
+      ctx.clearRect(0, 0, 96, 96);
+      A.draw(ctx, key, 48, 48, { tint, t: 0 });
+      return ctx.getImageData(0, 0, 96, 96).data;
+    };
+    const red = paint('#ff2020');
+    const cyan = paint('#20ffff');
+
+    // Ink in the same places, different colour: the tint is being applied and
+    // the silhouette is not being flattened away.
+    let inked = 0, differs = 0, sameAlpha = 0;
+    for (let i = 3; i < red.length; i += 4) {
+      if (red[i] > 8) inked++;
+      if (red[i] === cyan[i]) sameAlpha++;
+      if (red[i] > 8 && (red[i - 3] !== cyan[i - 3] || red[i - 1] !== cyan[i - 1])) differs++;
+    }
+
+    const atlasDef = A.frames.get(key)?.def;
+    const vectorDef = A.defs.get(key);
+    return {
+      ok, frames: A.frames.size, unresolved: A.unresolvedAnimations(),
+      drew: A.stats.atlasDraws - before, inked, differs,
+      alphaMatch: sameAlpha === red.length / 4,
+      // The blit covers the vector version's box plus the glow that spills
+      // past it, trimmed back to the ink. Under 1 would clip the halo; over
+      // the bleed factor means the trim did nothing.
+      sizeRatio: atlasDef && vectorDef ? +(atlasDef.w / vectorDef.w).toFixed(2) : 0,
+      atlasFrameCount: atlasDef?.frames ?? 0,
+      vectorFrameCount: vectorDef?.frames ?? 0,
+    };
+  });
+  check('atlas laadt en levert frames', r.ok && r.frames > 0 && r.unresolved.length === 0,
+    `${r.frames} frames, ${r.unresolved.length} onopgelost`);
+  check('sprite komt uit de atlas, niet uit de vectortekenaar', r.drew === 2, `${r.drew} atlas-draws`);
+  check('atlas-sprite neemt de kleur van de entiteit over',
+    r.inked > 200 && r.differs > r.inked * 0.5 && r.alphaMatch,
+    `${r.inked} px inkt, ${r.differs} verkleurd, alfa gelijk: ${r.alphaMatch}`);
+  check('atlas-frame houdt de maat en het aantal frames van het vectorformaat',
+    // 1.85 is the bleed; the extra hundredth is the ceil() to a whole pixel.
+    r.sizeRatio >= 1 && r.sizeRatio <= 1.9 && r.atlasFrameCount === r.vectorFrameCount,
+    `${r.sizeRatio}× nominaal, ${r.atlasFrameCount}/${r.vectorFrameCount} frames`);
+}
+
 /* ---------------- nothing leaked to the console ---------------- */
 check('geen fouten of stille waarschuwingen', problems.length === 0, problems.slice(0, 6).join(' | '));
 

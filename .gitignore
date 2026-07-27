@@ -4,3 +4,10 @@ dist/
 *.log
 .vscode/
 .idea/
+
+# Volledige atlas-bakken zijn ~17 MB referentie-art, geen bronbestand.
+# Draai tools/bake-atlas.mjs als je ze nodig hebt.
+assets/sprites/core-*.png
+assets/sprites/core-*.json
+assets/sprites/core.png
+assets/sprites/core.json

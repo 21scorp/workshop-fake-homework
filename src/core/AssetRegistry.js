@@ -61,6 +61,8 @@ class Registry {
     this.images = new Map();
     /** Tinted-atlas scratch canvases, keyed by colour. */
     this._tintCache = new Map();
+    /** Animation specs waiting for frames from a sheet not loaded yet. */
+    this._pendingAnims = new Map();
     this.missing = new Set();
     /** Flip to false to force procedural rendering even with an atlas loaded. */
     this.useAtlas = true;
@@ -154,6 +156,11 @@ class Registry {
 
     const src = data.frames || {};
     const atlasScale = data.scale || data.meta?.scale || 1;
+    // A sheet baked as a white master says so, and every frame on it then
+    // takes the entity's runtime colour by multiply. Without this the atlas
+    // path silently drops `tint` and the whole game renders white — which is
+    // exactly what the first real bake did.
+    const tintMode = data.tintMode || data.meta?.tintMode || null;
 
     // Individual frames.
     for (const key in src) {
@@ -163,33 +170,53 @@ class Registry {
         img, sx: r.x, sy: r.y, sw: r.w, sh: r.h,
         anchor: f.pivot || f.anchor || DEFAULT_ANCHOR,
         scale: atlasScale,
+        tintMode: f.tintMode ?? tintMode,
         def: { w: r.w / atlasScale, h: r.h / atlasScale, frames: 1, fps: 1, loop: false },
       });
     }
 
     // Animation keys: a key that resolves to an ordered list of frames.
+    //
+    // A long animation can outgrow a single page, so its frames may be spread
+    // over several sheets. Resolving eagerly would give each sheet a partial
+    // list and let the last one loaded win — a six-frame idle that plays two.
+    // Specs are therefore parked and re-resolved after every atlas, and only
+    // become a key once every frame they name actually exists.
     const anims = data.animations || {};
     for (const key in anims) {
-      const a = anims[key];
-      const list = (a.frames || []).map((n) => this.frames.get(n)).filter(Boolean);
-      if (!list.length) continue;
+      this._pendingAnims.set(key, { ...anims[key], tintMode: anims[key].tintMode ?? tintMode });
+    }
+    this._resolveAnims();
+
+    console.info(`[assets] atlas loaded: ${Object.keys(src).length} frames, ` +
+                 `${Object.keys(anims).length} animations from ${jsonUrl}`);
+    return true;
+  }
+
+  _resolveAnims() {
+    for (const [key, a] of this._pendingAnims) {
+      const names = a.frames || [];
+      if (!names.length) { this._pendingAnims.delete(key); continue; }
+      const list = names.map((n) => this.frames.get(n));
+      if (list.some((f) => !f)) continue;         // a later sheet still owes us frames
       const first = list[0];
       this.frames.set(key, {
         ...first,
         list,
         anchor: a.pivot || first.anchor,
+        tintMode: a.tintMode ?? first.tintMode,
         def: {
           w: a.w ?? first.def.w, h: a.h ?? first.def.h,
           frames: list.length, fps: a.fps ?? 12, loop: a.loop !== false,
           anchor: a.pivot || first.anchor,
         },
       });
+      this._pendingAnims.delete(key);
     }
-
-    console.info(`[assets] atlas loaded: ${Object.keys(src).length} frames, ` +
-                 `${Object.keys(anims).length} animations from ${jsonUrl}`);
-    return true;
   }
+
+  /** Animations whose frames never arrived — a truncated or half-copied set. */
+  unresolvedAnimations() { return [...this._pendingAnims.keys()]; }
 
   /* ------------------------------------------------------------ draw */
 
@@ -254,15 +281,16 @@ class Registry {
       const dh = f.sh / (f.scale || 1);
       const dx = -dw * anchor.x;
       const dy = -dh * anchor.y;
-      if (o.tint && o.tintMode === 'multiply') {
-        ctx.drawImage(this._tinted(f, o.tint), dx, dy, dw, dh);
+      const mode = o.tintMode ?? f.tintMode ?? atlas.tintMode;
+      if (o.tint && mode) {
+        ctx.drawImage(this._tinted(f, o.tint, mode), dx, dy, dw, dh);
       } else {
         ctx.drawImage(f.img, f.sx, f.sy, f.sw, f.sh, dx, dy, dw, dh);
       }
       if (o.flash > 0.01) {
         ctx.globalCompositeOperation = 'lighter';
         ctx.globalAlpha *= o.flash;
-        ctx.drawImage(this._tinted(f, '#ffffff'), dx, dy, dw, dh);
+        ctx.drawImage(this._tinted(f, '#ffffff', 'flat'), dx, dy, dw, dh);
       }
     } else {
       this.stats.proceduralDraws++;
@@ -282,18 +310,38 @@ class Registry {
     ctx.restore();
   }
 
-  /** Silhouette of an atlas frame in a flat colour, cached. */
-  _tinted(frame, color) {
-    const key = `${frame.sx},${frame.sy},${frame.sw},${frame.sh},${color}`;
+  /**
+   * A recoloured copy of an atlas frame, cached.
+   *
+   *   'flat'      → solid silhouette. Right for a hit flash, wrong for art:
+   *                 it throws away every highlight the artist painted.
+   *   'multiply'  → the frame's own luminance, pushed toward `color`. A white
+   *                 master sheet recoloured this way keeps its shading, which
+   *                 is the only way one baked frame can serve seven elements.
+   *
+   * Multiply composites over the whole rect, so the alpha has to be put back
+   * with destination-in or the sprite arrives as an opaque square.
+   */
+  _tinted(frame, color, mode = 'flat') {
+    const key = `${frame.sx},${frame.sy},${frame.sw},${frame.sh},${color},${mode}`;
     let cv = this._tintCache.get(key);
     if (cv) return cv;
+
+    // Every distinct colour costs a canvas the size of the frame. Element
+    // colours are a fixed set, but a gradient-driven tint is not — so cap it.
+    if (this._tintCache.size > 512) this._tintCache.clear();
+
     cv = document.createElement('canvas');
     cv.width = frame.sw; cv.height = frame.sh;
     const c = cv.getContext('2d');
     c.drawImage(frame.img, frame.sx, frame.sy, frame.sw, frame.sh, 0, 0, frame.sw, frame.sh);
-    c.globalCompositeOperation = 'source-in';
+    c.globalCompositeOperation = mode === 'multiply' ? 'multiply' : 'source-in';
     c.fillStyle = color;
     c.fillRect(0, 0, frame.sw, frame.sh);
+    if (mode === 'multiply') {
+      c.globalCompositeOperation = 'destination-in';
+      c.drawImage(frame.img, frame.sx, frame.sy, frame.sw, frame.sh, 0, 0, frame.sw, frame.sh);
+    }
     this._tintCache.set(key, cv);
     return cv;
   }
@@ -304,6 +352,7 @@ class Registry {
       defined: this.defs.size,
       atlasFrames: this.frames.size,
       missing: [...this.missing],
+      unresolved: this.unresolvedAnimations(),
       mode: this.frames.size && this.useAtlas ? 'atlas+procedural' : 'procedural',
       ...this.stats,
     };

@@ -1,16 +1,53 @@
 # Sprite atlassen
 
-Deze map is leeg — en dat is de bedoeling. Het spel draait nu volledig op
-**procedurele vector-art**, maar elke tekening gaat al door de
-`AssetRegistry` heen. Zodra hier een atlas ligt, gebruikt het spel die
-automatisch. Er hoeft geen enkele regel gameplay-code aangepast te worden.
+Het spel draait op **procedurele vector-art**, maar elke tekening gaat al door
+de `AssetRegistry`. Zodra hier een atlas ligt die in `atlases.json` genoemd
+wordt, gebruikt het spel die. Er hoeft geen regel gameplay-code aangepast te
+worden.
+
+Dat is geen belofte meer maar een gemeten feit: `tools/bake-atlas.mjs` bakt de
+hele vector-art naar een echte atlas, en het spel draait daar volledig op —
+identieke posities, identieke animatietiming, nul procedurele draws. Wat die
+eerste bak óók aan het licht bracht, staat onder "Tint" hieronder.
 
 ## Zo zet je sprites erin
 
 1. Exporteer een sprite sheet + JSON (TexturePacker "JSON hash" werkt direct).
-2. Leg beide bestanden hier neer als `core.png` en `core.json`.
-3. Klaar. `src/main.js` roept al `Assets.loadAtlas('./assets/sprites/core.json')`
-   aan bij het opstarten en negeert het stilletjes als het bestand er niet is.
+2. Leg beide bestanden hier neer, bijvoorbeeld `core.png` + `core.json`.
+3. Zet de JSON-naam in `atlases.json`. Meer dan één atlas mag; ze worden in
+   volgorde geladen en een animatie mag over meerdere sheets verdeeld zijn.
+
+Je kunt **incrementeel** overstappen: de registry valt per key terug op de
+vectortekening, dus zet er eerst één Astra in, kijk of het klopt, ga dan door.
+
+## De bak-tool
+
+```bash
+npx http-server -p 8080 -c-1 .          # in een tweede terminal
+node tools/bake-atlas.mjs               # 2x, 2048px pagina's
+node tools/bake-atlas.mjs --only enemy/ --name enemies --scale 1
+```
+
+De tool start het spel headless, tekent elke geregistreerde key door zijn
+eigen procedurele tekenaar, snijdt elk frame terug tot waar echt inkt zit en
+pakt ze in een atlas met precies het JSON dat `loadAtlas` verwacht.
+
+Twee dingen die de output vormgeven:
+
+- **Bleed.** Elke tekenaar zet glow ver buiten zijn nominale doos — dat is wat
+  de art bioluminescent laat lezen. Bakken op exact `w×h` snijdt de halo eraf
+  en levert een zichtbare rechthoek op. Elk frame krijgt daarom een doos van
+  1,85× rond zijn anchor, en de atlas legt die maat vast.
+- **Trim.** Die 1,85× is 3,4× zoveel oppervlak, grotendeels lege uitloop. Elk
+  frame wordt teruggesneden tot zijn alfa-bounding-box, met de pivot mee. Zelfde
+  pixels op het scherm, een derde minder download.
+
+De volle bak is ~17 MB aan referentie-art en staat **niet** in de repo. Wat er
+wel staat is `pickups.json` + `pickups.png` (300 KB): een echte, kleine atlas
+die `tests/systems.mjs` laadt om de hele swap-route te controleren. Die staat
+bewust niet in `atlases.json` — het uitgeleverde spel blijft procedureel,
+want vector-art hérkleurt per element, per zeldzaamheid en per romp-palet en
+gebakken frames kunnen dat niet.
 
 ## Formaat
 
@@ -18,6 +55,7 @@ automatisch. Er hoeft geen enkele regel gameplay-code aangepast te worden.
 {
   "image": "core.png",
   "scale": 1,                       // sheet-pixels per virtuele unit (2 = @2x)
+  "tintMode": "multiply",           // optioneel; zie "Tint" onderaan
   "frames": {
     "astra/ember/idle/0": {
       "frame": { "x": 0, "y": 0, "w": 64, "h": 64 },
@@ -40,11 +78,13 @@ automatisch. Er hoeft geen enkele regel gameplay-code aangepast te worden.
 Een key die maar één frame heeft mag direct in `frames` staan zonder
 animatie-entry.
 
-## Welke keys moeten er zijn
+Een animatie mag frames noemen die op een **ander** sheet staan. De registry
+parkeert zo'n animatie tot elk frame dat hij noemt bestaat; hij wordt pas een
+key als de set compleet is. Zonder dat zou elk sheet een halve lijst
+registreren en zou de laatst geladene winnen — een idle van zes frames die er
+twee afspeelt. `Assets.report().unresolved` laat zien wat er nog ontbreekt.
 
-De registry valt per key terug op de procedurele tekening, dus je kunt
-**incrementeel** overstappen: zet er eerst één Astra in, kijk of het klopt,
-ga dan verder.
+## Welke keys moeten er zijn
 
 ### Astra
 Voor elke vorm (`orb`, `blade`, `wisp`, `beast`, `construct`, `bloom`,
@@ -98,10 +138,25 @@ pickup/coin   22×22 (8f)
 - **Afmetingen** zijn in virtuele units. Het spel rendert op een virtueel
   canvas van 720 breed, dus een vijand van 44 units is ongeveer 6% van de
   schermbreedte. Teken op @2x of @3x en zet `scale` navenant.
-- **Tint**: procedurele art krijgt zijn kleur van de entity. Een atlas-sprite
-  niet — teken de kleuren er dus in. Wil je één sprite voor meerdere elementen
-  hergebruiken, teken hem dan in grijstinten en zet `tintMode: 'multiply'` aan
-  in de draw-call.
+- **Tint** — lees dit voordat je begint te tekenen. Procedurele art krijgt zijn
+  kleur van de entity: dezelfde drone is rood, cyaan of violet afhankelijk van
+  wat er in de golf zit. Een atlas-frame is één plaatje. De eerste echte bak
+  liep daar frontaal op: geometrie en timing klopten tot op de pixel, en het
+  hele spel rende **wit**, omdat de atlas-route `tint` liet vallen.
+
+  Nu kan een sheet zeggen dat hij herkleurbaar is:
+
+  ```jsonc
+  { "image": "core.png", "scale": 2, "tintMode": "multiply", ... }
+  ```
+
+  Teken dan een **wit master**: vorm en schaduw in wit/grijs, geen eigen kleur.
+  De registry vermenigvuldigt de entity-kleur erin en houdt de shading intact.
+
+  Wat multiply níét kan: wit blijven. Een witte glans op een groen kristal
+  wordt groen, want multiply kan niet lichter maken dan de bron. Wil je die
+  glans behouden, lever dan gewoon gekleurde frames per variant en laat
+  `tintMode` weg — de registry blit ze dan onbewerkt.
 - **Hit-flash** werkt automatisch: de registry maakt een wit silhouet van het
   frame en blend dat additief. Geen extra frames nodig.
 - **Achtergrond transparant**, geen premultiplied alpha.
