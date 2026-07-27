@@ -1051,6 +1051,31 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('starpass: later kopen keert met terugwerkende kracht uit',
     r.premiumPending === 15 && r.premiumClaimed === 15, `${r.premiumClaimed} van ${r.premiumPending}`);
   check('starpass: twee keer ophalen betaalt niet twee keer', r.doublePaid === 0, `+${r.doublePaid}`);
+  {
+    const h = await page.evaluate(async () => {
+      const { HIGHLIGHTS, highlightLabel, TIERS } = await import('./src/data/starpass.js');
+      const { SKINS } = await import('./src/data/skins.js');
+      const bad = [];
+      for (const x of HIGHLIGHTS) {
+        const label = highlightLabel(x);
+        if (!label) { bad.push(`T${x.at}: geen regel`); continue; }
+        if (x.skin) {
+          // Een uitgelicht item moet ergens vandaan komen. Het vorige noemde
+          // een titel die in deze build helemaal niet bestaat — op de betaalde
+          // track, dus je koopt hem voordat je erachter komt.
+          const sk = SKINS.find((s) => s.id === x.skin);
+          if (!sk) { bad.push(`T${x.at}: romp ${x.skin} bestaat niet`); continue; }
+          if (sk.unlock.type !== 'pass' || sk.unlock.tier !== x.at || sk.unlock.track !== x.track) {
+            bad.push(`T${x.at}: ${sk.id} ontgrendelt op ${JSON.stringify(sk.unlock)}`);
+          }
+        } else if (!TIERS.find((t) => t.n === x.at)?.[x.track]) {
+          bad.push(`T${x.at}: geen beloning op de ${x.track}-track`);
+        }
+      }
+      return { bad, count: HIGHLIGHTS.length };
+    });
+    check(`de ${h.count} uitgelichte Starpass-beloningen bestaan echt`, h.bad.length === 0, h.bad.join(' | '));
+  }
   check('starpass: tier stopt bij het einde van de tabel', r.maxTier === r.tiers,
     `${r.maxTier}/${r.tiers}`);
 }

@@ -12,6 +12,9 @@
  * strange thing to sell.
  */
 
+import { SKINS } from './skins.js';
+import { CURRENCY } from './constants.js';
+
 export const SEASON = {
   id: 's1',
   name: 'Seizoen 1 — Sterrenval',
@@ -48,12 +51,34 @@ function tier(n) {
 
 export const TIERS = Array.from({ length: SEASON.tiers }, (_, i) => tier(i + 1));
 
-/** Headline items shown on the pass card. Cosmetic-only by design. */
+/**
+ * Headline items shown on the pass card.
+ *
+ * These point at something instead of describing it. A headline that carried
+ * its own text promised "Titel: Sterrenvaller" on the paid track, and this
+ * build has no titles at all — the most expensive kind of drift there is,
+ * because the player pays before finding out. A highlight now names a skin
+ * whose own unlock says it sits on that tier, or it names the tier's real
+ * reward; both are resolved from the data that grants it.
+ */
 export const HIGHLIGHTS = [
-  { at: 10, track: 'free', label: 'Vessel-skin: Sintel' },
-  { at: 20, track: 'premium', label: 'Vessel-skin: Prisma' },
-  { at: 30, track: 'premium', label: 'Titel: Sterrenvaller' },
+  { at: 10, track: 'free', skin: 'ember' },
+  { at: 20, track: 'premium', skin: 'prism' },
+  { at: 30, track: 'premium' },
 ];
+
+/** The line under a highlight, built from whatever actually grants it. */
+export function highlightLabel(h) {
+  if (h.skin) {
+    const sk = SKINS.find((s) => s.id === h.skin);
+    return sk ? `Romp: ${sk.name}` : '';
+  }
+  const t = TIERS.find((x) => x.n === h.at);
+  const reward = t?.[h.track];
+  if (!reward) return '';
+  return Object.entries(reward)
+    .map(([k, v]) => `${v} ${CURRENCY[k]?.name ?? k}`).join(' + ');
+}
 
 /** How much season XP a finished run is worth. */
 export function seasonXpForRun(result) {

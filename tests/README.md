@@ -119,6 +119,10 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
 - de dagelijkse laag: streak-claim, drie unieke opdrachten die door runs heen
   optellen, de gratis pull, beide takken van de proef-Astra, en een stabiele
   seed
+- de uitgelichte Starpass-beloningen bestaan echt: een romp die zichzelf op
+  die tier en die track ontgrendelt, of de echte beloning van die tier. De
+  vorige regel beloofde een titel die in deze build niet bestaat, op de
+  betaalde track
 - de drie beloftes van de Starpass: het gratis spoor keert uit tot waar je
   staat, later kopen keert met terugwerkende kracht uit, en twee keer ophalen
   betaalt niet twee keer

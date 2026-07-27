@@ -9,7 +9,7 @@
 import { el, clear, countTo } from '../dom.js';
 import { currencyRail, header, button, progressBar, sheet } from '../components/Chrome.js';
 import { CURRENCY } from '../../data/constants.js';
-import { HIGHLIGHTS } from '../../data/starpass.js';
+import { HIGHLIGHTS, highlightLabel } from '../../data/starpass.js';
 import {
   SEASON, TIERS, progress, pending, claimTier, claimAll, claimed,
   hasPremium, msUntilSeasonEnd,
@@ -49,7 +49,7 @@ export function StarpassScreen(ctx) {
       }),
       el('div.pass__hl', null, ...HIGHLIGHTS.map((h) =>
         el('span.pass__hlitem', { dataset: { track: h.track, on: pr.tier >= h.at ? '1' : '0' } },
-          `T${h.at} · ${h.label}`))),
+          `T${h.at} · ${highlightLabel(h)}`))),
     );
 
     /* ---------------- tier track ---------------- */
