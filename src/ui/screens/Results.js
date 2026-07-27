@@ -13,12 +13,14 @@ import { SpriteCanvas } from '../components/SpriteCanvas.js';
 import { getAstra, astraSprite } from '../../data/astra.js';
 import { RARITY_INFO, CURRENCY } from '../../data/constants.js';
 import { getCard } from '../../data/cards.js';
-import { grouped, timeStr, abbrev } from '../../core/Math2.js';
+import { grouped, timeStr, abbrev, clamp } from '../../core/Math2.js';
 import { save } from '../../core/Save.js';
 import { Sfx, Music } from '../../core/Audio.js';
 import { haptic } from '../../core/Input.js';
 import { renderShareCard, shareRun, downloadBlob } from '../../systems/Share.js';
 import { rankFor } from '../../systems/Rank.js';
+import { ENEMY, BOSSES } from '../../data/enemies.js';
+import Assets from '../../core/AssetRegistry.js';
 import { accountProgress } from '../../systems/Economy.js';
 import { bus, EV } from '../../core/Events.js';
 
@@ -28,6 +30,11 @@ export function ResultsScreen(ctx, params = {}) {
   const levels = params.levels ?? [];
   const unlocked = params.unlocked ?? [];
   const season = params.season ?? null;
+  const discovered = (params.discovered ?? [])
+    .map((id) => (id.startsWith('boss/')
+      ? { def: BOSSES.find((b) => `boss/${b.id}` === id), boss: true }
+      : { def: ENEMY[id], boss: false }))
+    .filter((d) => d.def);
   const astra = getAstra(run.astraId) ?? getAstra('pip');
   const info = RARITY_INFO[astra.rarity];
   const isBest = run.score >= (save.profile.stats.bestScore ?? 0) && run.score > 0;
@@ -101,6 +108,21 @@ export function ResultsScreen(ctx, params = {}) {
         statTile('Bosses', String(run.bossesKilled ?? 0), { color: '#f43f5e' }),
         statTile('Ultimates', String(run.ultsFired ?? 0), { color: '#fbbf24' }),
       ),
+
+      // New bestiary entries. The codex is discovery-gated, so the run that
+      // first meets something is the only moment that discovery exists.
+      discovered.length ? el('div.res__block', null,
+        el('h3', { text: 'Nieuw in het bestiarium' }),
+        el('div.res__found', null, ...discovered.map((d) => {
+          const sc = new SpriteCanvas(d.def.sprite, {
+            size: 52, tint: d.def.color, tint2: d.def.color2, speed: 0.8,
+            scale: clamp(40 / (Assets.meta(d.def.sprite)?.w ?? 48), 0.7, 1.7),
+          });
+          return el('button.found', {
+            onclick: () => { Sfx.play('tap'); ctx.go('bestiary'); },
+          }, sc.canvas, el('span', { text: d.def.name }));
+        })),
+      ) : null,
 
       uniqueChips.length ? el('div.res__block', null,
         el('h3', { text: 'Jouw build' }),

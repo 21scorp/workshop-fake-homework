@@ -303,11 +303,11 @@ function createApp() {
   bus.on(EV.RUN_END, (result) => {
     hud.hide();
     cardPicker.close();
-    const { rewards, levels } = commitRun(result);
+    const { rewards, levels, discovered } = commitRun(result);
     progressQuests(result);
     const unlocked = evaluateAchievements(result);
     const season = addSeasonXp(result);
-    toMenu('results', { run: result, rewards, levels, unlocked, season });
+    toMenu('results', { run: result, rewards, levels, unlocked, season, discovered });
   });
 
   // Collection milestones can complete outside a run.

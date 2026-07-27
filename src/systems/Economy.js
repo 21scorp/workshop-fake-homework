@@ -128,7 +128,11 @@ export function commitRun(result) {
 
   if (result.astraId && p.collection[result.astraId]) p.collection[result.astraId].uses++;
 
+  // Collect what this run met for the first time — the results screen shows
+  // it, which is the only place the discovery is worth a beat.
+  const discovered = [];
   for (const id in result.bestiary ?? {}) {
+    if (!p.bestiary[id]) discovered.push(id);
     const entry = (p.bestiary[id] ??= { seen: 0, kills: 0, firstAt: Date.now() });
     entry.seen += result.bestiary[id].seen;
     entry.kills += result.bestiary[id].kills;
@@ -153,7 +157,7 @@ export function commitRun(result) {
   if (p.history.length > 20) p.history.length = 20;
 
   save.touch();
-  return { rewards, levels };
+  return { rewards, levels, discovered };
 }
 
 /** Local leaderboard: best runs on this device, newest tiebreak. */

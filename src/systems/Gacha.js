@@ -24,19 +24,26 @@ import { ASTRA, getAstra } from '../data/astra.js';
 import { save } from '../core/Save.js';
 import { bus, EV } from '../core/Events.js';
 
-/** Ensure the pity block exists for a banner. */
+const PITY_DEFAULTS = {
+  total: 0,              // lifetime pulls on this banner
+  sinceSSR: 0,           // pulls since the last SSR+
+  sinceSR: 0,            // pulls since the last SR+
+  guaranteedFeatured: false,
+  lastSSR: null,
+};
+
+/**
+ * Ensure the pity block exists *and is complete* for a banner.
+ *
+ * Filling it only when the whole block is missing was one migration away from
+ * a crash: a profile written by a version with fewer fields, or a hand-edited
+ * import, arrives with `st` present and `st.history` undefined, and the first
+ * pull dies on `history.unshift`. Every field is backfilled individually.
+ */
 export function pityState(profile, bannerId) {
-  let st = profile.gacha[bannerId];
-  if (!st) {
-    st = profile.gacha[bannerId] = {
-      total: 0,          // lifetime pulls on this banner
-      sinceSSR: 0,       // pulls since the last SSR+
-      sinceSR: 0,        // pulls since the last SR+
-      guaranteedFeatured: false,
-      lastSSR: null,
-      history: [],       // last 50 results, for the "recent" panel
-    };
-  }
+  const st = profile.gacha[bannerId] ??= {};
+  for (const k in PITY_DEFAULTS) if (st[k] === undefined) st[k] = PITY_DEFAULTS[k];
+  if (!Array.isArray(st.history)) st.history = [];   // last 50, for "recent"
   return st;
 }
 
