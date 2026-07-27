@@ -434,7 +434,7 @@ export function HomeScreen(ctx) {
       stats,
       el('div.home__foot', null,
         el('button.linkbtn', { text: '⚙ Instellingen', onclick: () => ctx.go('settings') }),
-        el('span.home__ver', { text: 'ASTRAFALL v0.10' }),
+        el('span.home__ver', { text: 'ASTRAFALL v0.11' }),
       ),
     ),
   );

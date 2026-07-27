@@ -44,6 +44,7 @@ Je doet het nog een keer.
 | **Share card** | 1080×1920 PNG, klaar voor Stories en TikTok, met je seed groot in beeld. |
 | **Rarity reveal** | De kleur van de straal verraadt de zeldzaamheid één tel voor de onthulling. Dat is precies waarom een pull kijkbaar is. |
 | **Kaartkeuze** | Drie kaarten, één keuze. Comment-bait: "welke pak jij?" |
+| **Rang** | D tot S+, groot op de kaart. "Ik heb S" is een caption; "984.210" is een screenshot. |
 
 ---
 
@@ -56,7 +57,7 @@ src/
 ├── fx/         particles, screenshake, starfield
 ├── data/       roster, vijanden, kaarten, banners, winkel  (pure data)
 ├── game/       run-scene, wapens, ultimates, wave-director
-├── systems/    gacha, economie, dailies, delen
+├── systems/    gacha, economie, dailies, delen, bestiarium, rang
 └── ui/         DOM-overlay: router, schermen, HUD, gacha-cinematic
 ```
 
@@ -123,6 +124,12 @@ iemand die zich bekocht voelt vertrekt.
 - **50/50** (75/25 op limited): een off-banner Stellar+ maakt de volgende
   gegarandeerd rate-up. Twee keer achter elkaar verliezen kan niet.
 - **Dubbels** worden Echoes en Stardust. Niets is verspild.
+
+Vier banners: een standaardbanner en de dagelijkse gratis summon in Stardust,
+een debuutbanner voor de nieuwkomers óók in Stardust, en twee limited banners
+in Shards. Het summonscherm opent op een banner waarvan het saldo een ×10
+dekt — een nieuwe speler mag zijn eerste gacha niet als een uitgegrijsde knop
+tegenkomen.
 
 De roller (`src/systems/Gacha.js`) is puur: geef hem een profiel, een banner en
 een RNG en hij geeft resultaten terug. Uitdelen is een aparte stap, zodat de
@@ -233,9 +240,17 @@ schermflitsen en camera-shake te dempen.
 
 ## Status
 
-v0.10 — speelbaar van begin tot eind: run, gacha, collectie, loadout, winkel,
-Starpass, dailies, prestaties, bestiarium, delen. Getest tot golf 13 met een
-uitgebouwd profiel (ruim 500.000 punten in drieënhalve minuut).
+v0.11 — speelbaar van begin tot eind: run, gacha, collectie, loadout, winkel,
+Starpass, dailies, prestaties, bestiarium, delen.
+
+Zesentwintig Astra over negentien wapenpatronen, twaalf vijandarchetypes en
+vier bazen. Elk personage en elk archetype heeft een eigen silhouet; bij
+vijanden komen de markeringen uit hun eigen definitie, zodat de art nooit iets
+anders belooft dan het gedrag.
+
+Gemeten: golf 12 en 564.000 punten in tweeëneenhalve minuut met een
+uitgebouwd profiel, frame-kosten 0,8–4,3 ms met twaalfhonderd particles in
+beeld.
 
 De sprite-atlas is geen belofte meer: `tools/bake-atlas.mjs` bakt de hele
 vector-art naar een echte atlas en het spel draait daar volledig op. Wat er

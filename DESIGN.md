@@ -160,5 +160,7 @@ Astra is gebalanceerd zodra hij bestaat.
 - [x] v0.9 Loadout met steun-Astra
 - [x] v0.10 Eigen silhouet per Astra en per vijand, bestiarium, bak-tool voor
       atlassen — de sprite-swap is end-to-end aangetoond
+- [x] v0.11 Roster naar 26 met vier nieuwe wapenpatronen, vierde baas, rangen
+      op de sharekaart, debuutbanner
 - [ ] v1.0 Echte sprite-art in dat formaat
 - [ ] later Vessel-skins uit de Starpass, echte betaalprovider, server-leaderboard
