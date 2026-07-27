@@ -43,7 +43,7 @@ export const ASTRA = [
     stats: { power: 10, fireRate: 5.4, projectiles: 1, spread: 0, speed: 1.0, hp: 3, crit: 0.05, critDmg: 1.6, magnet: 1.0 },
     weapon: { type: 'straight', bullet: 'bullet/basic', bulletSpeed: 900, pierce: 0 },
     passive: { key: 'steady', name: 'Standvastig', desc: '+8% schade zolang je niet beweegt.' },
-    ult: { key: 'flare', name: 'Fakkel', cost: 100, desc: 'Een lichtflits verdooft alles op het scherm 2s.' },
+    ult: { key: 'flare', name: 'Fakkel', cost: 100, desc: 'Een lichtflits verdooft alles op het scherm 2.2s.' },
     lore: 'De eerste Astra die ooit antwoordde. Klein, koppig, altijd wakker.',
   },
   {
@@ -53,7 +53,7 @@ export const ASTRA = [
     stats: { power: 8, fireRate: 7.0, projectiles: 1, spread: 0.05, speed: 1.05, hp: 3, crit: 0.06, critDmg: 1.6, magnet: 1.0 },
     weapon: { type: 'straight', bullet: 'bullet/basic', bulletSpeed: 980, pierce: 0, burn: 0.5 },
     passive: { key: 'ignite', name: 'Ontsteking', desc: 'Treffers laten vijanden 2s branden.' },
-    ult: { key: 'firewall', name: 'Vuurmuur', cost: 100, desc: 'Een brandende lijn over het scherm, 3s.' },
+    ult: { key: 'firewall', name: 'Vuurmuur', cost: 100, desc: 'Een brandende lijn over het scherm, 3.5s.' },
     lore: 'Wat overblijft als een ster uitdooft, en het er niet mee eens is.',
   },
   {
@@ -75,7 +75,7 @@ export const ASTRA = [
     stats: { power: 7, fireRate: 8.4, projectiles: 1, spread: 0.08, speed: 1.2, hp: 3, crit: 0.08, critDmg: 1.5, magnet: 1.15 },
     weapon: { type: 'straight', bullet: 'bullet/basic', bulletSpeed: 1150, pierce: 0 },
     passive: { key: 'swift', name: 'Rap', desc: '+12% bewegingssnelheid.' },
-    ult: { key: 'gust', name: 'Windstoot', cost: 90, desc: 'Blaast alle vijandelijke kogels weg.' },
+    ult: { key: 'gust', name: 'Windstoot', cost: 90, desc: 'Blaast alle vijandelijke kogels weg — ze worden prisms.' },
     lore: 'Te licht om te vangen, te snel om te raken.',
   },
   {
@@ -98,7 +98,7 @@ export const ASTRA = [
     stats: { power: 11, fireRate: 5.8, projectiles: 3, spread: 0.22, speed: 1.0, hp: 3, crit: 0.1, critDmg: 1.7, magnet: 1.0 },
     weapon: { type: 'spread', bullet: 'bullet/shard', bulletSpeed: 940, pierce: 0, burn: 0.8 },
     passive: { key: 'sparks', name: 'Vonkenregen', desc: 'Kritieke treffers ontsteken een tweede vonk.' },
-    ult: { key: 'inferno', name: 'Inferno', cost: 110, desc: 'Ring van vuur die 4s meedraait.' },
+    ult: { key: 'inferno', name: 'Inferno', cost: 110, desc: 'Ring van vuur die 6s meedraait.' },
     lore: 'Sla hem hard genoeg en hij geeft je een heel vuur terug.',
   },
   {
@@ -118,7 +118,7 @@ export const ASTRA = [
     stats: { power: 6, fireRate: 13.0, projectiles: 2, spread: 0.1, speed: 1.25, hp: 2, crit: 0.14, critDmg: 1.6, magnet: 1.2 },
     weapon: { type: 'straight', bullet: 'bullet/basic', bulletSpeed: 1280, pierce: 0 },
     passive: { key: 'tailwind', name: 'Rugwind', desc: 'Elke kill geeft 1s +25% vuursnelheid, stapelt tot 5x.' },
-    ult: { key: 'cyclone', name: 'Cycloon', cost: 95, desc: 'Wordt 3s onkwetsbaar en ramt door alles heen.' },
+    ult: { key: 'cyclone', name: 'Cycloon', cost: 95, desc: 'Wordt 3.2s onkwetsbaar en ramt door alles heen.' },
     lore: 'Gaat te snel om bang te zijn.',
   },
   {
@@ -138,7 +138,7 @@ export const ASTRA = [
     stats: { power: 15, fireRate: 4.4, projectiles: 1, spread: 0, speed: 1.02, hp: 3, crit: 0.12, critDmg: 1.9, magnet: 1.3 },
     weapon: { type: 'homing', bullet: 'bullet/orb', bulletSpeed: 640, pierce: 0, turnRate: 3.2 },
     passive: { key: 'feast', name: 'Feestmaal', desc: 'Elke 25 kills herstelt 1 HP.' },
-    ult: { key: 'devour', name: 'Verslinden', cost: 120, desc: 'Zwart gat dat 3s alles naar binnen trekt.' },
+    ult: { key: 'devour', name: 'Verslinden', cost: 120, desc: 'Zwart gat dat 3.2s alles opzuigt en dan detoneert.' },
     lore: 'Het beest tussen de sterren dat de sterren opeet.',
   },
   {
@@ -148,7 +148,7 @@ export const ASTRA = [
     stats: { power: 9, fireRate: 6.1, projectiles: 1, spread: 0, speed: 1.05, hp: 3, crit: 0.15, critDmg: 1.8, magnet: 1.25 },
     weapon: { type: 'chain', bullet: 'bullet/basic', bulletSpeed: 1000, chains: 2, chainRange: 160 },
     passive: { key: 'refract', name: 'Weerkaatsing', desc: 'Treffers ketsen door naar 2 vijanden.' },
-    ult: { key: 'prismbeam', name: 'Prismastraal', cost: 105, desc: 'Straal die splitst bij elke vijand.' },
+    ult: { key: 'prismbeam', name: 'Prismastraal', cost: 105, desc: 'Sleepstraal, 4s, alles wat hij raakt neemt meer schade.' },
     lore: 'Licht dat besloot niet in een rechte lijn te reizen.',
   },
 
@@ -237,7 +237,7 @@ export const ASTRA = [
     stats: { power: 15, fireRate: 5.0, projectiles: 6, spread: 6.28, speed: 1.04, hp: 5, crit: 0.12, critDmg: 1.9, magnet: 1.5 },
     weapon: { type: 'nova', bullet: 'bullet/orb', bulletSpeed: 640, pierce: 1, slow: 0.3 },
     passive: { key: 'bloomheal', name: 'Bloei', desc: 'Elke level-up herstelt 1 HP en geeft 4s onkwetsbaarheid.' },
-    ult: { key: 'gardenof', name: 'Tuin van Licht', cost: 135, desc: 'Zes bloemen die om je heen schieten, 8s.' },
+    ult: { key: 'gardenof', name: 'Tuin van Licht', cost: 135, desc: 'Zes bloemen schieten 8s om je heen. Heelt 1 HP.' },
     lore: 'Groeit alleen op plekken waar iets groots gestorven is.',
   },
 
@@ -277,7 +277,7 @@ export const ASTRA = [
     stats: { power: 11, fireRate: 2.4, projectiles: 1, spread: 0.06, speed: 1.0, hp: 3, crit: 0.1, critDmg: 1.8, magnet: 1.0 },
     weapon: { type: 'burst', bullet: 'bullet/basic', bulletSpeed: 1020, burst: 3, burstGap: 0.07 },
     passive: { key: 'deadeye', name: 'Scherpschutter', desc: '+20% kritieke kans zolang je stilstaat.' },
-    ult: { key: 'fusillade', name: 'Salvo', cost: 110, desc: 'Negen inslagen marcheren het scherm op.' },
+    ult: { key: 'fusillade', name: 'Salvo', cost: 110, desc: 'Negen inslagen, en alles neemt 5s lang meer schade.' },
     lore: 'Telt tot drie. Daarna telt hij opnieuw. Dat is alles wat hij doet.',
   },
   {
@@ -313,7 +313,7 @@ export const ASTRA = [
     stats: { power: 15, fireRate: 3.4, projectiles: 2, spread: 0, speed: 1.05, hp: 4, crit: 0.14, critDmg: 2.0, magnet: 1.3 },
     weapon: { type: 'rain', bullet: 'bullet/basic', bulletSpeed: 640, spacing: 54, splash: 44 },
     passive: { key: 'undertow', name: 'Onderstroom', desc: 'Treffers van bovenaf vertragen wat ze raken.' },
-    ult: { key: 'downpour', name: 'Wolkbreuk', cost: 140, desc: 'Veertien inslagen in twee tellen, en alles wordt traag.' },
+    ult: { key: 'downpour', name: 'Wolkbreuk', cost: 140, desc: 'Veertien inslagen in een halve tel, en alles wordt traag.' },
     lore: 'Vraagt niet of het uitkomt. Valt gewoon.',
   },
   {

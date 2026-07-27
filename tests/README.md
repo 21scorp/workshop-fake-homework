@@ -57,6 +57,11 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   gebaar bewijzen twintig geluiden niets
 - alle geluiden, plus het reveal-geluid per zeldzaamheid
 - alle wapenpatronen en alle ultimates op ster 5, dus inclusief de echo-tak
+- elk getal in een ultimate-tekst staat ook echt in zijn recept: zes
+  getallen deden dat niet, waaronder een ring die vier seconden beloofde en
+  er zes draaide, en een salvo dat twee tellen claimde en in minder dan één
+  landt. De uitzonderingen zijn expliciet en beperkt tot aantallen die het
+  recept structureel uitdrukt in plaats van als argument
 - alle vijandtypes spawnen en updaten, en alle schietende types vuren echt
 - alle bossen in elke fase
 - alle kaarten tot hun maximum, met een NaN-sweep over de modifiers, plus een

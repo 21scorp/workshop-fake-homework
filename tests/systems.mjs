@@ -186,6 +186,41 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check(`alle ${r.count} ultimates vuren`, r.failed.length === 0, r.failed.join(' | '));
 }
 
+/* ---------------- ult text matches the ult recipe ---------------- */
+{
+  const r = await page.evaluate(async () => {
+    const { ASTRA } = await import('./src/data/astra.js');
+    const { RECIPES } = await import('./src/game/Ults.js');
+    // A number in an ult's line is a promise. The recipe is the only place it
+    // can be kept, so it has to appear there — as a duration, a count, a
+    // multiplier, anything. Six numbers in this build did not: one ult claimed
+    // four seconds of a six-second ring, another claimed two seconds for a
+    // volley that lands in under one.
+    const WORDS = {
+      twee: 2, drie: 3, vier: 4, vijf: 5, zes: 6, zeven: 7, acht: 8,
+      negen: 9, tien: 10, elf: 11, twaalf: 12, dertien: 13, veertien: 14,
+    };
+    // Counts the recipe expresses structurally rather than as an argument.
+    const STRUCTURAL = { crossfire: [2] };   // twee losse P.zone-aanroepen
+    const bad = [];
+    for (const a of ASTRA) {
+      const u = a.ult;
+      const src = String(RECIPES[u.key] ?? '');
+      if (!src) { bad.push(`${a.id}: geen recept voor ${u.key}`); continue; }
+      const claimed = new Set();
+      for (const m of u.desc.matchAll(/(\d+(?:[.,]\d+)?)/g)) claimed.add(parseFloat(m[1].replace(',', '.')));
+      for (const w in WORDS) if (new RegExp(`\\b${w}\\b`, 'i').test(u.desc)) claimed.add(WORDS[w]);
+      const literals = new Set([...src.matchAll(/(\d+(?:\.\d+)?)/g)].map((m) => parseFloat(m[1])));
+      const ok = new Set(STRUCTURAL[u.key] ?? []);
+      const missing = [...claimed].filter((n) => !literals.has(n) && !ok.has(n));
+      if (missing.length) bad.push(`${u.key}: ${missing.join(',')} staat niet in het recept — "${u.desc}"`);
+    }
+    return { count: ASTRA.length, bad };
+  });
+  check(`elk getal in de ${r.count} ultimate-teksten staat ook in het recept`,
+    r.bad.length === 0, r.bad.slice(0, 6).join(' | '));
+}
+
 /* ---------------- every enemy type and AI ---------------- */
 {
   const state = await settle(page);
