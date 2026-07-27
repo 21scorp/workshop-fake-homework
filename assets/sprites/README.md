@@ -145,6 +145,7 @@ informatie niet, dan is de vijand oneerlijk — hoe mooi het plaatje ook is.
 boss/warden    200×200   8 frames @ 10fps
 boss/devourer  210×210   8 frames @ 10fps
 boss/nova      190×190   8 frames @ 12fps
+boss/loom      205×205   8 frames @ 10fps
 ```
 
 ### Projectielen & pickups

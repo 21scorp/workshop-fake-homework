@@ -321,6 +321,80 @@ function drawWeaver(ctx, s, v = NEUTRAL) {
   flashOverlay(ctx, r, s.flash);
 }
 
+/**
+ * LOOM — a spinning frame that spools thread between its arms.
+ *
+ * The other three bosses are round: a shielded core, a maw, a star. This one
+ * is a cross, because its whole fight is about a rotating spoke sweeping the
+ * arena — the silhouette has to say "this thing turns" before the first shot
+ * does.
+ */
+function drawBossLoom(ctx, s) {
+  const t = s.t;
+  const r = s.w * 0.42;
+  const phase = s.data?.phase ?? 0;
+  const spin = t * (0.5 + phase * 0.3);
+  const arms = 4;
+
+  halo(ctx, r * 2.7, s.tint, 0.4);
+
+  // Arms. They lengthen with each phase, so the reach reads before it hits.
+  ctx.save();
+  ctx.rotate(spin);
+  const reach = r * (1.35 + phase * 0.2);
+  for (let i = 0; i < arms; i++) {
+    ctx.save();
+    ctx.rotate((i / arms) * TAU);
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.16, 0);
+    ctx.lineTo(0, -reach);
+    ctx.lineTo(r * 0.16, 0);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, -reach, 0, 0);
+    g.addColorStop(0, mixHex(s.tint2, '#ffffff', 0.5));
+    g.addColorStop(1, mixHex(s.tint, '#04160f', 0.5));
+    ctx.fillStyle = g;
+    ctx.fill();
+    // Spool tip.
+    ctx.beginPath();
+    ctx.arc(0, -reach, r * 0.14, 0, TAU);
+    ctx.fillStyle = hexA(s.tint2, 0.9);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Thread strung between neighbouring tips — the lattice it is weaving.
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.strokeStyle = hexA(s.tint2, 0.35 + s.charge * 0.5);
+  ctx.lineWidth = Math.max(1, r * 0.045);
+  ctx.beginPath();
+  for (let i = 0; i < arms; i++) {
+    const a0 = (i / arms) * TAU - Math.PI / 2;
+    const a1 = ((i + 1) / arms) * TAU - Math.PI / 2;
+    ctx.moveTo(Math.cos(a0) * reach, Math.sin(a0) * reach);
+    ctx.lineTo(Math.cos(a1) * reach, Math.sin(a1) * reach);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Hub.
+  ctx.save();
+  ctx.rotate(-spin * 0.6);
+  crystal(ctx, r * 0.62, 4, s.tint, Math.PI / 4, 0.9);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const core = r * (0.2 + s.charge * 0.3 + Math.sin(t * 4) * 0.03);
+  ctx.beginPath();
+  ctx.arc(0, 0, core, 0, TAU);
+  ctx.fillStyle = mixHex(s.tint2, '#ffffff', 0.6);
+  ctx.fill();
+  ctx.restore();
+
+  flashOverlay(ctx, r * 1.1, s.flash * 0.6);
+}
+
 /* ------------------------------------------------------------------
    ROLE MARKS
    ------------------------------------------------------------------
@@ -848,6 +922,7 @@ export function registerEntityArt(enemyDefs = {}) {
     .define('boss/warden',   { w: 200, h: 200, frames: 8, fps: 10, draw: drawBossWarden })
     .define('boss/devourer', { w: 210, h: 210, frames: 8, fps: 10, draw: drawBossDevourer })
     .define('boss/nova',     { w: 190, h: 190, frames: 8, fps: 12, draw: drawBossNova })
+    .define('boss/loom',     { w: 205, h: 205, frames: 8, fps: 10, draw: drawBossLoom })
 
     .define('bullet/basic', { w: 12, h: 12, frames: 1, draw: drawBulletBasic })
     .define('bullet/shard', { w: 14, h: 14, frames: 1, draw: drawBulletShard })

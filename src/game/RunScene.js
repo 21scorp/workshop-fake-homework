@@ -1827,6 +1827,60 @@ export class RunScene extends Scene {
         Sfx.play('warning');
         break;
       }
+
+      /**
+       * A slowly turning cross of spokes.
+       *
+       * Every other pattern is dodged on sight; this one you have to read
+       * ahead, because the safe wedge you are standing in is rotating toward
+       * a spoke whether you move or not.
+       */
+      case 'cross': {
+        const arms = 4;
+        const turn = e.t * 0.6;
+        for (let a = 0; a < arms; a++) {
+          const ang = turn + (a / arms) * TAU;
+          for (let i = 0; i < 7; i++) {
+            this.schedule(i * 0.06, () => {
+              this.spawnEnemyBullet(e.x, e.y, ang, 210 + i * 22, { color: e.color2 });
+            });
+          }
+        }
+        break;
+      }
+
+      /**
+       * Mines: stationary shots that sit for a moment and then burst.
+       *
+       * They turn the floor into a decision instead of a reaction — the
+       * dangerous square is the one you can already see, and you have about a
+       * second and a half to not be in it. No new system: a zero-speed shot
+       * is its own telegraph, and the burst is scheduled at its position.
+       */
+      case 'mines': {
+        const count = 5;
+        for (let i = 0; i < count; i++) {
+          const mx = view.w * (0.12 + 0.76 * (i / (count - 1)));
+          const my = e.y + 180 + this.rng.range(-40, 120);
+          // Danger red, not the boss's emerald. In the first pass they took
+          // the boss colour and read as pickups — a glowing thing sitting
+          // still in an empty lane is something a player flies *toward*.
+          const mine = this.spawnEnemyBullet(mx, my, 0, 0, { color: '#f43f5e', r: 11, life: 1.7 });
+          if (mine) mine.homing = 0;
+          // Two ticks before it goes: the pattern is only fair if the moment
+          // is legible, not just the position.
+          this.schedule(0.9, () => { this.fx.hit(mx, my, '#fda4af', 0, 0.7); Sfx.play('tick', { gate: 0.1 }); });
+          this.schedule(1.35, () => { this.fx.hit(mx, my, '#fecdd3', 0, 1); Sfx.play('tick', { pitch: 1.4, gate: 0.1 }); });
+          this.schedule(1.6, () => {
+            this.fx.explosion(mx, my, '#fb7185', 0.8);
+            for (let k = 0; k < 9; k++) {
+              this.spawnEnemyBullet(mx, my, (k / 9) * TAU + i, 230, { color: e.color2 });
+            }
+          });
+        }
+        Sfx.play('warning', { gate: 0.3 });
+        break;
+      }
     }
   }
 

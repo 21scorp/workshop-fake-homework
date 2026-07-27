@@ -40,6 +40,11 @@ RUN (60-120s)  →  DEATH/CLEAR  →  REWARDS  →  SUMMON  →  UPGRADE  →  R
 ### Meso-loop (per run)
 `wave 1-3 → elite → wave 4-6 → BOSS → escalatie → dood`
 
+Vier bazen, elke vijf golven één, cyclisch. De vierde — HET WEEFGETOUW —
+vraagt iets anders dan de andere drie: geen kogelregen om op te reageren maar
+een draaiende spaak en mijnen op de vloer, dus je moet een tel vooruit lezen
+in plaats van te ontwijken wat er al is.
+
 ### Macro-loop (per dag)
 `daily seed → free summon → login streak → banner pity opbouwen → nieuwe Astra → build unlock`
 

@@ -273,6 +273,22 @@ export const BOSSES = [
     ],
     minions: { id: 'lancer', every: 7, count: 4 },
   },
+  {
+    id: 'loom',
+    sprite: 'boss/loom',
+    name: 'HET WEEFGETOUW',
+    subtitle: 'Dat wat het patroon spant',
+    hp: 2600, radius: 96, score: 2200, xp: 400,
+    color: '#10b981', color2: '#a7f3d0',
+    // Not a bullet hose. Every phase asks you to read the floor a second
+    // ahead instead of reacting to what is already in the air.
+    phases: [
+      { at: 1.00, pattern: 'cross', interval: 2.4, note: 'Draaiende spaken' },
+      { at: 0.62, pattern: 'mines', interval: 3.2, note: 'Mijnen op de vloer' },
+      { at: 0.30, pattern: 'cross', interval: 1.2, note: 'Het patroon sluit' },
+    ],
+    minions: { id: 'weaver', every: 8, count: 2 },
+  },
 ];
 
 export const bossForWave = (wave) => BOSSES[Math.floor(wave / 5 - 1) % BOSSES.length];
