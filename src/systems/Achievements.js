@@ -151,6 +151,14 @@ export const ACHIEVEMENTS = [
     progress: (c) => (c.run && c.run.wave >= 8 && (c.run.ultsFired ?? 0) === 0 ? 1 : 0),
     reward: { shards: 45 } },
 
+  /* ---------------- anomalies ---------------- */
+  { id: 'anom_three', group: 'Diepte', icon: '⚠', name: 'Drie hemels',
+    desc: 'Overleef tot drie anomalieën tegelijk',
+    progress: (c) => ratio(c.run?.anomalies?.length ?? 0, 3), reward: { stardust: 700 } },
+  { id: 'anom_five', group: 'Diepte', icon: '⚠', name: 'De lucht is stuk',
+    desc: 'Overleef tot vijf anomalieën tegelijk',
+    progress: (c) => ratio(c.run?.anomalies?.length ?? 0, 5), reward: { shards: 60 } },
+
   /* ---------------- bestiary ----------------
      Declarative like the rest: the bestiary itself is the state, so these
      cannot drift and an imported save unlocks them the moment it lands. */

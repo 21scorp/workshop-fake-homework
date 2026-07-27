@@ -235,7 +235,7 @@ schermflitsen en camera-shake te dempen.
 | Run | 1–3 min | Kaarten, golven, bosses |
 | Dagelijks | 1 dag | Inlogreeks, drie opdrachten, gratis summon, gratis proefvlucht met een Astra die je niet bezit, dagelijkse seed |
 | Starpass | 6 weken | 30 tiers, gratis spoor tot het einde, premium keert met terugwerkende kracht uit |
-| Prestaties | open | 34 doelen die zichzelf uitkeren zodra ze kloppen |
+| Prestaties | open | 36 doelen die zichzelf uitkeren zodra ze kloppen |
 | Anomalieën | per run | Elke vierde golf verandert de lucht: acht modifiers, de helft in jouw voordeel |
 | Bestiarium | open | 16 vijanden en bazen, per stuk vrijgespeeld door ze tegen te komen |
 | Rang | per run | D t/m S+, met de afstand tot de volgende rang erbij |
