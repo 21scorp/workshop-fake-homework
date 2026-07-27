@@ -92,6 +92,11 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   leugen is, en niets gooit daarbij een fout
 - 60 000 gesimuleerde pulls: de effectieve Stellar+-rate ligt boven de
   basisrate en geen enkele reeks overschrijdt de harde pity
+- en 20 000 pulls per banner door de *echte* roller: het aandeel rate-up landt
+  op 1/(2−boost) — het getal dat volgt uit de regel die op het scherm staat —
+  nooit twee keer op rij naast de rate-up, en niets heet rate-up dat niet op de
+  banner staat. De pity-curve die de UI beschrijft is dezelfde die de roller
+  gebruikt: vlak tot de zachte grens, stijgend daarna, exact 100% op de harde
 - alle tien anomalieën veranderen echt iets, stapelen door vermenigvuldiging,
   en worden gezaaid getrokken zonder zichzelf te herhalen
 - loadout, skins en runbeloningen: de steunbonus stijgt met zeldzaamheid en

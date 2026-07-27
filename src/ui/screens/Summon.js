@@ -195,6 +195,13 @@ export function SummonScreen(ctx, params = {}) {
 
   function openRates(banner) {
     const rows = rateTable(banner);
+    // Name the tier the rate-up actually lives on. On most banners that is
+    // Stellar; pulling an Ultra there is not a lost 50/50, it is the best
+    // outcome in the game, and the roller does not treat it as a miss. Saying
+    // "Stellar+" would promise a rate-up at a tier that has none.
+    const featTiers = [...new Set((banner.featured ?? []).map(getAstra)
+      .filter((a) => a && a.rarity >= 3).map((a) => a.rarity))].sort();
+    const featLabel = featTiers.length === 1 ? RARITY_INFO[featTiers[0]].name : 'Stellar+';
     const body = el('div', null,
       el('p.sheet__lead', { text: 'Alle percentages zijn exact zoals de code ze gebruikt.' }),
       el('div.rates', null, ...rows.map((r) => el('div.rates__row', { dataset: { t: RARITY_INFO[r.tier].key.toLowerCase() } },
@@ -206,7 +213,7 @@ export function SummonScreen(ctx, params = {}) {
         el('li', { text: `Vanaf pull ${banner.pity.soft} stijgt de Stellar+ kans elke pull tot 100% op pull ${banner.pity.hard}.` }),
         el('li', { text: `Elke ${banner.pity.srEvery} pulls is minimaal Superior gegarandeerd.` }),
         el('li', { text: `Een ×10 garandeert minimaal één Superior of hoger.` }),
-        el('li', { text: `${Math.round((banner.featuredBoost ?? 0.5) * 100)}% kans dat een Stellar+ de rate-up Astra is. Zo niet, dan is de volgende Stellar+ gegarandeerd rate-up.` }),
+        el('li', { text: `${Math.round((banner.featuredBoost ?? 0.5) * 100)}% kans dat een ${featLabel} de rate-up Astra is. Zo niet, dan is de volgende ${featLabel} gegarandeerd rate-up.` }),
         el('li', { text: 'Dubbele Astra worden Echoes en Stardust — niets is verspild.' }),
       ),
       el('h3.sheet__h3', { text: 'Rate-up Astra' }),

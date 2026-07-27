@@ -465,6 +465,57 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- the banner sheet is the deal the roller honours ---------- */
+{
+  const r = await page.evaluate(async () => {
+    const { BANNERS, ssrChanceAt } = await import('./src/data/banners.js');
+    const { preview } = await import('./src/systems/Gacha.js');
+    const { ASTRA } = await import('./src/data/astra.js');
+    const { RARITY } = await import('./src/data/constants.js');
+    const byId = new Map(ASTRA.map((a) => [a.id, a]));
+    const bad = [];
+    const shares = [];
+    for (const b of BANNERS) {
+      if (!(b.featured ?? []).length) continue;
+      // Drive the shipped roller, not a reimplementation of it — the whole
+      // point is that the sheet in the UI and the code agree.
+      const res = preview(b.id, 20000, `deal-${b.id}`);
+      // The 50/50 lives on the tier the rate-up is actually on. Pulling an
+      // Ultra on a banner whose rate-up is a Stellar is not a miss — it is the
+      // best outcome in the game, and the roller keeps your guarantee armed.
+      const featTiers = new Set(b.featured.map((id) => byId.get(id))
+        .filter((a) => a && a.rarity >= RARITY.SSR).map((a) => a.rarity));
+      if (!featTiers.size) { bad.push(`${b.id}: geen rate-up op Stellar of hoger`); continue; }
+      const ssr = res.filter((x) => featTiers.has(x.tier));
+      let missAgo = false;
+      for (const x of ssr) {
+        if (x.featured && !b.featured.includes(x.astra.id)) {
+          bad.push(`${b.id}: ${x.astra.id} heet rate-up maar staat niet op de banner`);
+        }
+        // "Zo niet, dan is de volgende Stellar+ gegarandeerd rate-up."
+        if (!x.featured && missAgo) bad.push(`${b.id}: twee keer op rij naast de rate-up`);
+        missAgo = !x.featured;
+      }
+      // A boost b with a guarantee after a loss settles at 1 / (2 - b).
+      const share = ssr.filter((x) => x.featured).length / Math.max(1, ssr.length);
+      const want = 1 / (2 - (b.featuredBoost ?? 0.5));
+      shares.push(`${b.id} ${(share * 100).toFixed(1)}% (verwacht ${(want * 100).toFixed(1)}%)`);
+      if (Math.abs(share - want) > 0.035) bad.push(`${b.id}: rate-up aandeel ${(share * 100).toFixed(1)}% vs ${(want * 100).toFixed(1)}%`);
+
+      // "Vanaf pull <soft> stijgt de kans elke pull tot 100% op pull <hard>."
+      const base = b.rates[RARITY.SSR] + b.rates[RARITY.UR];
+      if (Math.abs(ssrChanceAt(b, b.pity.soft - 2) - base) > 1e-9) bad.push(`${b.id}: kans stijgt al voor pull ${b.pity.soft}`);
+      if (ssrChanceAt(b, b.pity.hard - 1) !== 1) bad.push(`${b.id}: pull ${b.pity.hard} is geen 100%`);
+      for (let n = b.pity.soft; n < b.pity.hard; n++) {
+        if (ssrChanceAt(b, n) < ssrChanceAt(b, n - 1)) { bad.push(`${b.id}: kans daalt bij pull ${n + 1}`); break; }
+      }
+    }
+    return { banners: BANNERS.length, bad, shares };
+  });
+  check(`de ${r.banners} banners keren uit wat hun tabel belooft`, r.bad.length === 0,
+    r.bad.length ? r.bad.slice(0, 4).join(' | ') : r.shares.join('  ·  '));
+}
+
 /* ---------------- no data describes behaviour nobody implements ----------------
  * Two bugs this build were the same shape: a field in the data that reads
  * like a feature and that no code ever looks at. OUROBOROS's passive and the
