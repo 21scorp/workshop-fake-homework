@@ -90,6 +90,19 @@ gedoe zou zijn.
 
 ---
 
+## Loadout
+
+Eén hoofd-Astra plus twee steunslots. Dat lost het probleem op dat in een
+verzamelspel met één uitgeruste unit elke dubbele en elke off-meta pull dood
+gewicht is. Steun-Astra vechten niet mee maar geven stats én lenen hun element
+aan je treffers, op een kans die met hun zeldzaamheid en sterren meeschaalt.
+Daardoor bouw je een *combinatie* — Ember-hoofd met Tide-steun brandt én
+vertraagt — in plaats van het hoogste getal te stapelen.
+
+De bonus is een formule, geen handmatige tabel per Astra. Elke Astra die er in
+de toekomst bijkomt is dus gebalanceerd op het moment dat hij bestaat, en de
+speler kan de waarde vooraf inschatten.
+
 ## Gacha
 
 Alle percentages staan in het spel, op de banner, in gewone taal. Niet omdat
@@ -180,9 +193,22 @@ zonder voortgang te bewaren, en dat wordt eerlijk gemeld.
 Respecteert `prefers-reduced-motion`, en er is een aparte instelling om
 schermflitsen en camera-shake te dempen.
 
+## Meta-lagen
+
+| Laag | Horizon | Wat het doet |
+|---|---|---|
+| Run | 1–3 min | Kaarten, golven, bosses |
+| Dagelijks | 1 dag | Inlogreeks, drie opdrachten, gratis summon, gratis proefvlucht met een Astra die je niet bezit, dagelijkse seed |
+| Starpass | 6 weken | 30 tiers, gratis spoor tot het einde, premium keert met terugwerkende kracht uit |
+| Prestaties | open | 31 doelen die zichzelf uitkeren zodra ze kloppen |
+| Werf | permanent | Cores in permanente upgrades |
+
 ## Status
 
-v0.9 — speelbaar van begin tot eind: run, gacha, collectie, winkel, dailies,
-delen. De volgende stap is de sprite-atlas; het spel staat er al klaar voor.
+v0.9 — speelbaar van begin tot eind: run, gacha, collectie, loadout, winkel,
+Starpass, dailies, prestaties, delen. Getest tot golf 13 met een uitgebouwd
+profiel (ruim 500.000 punten in drieënhalve minuut).
+
+De volgende stap is de sprite-atlas; het spel staat er al klaar voor.
 
 Zie `DESIGN.md` voor de volledige designbijbel.

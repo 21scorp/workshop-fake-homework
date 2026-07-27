@@ -34,7 +34,8 @@ export function defaultProfile() {
     /** astraId → { stars, dupes, obtainedAt, uses, favourite } */
     collection: {},
     equipped: null,
-    loadout: [null, null, null],   // future: support Astra
+    /** Two support Astra alongside `equipped`. See systems/Loadout.js. */
+    loadout: [null, null],
 
     /** bannerId → pity state */
     gacha: {},
@@ -99,7 +100,7 @@ export function defaultProfile() {
    ------------------------------------------------------------------ */
 
 const MIGRATIONS = {
-  1: (p) => { p.loadout ??= [null, null, null]; p.entitlements ??= {}; return p; },
+  1: (p) => { p.loadout ??= [null, null]; p.entitlements ??= {}; return p; },
   2: (p) => { p.daily.seedScores ??= {}; p.stats.ultsFired ??= 0; return p; },
   3: (p) => { p.settings.lang ??= 'nl'; p.stats.bestTime ??= 0; p.achievements ??= {}; return p; },
 };

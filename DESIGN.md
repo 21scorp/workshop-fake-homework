@@ -121,11 +121,25 @@ raakt aangetast. Anchors, pivots, hitboxen en animatie-timelines zitten al in de
 - [ ] Nummer dat omhoog drijft
 - [ ] Trail achter alles wat beweegt
 
-## 10. Roadmap
+## 10. Loadout
+
+Eén hoofd-Astra plus twee steunslots. Steun vecht niet mee maar geeft stats en
+leent zijn element aan je treffers, op een kans die meeschaalt met zeldzaamheid
+en sterren. Zo bouw je een combinatie in plaats van een stapel getallen, en
+heeft elke Astra in je verzameling een rol.
+
+De steunbonus is een formule (`systems/Loadout.js`), geen tabel: elke nieuwe
+Astra is gebalanceerd zodra hij bestaat.
+
+## 11. Roadmap
 
 - [x] v0.1 Engine + render-abstractie + save
-- [ ] v0.2 Run-gameplay: vessel, enemies, waves, upgrade-kaarten
-- [ ] v0.3 Gacha + collectie + economie
-- [ ] v0.4 Meta: dailies, seeds, share card
-- [ ] v0.5 Audio, polish, PWA
+- [x] v0.2 Run-gameplay: vessel, enemies, waves, upgrade-kaarten, bosses
+- [x] v0.3 Gacha + collectie + economie
+- [x] v0.4 Meta: dailies, seeds, share card
+- [x] v0.5 Audio, polish, PWA
+- [x] v0.6 Onboarding, omgeving met biomes, elementen en passives
+- [x] v0.7 Prestaties, proefvlucht, Starpass
+- [x] v0.9 Loadout met steun-Astra
 - [ ] v1.0 Sprite-atlas swap
+- [ ] later Vessel-skins uit de Starpass, echte betaalprovider, server-leaderboard

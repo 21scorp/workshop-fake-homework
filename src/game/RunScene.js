@@ -37,6 +37,7 @@ import { starPower, SCORE_SCALE } from '../data/constants.js';
 import { blankMods, CARDS, CARD_WEIGHTS, getCard } from '../data/cards.js';
 import { ENEMY } from '../data/enemies.js';
 import { WaveDirector } from './WaveDirector.js';
+import { resolveSupports } from '../systems/Loadout.js';
 import { updateWeapon, fireEchoes, nearestEnemy } from './Weapons.js';
 import { fireUlt } from './Ults.js';
 
@@ -149,6 +150,10 @@ export class RunScene extends Scene {
     this.isTrial = !!params.trial;
     this.stars = params.stars ?? p.collection[this.astraId]?.stars ?? 1;
 
+    // Support Astra are read once, at run start: swapping mid-run isn't a
+    // thing, and re-reading the profile every frame would be a trap.
+    this.supports = params.trial ? [] : resolveSupports();
+
     this.mods = blankMods();
     this.cardStacks = {};
     this.cards = [];
@@ -200,6 +205,7 @@ export class RunScene extends Scene {
     this.director = new WaveDirector(this, this.rng.fork('waves'));
 
     this.applyMetaUpgrades();
+    this.applySupports();
     this.resolveStats();
     this.player.hp = this.player.maxHp;
 
@@ -224,6 +230,21 @@ export class RunScene extends Scene {
   /* ============================================================
      STATS
      ============================================================ */
+
+  /** Support Astra fold into the same modifier bag as everything else. */
+  applySupports() {
+    const m = this.mods;
+    this.supportElements = [];
+    for (const s of this.supports) {
+      const b = s.bonus;
+      m.damageMul += b.damage;
+      m.fireRateMul += b.fireRate;
+      m.magnetMul += b.magnet;
+      m.ultChargeMul += b.ultCharge;
+      m.maxHp += b.hp;
+      this.supportElements.push({ element: b.element, power: b.elementPower });
+    }
+  }
 
   /** Permanent meta upgrades bought with Cores fold straight into mods. */
   applyMetaUpgrades() {
@@ -1045,6 +1066,13 @@ export class RunScene extends Scene {
     if (opts.source === 'bullet' || opts.source === 'beam') {
       this.applyElement(e, dmg, opts);
 
+      // Supports lend their element too, but only some of the time. That's
+      // what makes a lead/support combination feel like a blend rather than
+      // like stacking two of everything.
+      for (const se of this.supportElements ?? []) {
+        if (this.rng.chance(se.power)) this.applyElement(e, dmg * 0.5, opts, se.element);
+      }
+
       if (this.passiveKey === 'aftershock' && ++this.hitCount % 4 === 0) {
         // Basalt: the fourth blow always lands like the first one should have.
         this.spawnShockwave(e.x, e.y, 110, this.stats.damage * 0.8,
@@ -1072,8 +1100,8 @@ export class RunScene extends Scene {
    * colour how an Astra feels without competing with the card build for the
    * player's attention.
    */
-  applyElement(e, dmg, opts) {
-    let el = this.stats.element;
+  applyElement(e, dmg, opts, forceElement = null) {
+    let el = forceElement ?? this.stats.element;
     // Prism refracts: every hit borrows a different element.
     if (el === 'prism') el = ELEMENTAL_CYCLE[(this.kills + e.id) % ELEMENTAL_CYCLE.length];
 

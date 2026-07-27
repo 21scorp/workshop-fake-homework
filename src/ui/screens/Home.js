@@ -10,6 +10,7 @@
 import { el, countTo, pulse } from '../dom.js';
 import {
   currencyRail, playerStrip, button, statTile, iconButton, sheet, progressBar,
+  astraCard, emptyState,
 } from '../components/Chrome.js';
 import { SpriteCanvas } from '../components/SpriteCanvas.js';
 import { save } from '../../core/Save.js';
@@ -22,6 +23,8 @@ import {
 } from '../../systems/Daily.js';
 import { list as achievementList, summary as achievementSummary, GROUPS } from '../../systems/Achievements.js';
 import { collectionStats } from '../../systems/Gacha.js';
+import { supports, setSupport, totals as supportTotals, supportBonus, SUPPORT_SLOTS } from '../../systems/Loadout.js';
+import { ASTRA } from '../../data/astra.js';
 import { leaderboard } from '../../systems/Economy.js';
 import { Sfx } from '../../core/Audio.js';
 import { haptic } from '../../core/Input.js';
@@ -116,6 +119,86 @@ export function HomeScreen(ctx) {
       iconButton('↗', { label: 'Deel', onclick: () => ctx.share({ seed, score: best }) }),
     ),
   );
+
+  /* ---------------- loadout ---------------- */
+
+  const supportSprites = [];
+  const loadoutStrip = buildLoadout();
+
+  function buildLoadout() {
+    const ids = supports();
+    const tot = supportTotals();
+    const strip = el('div.loadout');
+
+    for (let i = 0; i < SUPPORT_SLOTS; i++) {
+      const id = ids[i];
+      const sa = id ? getAstra(id) : null;
+      let art = null;
+      if (sa) {
+        const sc = new SpriteCanvas(astraSprite(sa, 'idle'), {
+          size: 56, tint: sa.colors.primary, tint2: sa.colors.secondary, scale: 1.25,
+        });
+        supportSprites.push(sc);
+        art = sc.canvas;
+      }
+      strip.appendChild(el('button.slot', {
+        dataset: { filled: sa ? '1' : '0' },
+        style: sa ? { '--c': RARITY_INFO[sa.rarity].color } : null,
+        onclick: () => openSupportPicker(i),
+      },
+        art ?? el('span.slot__plus', { text: '+' }),
+        el('span.slot__label', { text: sa ? sa.name : 'Steun' }),
+      ));
+    }
+
+    strip.appendChild(el('div.loadout__sum', null,
+      el('div.loadout__sumt', { text: 'STEUNBONUS' }),
+      el('div.loadout__sumv', { text: tot.damage || tot.fireRate
+        ? `+${Math.round(tot.damage * 100)}% schade · +${Math.round(tot.fireRate * 100)}% tempo`
+        : 'Geen steun uitgerust' }),
+      tot.elements.length
+        ? el('div.loadout__els', null, ...tot.elements.map((e) =>
+            el('span.tag', { style: { '--c': ELEMENT[e.element].color } },
+              `${ELEMENT[e.element].icon} ${ELEMENT[e.element].name}`)))
+        : null,
+    ));
+    return strip;
+  }
+
+  function openSupportPicker(slot) {
+    const owned = ASTRA.filter((a) => p.collection[a.id] && a.id !== p.equipped)
+      .sort((a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name));
+    const current = supports()[slot];
+
+    const grid = el('div.cgrid');
+    const sprites = [];
+    for (const a of owned) {
+      const b = supportBonus(a, p.collection[a.id]?.stars ?? 1);
+      const card = astraCard(a, p.collection[a.id], {
+        size: 76,
+        equipped: current === a.id,
+        onclick: () => {
+          setSupport(slot, current === a.id ? null : a.id);
+          sh.close();
+          ctx.go('home', { force: true, replace: true });
+        },
+      });
+      card.appendChild(el('div.acard__sup', {
+        text: `+${Math.round(b.damage * 100)}% / +${Math.round(b.fireRate * 100)}%`,
+      }));
+      grid.appendChild(card);
+    }
+
+    const sh = sheet(`Steunslot ${slot + 1}`, el('div', null,
+      el('p.sheet__lead', { text: 'Steun-Astra vechten niet mee, maar geven stats en lenen hun element aan je treffers. Je hoofd-Astra kan niet ook steun zijn.' }),
+      current ? button('Slot leegmaken', {
+        variant: 'quiet', size: 'sm',
+        onclick: () => { setSupport(slot, null); sh.close(); ctx.go('home', { force: true, replace: true }); },
+      }) : null,
+      owned.length ? grid : emptyState('◈', 'Nog geen andere Astra', 'Summon er een om steunslots te vullen.'),
+    ));
+    node.appendChild(sh);
+  }
 
   /* ---------------- trial flight ---------------- */
 
@@ -297,6 +380,7 @@ export function HomeScreen(ctx) {
     el('div.home__scroll', null,
       hero,
       playBtn,
+      loadoutStrip,
       el('div.pills', null, streakBtn, questBtn, summonBtn),
       trialCard,
       dailyCard,
@@ -317,7 +401,11 @@ export function HomeScreen(ctx) {
 
   return {
     node,
-    dispose() { heroSprite.destroy(); trialSprite.destroy(); },
+    dispose() {
+      heroSprite.destroy();
+      trialSprite.destroy();
+      while (supportSprites.length) supportSprites.pop().destroy();
+    },
   };
 }
 
