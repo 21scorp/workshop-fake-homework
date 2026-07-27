@@ -64,6 +64,12 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   elementen bestaan echt
 - 60 000 gesimuleerde pulls: de effectieve Stellar+-rate ligt boven de
   basisrate en geen enkele reeks overschrijdt de harde pity
+- alle 34 prestaties evalueren tot een geldig getal, op een leeg én een
+  maximaal profiel — `list()` vangt een gooiende predicate af en meldt 0, dus
+  een kapot doel ziet er eeuwig uit als een onverdiend doel
+- de dagelijkse laag: streak-claim, drie unieke opdrachten die door runs heen
+  optellen, de gratis pull, beide takken van de proef-Astra, en een stabiele
+  seed
 - de drie beloftes van de Starpass: het gratis spoor keert uit tot waar je
   staat, later kopen keert met terugwerkende kracht uit, en twee keer ophalen
   betaalt niet twee keer

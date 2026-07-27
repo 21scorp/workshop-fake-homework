@@ -329,6 +329,130 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
   check('pity garandeert binnen de harde grens', r.worst <= r.hard, `slechtste reeks ${r.worst}, grens ${r.hard}`);
 }
 
+/* ---------------- every achievement predicate, both extremes ----------------
+ * `list()` wraps each predicate in try/catch and reports 0 on a throw, so a
+ * broken goal looks exactly like an unearned one — forever. Evaluate all of
+ * them against an empty profile and a maxed one, and fail on anything that is
+ * not a finite 0..1. */
+{
+  const r = await page.evaluate(async () => {
+    const { save } = await import('./src/core/Save.js');
+    const { ASTRA } = await import('./src/data/astra.js');
+    const { ACHIEVEMENTS, list, summary, evaluate } = await import('./src/systems/Achievements.js');
+    const bad = [];
+
+    const sweep = (label) => {
+      for (const a of ACHIEVEMENTS) {
+        let v;
+        try { v = a.progress(makeCtx()); }
+        catch (e) { bad.push(`${label}/${a.id}: ${e.message}`); continue; }
+        if (!Number.isFinite(v) || v < 0 || v > 1) bad.push(`${label}/${a.id}: ${v}`);
+        if (!a.name || !a.desc || !a.group) bad.push(`${label}/${a.id}: mist tekst`);
+      }
+    };
+    // The module's own ctx builder isn't exported; rebuild the shape it uses.
+    const makeCtx = () => {
+      const p = save.profile;
+      const owned = Object.keys(p.collection).length;
+      const byTier = [0, 0, 0, 0, 0];
+      for (const id in p.collection) {
+        const a = ASTRA.find((x) => x.id === id);
+        if (a) byTier[a.rarity]++;
+      }
+      return { p, run: lastRun, owned, byTier };
+    };
+
+    let lastRun = null;
+    save.profile.collection = {};
+    save.profile.bestiary = {};
+    sweep('leeg');
+
+    // Maxed: every Astra at ★5, every stat huge, every enemy met, a huge run.
+    for (const a of ASTRA) save.profile.collection[a.id] = { stars: 5, dupes: 99, obtainedAt: 1, uses: 9 };
+    Object.assign(save.profile.stats, {
+      runs: 9999, kills: 1e6, deaths: 500, bestScore: 5e6, bestWave: 40, bestCombo: 500,
+      bestTime: 3600, totalTime: 1e6, totalScore: 1e8, pulls: 5000, ssrCount: 90,
+      urCount: 12, cardsPicked: 9000, bossesKilled: 800, ultsFired: 4000,
+    });
+    save.profile.daily.streak = 60;
+    lastRun = { score: 5e6, wave: 40, kills: 5000, time: 900, maxCombo: 400,
+                level: 60, hitsTaken: 0, ultsFired: 0, bossesKilled: 8,
+                astraId: 'pip', cards: [], died: false };
+    sweep('vol');
+
+    const sum = summary();
+    return { bad, count: ACHIEVEMENTS.length, done: sum.done, listed: list().length };
+  });
+  check(`alle ${r.count} prestaties evalueren tot een geldig getal`, r.bad.length === 0,
+    r.bad.slice(0, 4).join(' | '));
+  check('de prestatielijst is compleet', r.listed === r.count, `${r.listed}/${r.count}`);
+}
+
+/* ---------------- dailies: streak, quests, trial, reset ---------------- */
+{
+  const r = await page.evaluate(async () => {
+    const { save } = await import('./src/core/Save.js');
+    const D = await import('./src/systems/Daily.js');
+    const bad = [];
+
+    save.profile.daily = { streak: 0, lastClaimDay: null, bestStreak: 0, quests: null,
+                           questDay: null, freePullDay: null, trialDay: null, seedScores: {} };
+
+    if (D.streakState().claimedToday) bad.push('verse dag telt al als geclaimd');
+    const dust0 = save.profile.currency.stardust;
+    if (!D.claimDaily().ok) bad.push('eerste claim mislukt');
+    if (save.profile.currency.stardust <= dust0) bad.push('claim betaalde niets uit');
+    if (D.claimDaily().ok) bad.push('tweede claim op dezelfde dag lukte wel');
+    if (save.profile.daily.streak !== 1) bad.push(`streak ${save.profile.daily.streak} na één claim`);
+
+    const q = D.todaysQuests();
+    if (q.length !== 3) bad.push(`${q.length} opdrachten in plaats van 3`);
+    if (q.some((x) => !x.text || !x.target || !x.bag)) bad.push('opdracht mist tekst, doel of beloning');
+    if (new Set(q.map((x) => x.id)).size !== q.length) bad.push('dubbele opdracht op één dag');
+    // Two of the nine are cumulative (three runs, ten cards), so a single run
+    // can't finish the set no matter how big it is — feed it several.
+    for (let i = 0; i < 5; i++) {
+      D.progressQuests({ score: 5e6, wave: 40, kills: 5000, time: 900, maxCombo: 400,
+                         level: 60, bossesKilled: 8, ultsFired: 40, cards: [1, 2, 3],
+                         isDaily: true, died: true });
+    }
+    const q2 = D.todaysQuests();
+    const ready = q2.filter((x) => x.progress >= x.target).length;
+    if (ready !== 3) bad.push(`${ready}/3 opdrachten klaar na vijf maximale runs`);
+    for (const x of q2) if (!D.claimQuest(x.id).ok) bad.push(`opdracht ${x.id} niet claimbaar`);
+    if (D.claimQuest(q2[0].id).ok) bad.push('opdracht twee keer claimbaar');
+    if (!D.questsComplete()) bad.push('questsComplete blijft false na alles claimen');
+
+    if (!D.freePullAvailable()) bad.push('gratis pull niet beschikbaar op een verse dag');
+    D.consumeFreePull();
+    if (D.freePullAvailable()) bad.push('gratis pull bleef beschikbaar');
+
+    if (D.trialUsed()) bad.push('proefvlucht al gebruikt op een verse dag');
+    // Two branches, and the second one is deliberate: with an empty collection
+    // the trial must be something you do not own, and with a full one it
+    // degrades to a high-star loan of an SSR+ rather than disappearing.
+    const full = save.profile.collection;
+    save.profile.collection = {};
+    const t1 = D.trialAstra();
+    if (!t1) bad.push('geen proef-Astra bij een lege collectie');
+    else if (save.profile.collection[t1.id]) bad.push('proef-Astra is er een die je al bezit');
+    else if (t1.rarity < 2) bad.push(`proef-Astra is maar rarity ${t1.rarity}`);
+    save.profile.collection = full;
+    const t2 = D.trialAstra();
+    if (!t2 || t2.rarity < 3) bad.push('volle collectie geeft geen SSR+ leen-Astra');
+    D.consumeTrial();
+    if (!D.trialUsed()) bad.push('proefvlucht niet verbruikt');
+
+    const seed = D.dailySeed();
+    if (!seed || seed !== D.dailySeed()) bad.push('dagelijkse seed is niet stabiel');
+    const ms = D.msUntilReset();
+    if (!(ms > 0 && ms <= 24 * 3600 * 1000)) bad.push(`reset over ${ms}ms`);
+    return { bad, seed, quests: D.todaysQuests().map((x) => x.id) };
+  });
+  check('dagelijkse laag: streak, opdrachten, gratis pull, proefvlucht en seed',
+    r.bad.length === 0, r.bad.slice(0, 4).join(' | '));
+}
+
 /* ---------------- starpass: the promise it makes ----------------
  * The pass promises three things in writing — the free track runs to the end,
  * buying late pays out retroactively, and nothing pays twice. All three are
