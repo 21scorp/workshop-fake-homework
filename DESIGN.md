@@ -39,7 +39,7 @@ RUN (60-120s)  →  DEATH/CLEAR  →  REWARDS  →  SUMMON  →  UPGRADE  →  R
 
 Voorbij golf tien was de run niet meer een ander gevecht maar hetzelfde
 gevecht met grotere getallen. Schaling verlengt een run; ze varieert er geen.
-Elke vierde golf verandert daarom de lucht: acht modifiers, elk een handvol
+Elke vierde golf verandert daarom de lucht: tien modifiers, elk een handvol
 vermenigvuldigers met een naam en een belofte, aangekondigd voordat ze landen
 en achteraf op het resultatenscherm.
 

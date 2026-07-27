@@ -144,6 +144,7 @@ export class WaveDirector {
       speed: base.speed * a.enemySpeed,
       score: base.score * a.score,
       density: base.density * a.density,
+      eliteChance: clamp(base.eliteChance * a.eliteChance, 0, 0.62),
     };
   }
 

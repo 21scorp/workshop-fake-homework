@@ -1048,7 +1048,9 @@ export class RunScene extends Scene {
 
   updateEnemyGun(e, dt) {
     const g = e.def.gun;
-    e.gunT -= dt;
+    // A lower fire rate means a longer cooldown, so the anomaly divides the
+    // clock rather than multiplying it.
+    e.gunT -= dt * this.anomalyMods.enemyFireRate;
     if (e.gunT <= g.charge && e.gunT > 0) {
       e.charge = 1 - e.gunT / g.charge;
     }

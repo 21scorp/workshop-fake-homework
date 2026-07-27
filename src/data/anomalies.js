@@ -78,6 +78,16 @@ export const ANOMALIES = [
     desc: 'Je ultimate laadt dubbel zo snel.',
     mods: { ultCharge: 2 },
   },
+  {
+    id: 'hunt', name: 'JACHTSEIZOEN', icon: '★', color: '#e879f9',
+    desc: 'Veel meer elites. Ze zijn ook veel meer waard.',
+    mods: { eliteChance: 2.6, score: 1.2 },
+  },
+  {
+    id: 'calm', name: 'WINDSTILTE', icon: '◌', color: '#5eead4', boon: true,
+    desc: 'Vijanden vuren veel trager. Ze bewegen wel sneller.',
+    mods: { enemyFireRate: 0.55, enemySpeed: 1.15 },
+  },
 ];
 
 const BY_ID = new Map(ANOMALIES.map((a) => [a.id, a]));
@@ -90,6 +100,7 @@ export const ANOMALY_EVERY = 4;
 export function blankMods() {
   return {
     enemySpeed: 1, enemyHp: 1, enemyDmg: 1, enemyBulletSpeed: 1,
+    enemyFireRate: 1, eliteChance: 1,
     density: 1, score: 1,
     playerSpeed: 1, fireRate: 1, prismValue: 1, magnet: 1, ultCharge: 1,
     grantHp: 0,

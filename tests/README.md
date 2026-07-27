@@ -64,7 +64,7 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   elementen bestaan echt
 - 60 000 gesimuleerde pulls: de effectieve Stellar+-rate ligt boven de
   basisrate en geen enkele reeks overschrijdt de harde pity
-- alle acht anomalieën veranderen echt iets, stapelen door vermenigvuldiging,
+- alle tien anomalieën veranderen echt iets, stapelen door vermenigvuldiging,
   en worden gezaaid getrokken zonder zichzelf te herhalen
 - loadout, skins en runbeloningen: de steunbonus stijgt met zeldzaamheid en
   sterren, de leider kan nooit in zijn eigen steunslot staan, een skin die je
