@@ -14,6 +14,7 @@ import { starUp, starCost, collectionStats } from '../../systems/Gacha.js';
 import { save } from '../../core/Save.js';
 import { abbrev, pct } from '../../core/Math2.js';
 import { Sfx } from '../../core/Audio.js';
+import { renderCollectionCard, shareRun, downloadBlob } from '../../systems/Share.js';
 import { haptic } from '../../core/Input.js';
 import { bus, EV } from '../../core/Events.js';
 
@@ -199,10 +200,37 @@ export function CollectionScreen(ctx, params = {}) {
 
   /* ---------------- assemble ---------------- */
 
+  /**
+   * Share the shelf.
+   *
+   * The run card sells a moment; this one sells a roster. Showing off a
+   * collection is the oldest social behaviour in the genre and the game had no
+   * artifact for it — you could post a great run but not a great collection.
+   */
+  let sharing = false;
+  async function shareCollection() {
+    if (sharing) return;
+    sharing = true;
+    Sfx.play('confirm');
+    try {
+      const { blob, canvas } = await renderCollectionCard();
+      const res = await shareRun({ blob, score: save.profile.stats.bestScore });
+      // Desktop has no share sheet, so hand over the file itself.
+      if (!res.ok && res.reason !== 'cancelled') downloadBlob(blob, 'astrafall-verzameling.png');
+      void canvas;
+    } catch (err) {
+      console.error('[share] collection card failed', err);
+      bus.emit(EV.TOAST, { text: 'Kaart maken mislukt', tone: 'bad' });
+    } finally {
+      sharing = false;
+    }
+  }
+
   const progress = el('div.cprogress', null,
     el('div.cprogress__top', null,
       el('span', { text: 'Verzameling' }),
       el('b', { text: `${stats.owned} / ${stats.total}` }),
+      el('button.cshare', { onclick: shareCollection, 'aria-label': 'Deel je verzameling' }, '↗'),
     ),
     progressBar(stats.pct, { color: '#a855f7', height: 8 }),
     el('div.cprogress__tiers', null,

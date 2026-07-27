@@ -681,11 +681,24 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
       const { canvas, blob } = await renderShareCard(run);
       sizes.push(`${canvas.width}x${canvas.height}:${blob ? blob.size > 1000 : false}`);
     }
-    return { bad, sizes, tiers: RANKS.length };
+    // The collection card too, at both extremes: nothing owned and all of it.
+    const { save } = await import('./src/core/Save.js');
+    const { ASTRA } = await import('./src/data/astra.js');
+    const { renderCollectionCard } = await import('./src/systems/Share.js');
+    const coll = [];
+    for (const own of [false, true]) {
+      save.profile.collection = {};
+      if (own) for (const a of ASTRA) save.profile.collection[a.id] = { stars: 5, dupes: 9, obtainedAt: 1, uses: 1 };
+      const c = await renderCollectionCard();
+      coll.push(`${c.canvas.width}x${c.canvas.height}:${c.blob ? c.blob.size > 1000 : false}`);
+    }
+    return { bad, sizes, coll, tiers: RANKS.length };
   });
   check(`${r.tiers} rangen lopen op en kloppen op hun drempel`, r.bad.length === 0, r.bad.join(' | '));
   check('sharekaart rendert voor een lege én een maximale run',
     r.sizes.every((s) => s === '1080x1920:true'), r.sizes.join(' | '));
+  check('verzamelkaart rendert leeg én vol', r.coll.every((s) => s === '1080x1920:true'),
+    r.coll.join(' | '));
 }
 
 /* ---------------- the sprite swap, end to end ----------------

@@ -42,6 +42,7 @@ Je doet het nog een keer.
 | **Dagelijkse seed** | Iedereen ter wereld speelt dezelfde run. Direct vergelijkbaar, dus duet-baar. |
 | **`?s=CODE` links** | Deel een code, je vriend krijgt exact jouw golven. Geen server nodig. |
 | **Share card** | 1080×1920 PNG, klaar voor Stories en TikTok, met je seed groot in beeld. |
+| **Verzamelkaart** | Dezelfde maat, maar dan je hele roster met sterren en gaten. Pronken met een collectie is het oudste sociale gedrag in het genre. |
 | **Rarity reveal** | De kleur van de straal verraadt de zeldzaamheid één tel voor de onthulling. Dat is precies waarom een pull kijkbaar is. |
 | **Kaartkeuze** | Drie kaarten, één keuze. Comment-bait: "welke pak jij?" |
 | **Rang** | D tot S+, groot op de kaart. "Ik heb S" is een caption; "984.210" is een screenshot. |

@@ -13,7 +13,8 @@
  */
 
 import Assets from '../core/AssetRegistry.js';
-import { getAstra, astraSprite } from '../data/astra.js';
+import { ASTRA, getAstra, astraSprite } from '../data/astra.js';
+import { collectionStats } from './Gacha.js';
 import { rankFor } from './Rank.js';
 import { RARITY_INFO, ELEMENT } from '../data/constants.js';
 import { grouped, timeStr } from '../core/Math2.js';
@@ -368,6 +369,197 @@ export async function renderShareCard(run) {
     ctx.fillStyle = '#64748b';
     ctx.letterSpacing = '3px';
     ctx.fillText(host, CARD_W / 2 + 2, 1858);
+    ctx.letterSpacing = '0px';
+  }
+  ctx.restore();
+
+  const blob = await new Promise((res) => cv.toBlob(res, 'image/png', 0.95));
+  return { canvas: cv, blob };
+}
+
+/**
+ * Render a collection card.
+ *
+ * The run card sells a moment; this one sells a shelf. Showing off a
+ * collection is the oldest social behaviour in the genre, and the game had no
+ * artifact for it — you could post a great run but not a great roster. Locked
+ * Astra are drawn as silhouettes on purpose: the gaps are what makes someone
+ * else want the picture.
+ */
+export async function renderCollectionCard() {
+  const cv = document.createElement('canvas');
+  cv.width = CARD_W;
+  cv.height = CARD_H;
+  const ctx = cv.getContext('2d');
+  const p = save.profile;
+  const stats = collectionStats();
+
+  /* ---- background ---- */
+  const bg = ctx.createLinearGradient(0, 0, CARD_W, CARD_H);
+  bg.addColorStop(0, '#0a0a1f');
+  bg.addColorStop(0.5, '#160d2e');
+  bg.addColorStop(1, '#05060f');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, CARD_W, CARD_H);
+  for (const [x, y, r, c] of [[160, 300, 520, '#a855f7'], [920, 1500, 620, '#22d3ee']]) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, hexA(c, 0.22));
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  ctx.save();
+  for (let i = 0; i < 200; i++) {
+    const px = Math.abs((Math.sin(i * 12.9898) * 43758.5453) % 1) * CARD_W;
+    const py = Math.abs((Math.sin(i * 78.233) * 12345.6789) % 1) * CARD_H;
+    ctx.globalAlpha = 0.18 + (i % 6) * 0.08;
+    ctx.fillStyle = i % 6 === 0 ? '#a855f7' : '#cbd5e1';
+    ctx.fillRect(px, py, 1 + (i % 3) * 0.9, 1 + (i % 3) * 0.9);
+  }
+  ctx.restore();
+
+  /* ---- header ---- */
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = '900 60px Inter, system-ui, sans-serif';
+  const tg = ctx.createLinearGradient(340, 0, 740, 0);
+  tg.addColorStop(0, '#22d3ee');
+  tg.addColorStop(0.5, '#a855f7');
+  tg.addColorStop(1, '#fbbf24');
+  ctx.fillStyle = tg;
+  ctx.letterSpacing = '18px';
+  ctx.fillText('ASTRAFALL', CARD_W / 2 + 9, 150);
+  ctx.letterSpacing = '0px';
+
+  ctx.font = '700 28px Inter, system-ui, sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.letterSpacing = '8px';
+  ctx.fillText('MIJN VERZAMELING', CARD_W / 2 + 4, 214);
+  ctx.letterSpacing = '0px';
+
+  ctx.font = '900 128px Inter, system-ui, sans-serif';
+  ctx.fillStyle = '#f8fafc';
+  ctx.shadowColor = 'rgba(168,85,247,.7)';
+  ctx.shadowBlur = 44;
+  ctx.fillText(`${stats.owned} / ${stats.total}`, CARD_W / 2, 330);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  /* ---- rarity bar ---- */
+  {
+    const y = 372, h = 16, x0 = 120, w = CARD_W - 240;
+    roundRect(ctx, x0, y, w, h, 8);
+    ctx.fillStyle = 'rgba(255,255,255,.08)';
+    ctx.fill();
+    let cx = x0;
+    for (let tier = 4; tier >= 0; tier--) {
+      if (!stats.byTier[tier]) continue;
+      const seg = (stats.byTier[tier] / stats.total) * w;
+      roundRect(ctx, cx, y, Math.max(seg, 4), h, 8);
+      ctx.fillStyle = RARITY_INFO[tier].color;
+      ctx.fill();
+      cx += seg;
+    }
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = '800 24px Inter, system-ui, sans-serif';
+    const parts = [4, 3, 2].map((t) => `${RARITY_INFO[t].short} ${stats.byTier[t]}/${stats.totalByTier[t]}`);
+    ctx.fillStyle = '#94a3b8';
+    ctx.letterSpacing = '3px';
+    ctx.fillText(parts.join('   ·   '), CARD_W / 2 + 2, 428);
+    ctx.letterSpacing = '0px';
+    ctx.restore();
+  }
+
+  /* ---- the shelf ---- */
+  const COLS = 5;
+  const list = ASTRA.slice().sort((a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name));
+  const rows = Math.ceil(list.length / COLS);
+  const y0 = 470;
+  // The shelf has to fit whatever the roster grows to. Reserve the footer band
+  // and let the cell shrink rather than run off the bottom of the card.
+  const AVAIL = CARD_H - 300 - y0;
+  const CELL = Math.min(196, Math.floor(AVAIL / rows), Math.floor((CARD_W - 120) / COLS));
+  const gridW = COLS * CELL;
+  const x0 = (CARD_W - gridW) / 2;
+  const K = CELL / 196;
+
+  list.forEach((astra, i) => {
+    const owned = p.collection[astra.id];
+    const cx = x0 + (i % COLS) * CELL + CELL / 2;
+    const cy = y0 + Math.floor(i / COLS) * CELL + CELL / 2;
+    const info = RARITY_INFO[astra.rarity];
+
+    ctx.save();
+    ctx.globalAlpha = owned ? 1 : 0.24;
+    if (owned) {
+      const g = ctx.createRadialGradient(cx, cy - 10, 0, cx, cy - 10, CELL * 0.46);
+      g.addColorStop(0, hexA(info.color, 0.28));
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx - CELL / 2, cy - CELL / 2, CELL, CELL);
+    }
+    Assets.draw(ctx, astraSprite(astra, 'idle'), cx, cy - 16 * K, {
+      t: 1.1 + i * 0.13, scale: 1.25 * K,
+      tint: owned ? astra.colors.primary : '#1e293b',
+      tint2: owned ? astra.colors.secondary : '#334155',
+    });
+    ctx.restore();
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    if (owned) {
+      ctx.font = `800 ${Math.round(20 * K)}px Inter, system-ui, sans-serif`;
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillText(astra.name.length > 10 ? astra.name.slice(0, 9) + '…' : astra.name, cx, cy + 56 * K);
+      ctx.font = `700 ${Math.round(18 * K)}px Inter, system-ui, sans-serif`;
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText('★'.repeat(owned.stars ?? 1), cx, cy + 78 * K);
+    } else {
+      ctx.font = `800 ${Math.round(22 * K)}px Inter, system-ui, sans-serif`;
+      ctx.fillStyle = '#334155';
+      ctx.fillText('???', cx, cy + 56 * K);
+    }
+    ctx.restore();
+  });
+
+  /* ---- footer stats ---- */
+  const fy = Math.min(y0 + rows * CELL + 40, CARD_H - 230);
+  const cells = [
+    ['LEVEL', String(p.account.level)],
+    ['BESTE SCORE', grouped(p.stats.bestScore ?? 0)],
+    ['SUMMONS', grouped(p.stats.pulls ?? 0)],
+  ];
+  const cw = (CARD_W - 180) / cells.length;
+  cells.forEach(([label, value], i) => {
+    const cx = 90 + cw * i + cw / 2;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = '900 48px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillText(value, cx, fy + 46);
+    ctx.font = '700 22px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.letterSpacing = '4px';
+    ctx.fillText(label, cx + 2, fy + 82);
+    ctx.restore();
+    if (i < cells.length - 1) {
+      ctx.fillStyle = 'rgba(255,255,255,.08)';
+      ctx.fillRect(90 + cw * (i + 1), fy + 8, 2, 86);
+    }
+  });
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = '600 28px Inter, system-ui, sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.fillText(`${p.name} · Lv ${p.account.level}`, CARD_W / 2, CARD_H - 108);
+  const host = shareHost();
+  if (host) {
+    ctx.font = '700 26px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.letterSpacing = '3px';
+    ctx.fillText(host, CARD_W / 2 + 2, CARD_H - 62);
     ctx.letterSpacing = '0px';
   }
   ctx.restore();

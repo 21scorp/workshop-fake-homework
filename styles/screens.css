@@ -1227,3 +1227,16 @@
 .found canvas { width: 34px; height: 34px; object-fit: contain; }
 .found span { font-size: 12px; font-weight: 800; }
 .summon__free { color: var(--gold); font-weight: 800; }
+
+.cprogress__top .cshare {
+  margin-left: 10px;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--hairline);
+  color: var(--accent);
+  font-size: 14px; font-weight: 800;
+  transition: transform .16s var(--ease-snap);
+}
+.cprogress__top .cshare:active { transform: scale(.9); }

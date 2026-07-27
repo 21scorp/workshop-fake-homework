@@ -22,6 +22,7 @@ Je doet het nog één keer.
 | **Share Seed** | `?s=CODE` link reproduceert exact dezelfde run | Stitch/duet challenge, geen server nodig |
 | **Share Card** | 1080×1920 PNG render van je run | Instagram Story-formaat, 1 tap |
 | **Rang** | D t/m S+, groot op de kaart | "Ik heb S" is een caption, "984.210" is een screenshot |
+| **Verzamelkaart** | Je hele roster als 1080×1920, met de gaten erin | De ontbrekende vakjes zijn wat de kijker het plaatje doet willen |
 | **Near-death** | Slowmo + chroma bij 1 HP | Automatisch dramatisch |
 | **Ultimate** | Schermvullende nova, hitstop, shake | De payoff-frame |
 | **Card choice** | 3 kaarten, 1 keuze, klok tikt | Comment-bait: "welke pak jij?" |
