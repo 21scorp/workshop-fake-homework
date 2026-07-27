@@ -73,6 +73,9 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   tenzij zijn regel een optelling is die elke keer even waar is. Twee kaarten
   beloofden letterlijk niets bij de eerste aanbieding en twee logen zodra je
   ze stapelde; niets daarvan gooit een fout
+- de zeven winkelupgrades leveren precies het getal dat op de knop staat —
+  gemeten aan de modifier-tas na `applyMetaUpgrades`, niet afgelezen uit de
+  bron. Cores zijn de enige valuta die je niet terugkrijgt
 - alle Astra tekenen, en hun verwijzingen naar patronen, ultimates en
   elementen bestaan echt
 - een veegcontrole over álle datavelden — vijanden, bazen, wapenconfig en de
@@ -95,7 +98,7 @@ Daarom draait dit bestand alles één keer, en faalt het ook op een
   sterren, de leider kan nooit in zijn eigen steunslot staan, een skin die je
   niet meer verdient wordt vanzelf weer vergrendeld, en geen enkele beloning
   wordt negatief of NaN
-- alle 34 prestaties evalueren tot een geldig getal, op een leeg én een
+- alle 36 prestaties evalueren tot een geldig getal, op een leeg én een
   maximaal profiel — `list()` vangt een gooiende predicate af en meldt 0, dus
   een kapot doel ziet er eeuwig uit als een onverdiend doel
 - de dagelijkse laag: streak-claim, drie unieke opdrachten die door runs heen

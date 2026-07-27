@@ -365,6 +365,46 @@ check('audio-context ontgrendeld door een gebaar', audioReady);
     r.bad.slice(0, 6).join(' | '));
 }
 
+/* ---------------- the shop's promise equals the run's maths ---------------- */
+{
+  await ensureRun(page);
+  const r = await page.evaluate(async () => {
+    const { META_UPGRADES } = await import('./src/data/shop.js');
+    const { save } = await import('./src/core/Save.js');
+    const { blankMods } = await import('./src/data/cards.js');
+    const run = globalThis.ASTRAFALL.scene;
+    const keep = { ...(save.profile.meta.upgrades || {}) };
+    const keepMods = run.mods;
+    const bad = [];
+    // Cores are spent on a number printed on a button. Whatever the run engine
+    // then folds in has to be that number — measured, not read off the source.
+    for (const up of META_UPGRADES) {
+      for (let l = 0; l < up.max; l++) {
+        save.profile.meta.upgrades = { [up.id]: l + 1 };
+        const before = blankMods();
+        run.mods = blankMods();
+        run.applyMetaUpgrades();
+        const moved = Object.keys(before).filter((k) => run.mods[k] !== before[k]);
+        if (moved.length !== 1) { bad.push(`${up.id}@${l + 1}: raakt ${moved.length} velden`); continue; }
+        const field = moved[0];
+        const delta = run.mods[field] - before[field];
+        const text = up.desc(l);
+        const num = parseFloat((text.match(/(\d+(?:\.\d+)?)/) ?? [])[1]);
+        const promised = /%/.test(text) ? num / 100 : num;
+        if (Math.abs(promised - delta) > 1e-9) {
+          bad.push(`${up.id}@${l + 1}: "${text}" maar ${field} ${delta > 0 ? '+' : ''}${delta.toFixed(3)}`);
+        }
+      }
+    }
+    save.profile.meta.upgrades = keep;
+    run.mods = keepMods;
+    run.resolveStats();
+    return { count: META_UPGRADES.length, bad };
+  });
+  check(`alle ${r.count} winkelupgrades leveren precies wat ze beloven`,
+    r.bad.length === 0, r.bad.slice(0, 5).join(' | '));
+}
+
 /* ---------------- every Astra is renderable and coherent ---------------- */
 {
   const r = await page.evaluate(async () => {
